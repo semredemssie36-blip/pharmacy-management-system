@@ -236,6 +236,52 @@ async function createOpeningBalance(input, userId) {
 }
 
 /**
+ * Internal stock-increase helper for TASK 09 Goods Receiving.
+ * Intended to be called *inside an existing caller-owned transaction*
+ * (pass the active `connection`). The inventory row update and the
+ * corresponding stock movement are made atomic with the caller trx.
+ */
+async function receiveStockInternal({
+  organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId,
+  quantity, movementType = 'purchase_receipt', referenceType, referenceId, reason, userId,
+  connection,
+}) {
+  if (!connection) throw new Error('receiveStockInternal requires an active connection');
+  const qty = Number(quantity);
+  if (!Number.isFinite(qty) || qty <= 0) {
+    throw new ValidationError('Validation failed', [{ field: 'quantity', message: 'Quantity must be a positive number' }]);
+  }
+
+  const targetStatus = 'available';
+  const [existingRows] = await connection.query(
+    `SELECT id FROM inventory
+     WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ? AND storage_location_id = ?
+       AND product_id = ? AND batch_id = ? AND unit_id = ? AND status = ? LIMIT 1`,
+    [organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId, targetStatus],
+  );
+  let inventoryId;
+  if (existingRows.length > 0) {
+    inventoryId = existingRows[0].id;
+    await connection.query('UPDATE inventory SET quantity = quantity + ? WHERE id = ?', [qty, inventoryId]);
+  } else {
+    const [res] = await connection.query(
+      `INSERT INTO inventory (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, status, quantity)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId, targetStatus, qty],
+    );
+    inventoryId = res.insertId;
+  }
+
+  const [movementResult] = await connection.query(
+    `INSERT INTO stock_movements (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, movement_type, quantity_delta, reference_type, reference_id, reason, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId, movementType, qty, referenceType || null, referenceId || null, reason || null, userId],
+  );
+
+  return { inventoryId, movementId: movementResult.insertId, quantity: qty, status: targetStatus };
+}
+
+/**
  * Internal decrement helper (used by tests and future inventory operations).
  * Atomically validates against negative stock within the same DB transaction
  * that records the compensating movement.
@@ -346,4 +392,5 @@ export default {
   getStockMovementForUser,
   listStockMovementsForUser: listMovementsForUser,
   decreaseAvailableStock,
+  receiveStockInternal,
 };

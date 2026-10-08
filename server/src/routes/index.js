@@ -11,6 +11,7 @@ import permissionRoutes from './permissionRoutes.js';
 import productRoutes from './productRoutes.js';
 import inventoryRoutes from './inventoryRoutes.js';
 import purchaseOrderRoutes from './purchaseOrderRoutes.js';
+import goodsReceiptRoutes from './goodsReceiptRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -28,6 +29,7 @@ router.use(permissionRoutes);
 router.use(productRoutes);
 router.use(inventoryRoutes);
 router.use(purchaseOrderRoutes);
+router.use(goodsReceiptRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

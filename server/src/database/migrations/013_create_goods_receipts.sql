@@ -1,0 +1,53 @@
+-- Task 09 — Goods Receiving.
+
+CREATE TABLE IF NOT EXISTS goods_receipts (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  organization_id INT UNSIGNED NOT NULL,
+  branch_id INT UNSIGNED NOT NULL,
+  warehouse_id INT UNSIGNED NOT NULL,
+  purchase_order_id INT UNSIGNED NOT NULL,
+  receipt_number VARCHAR(40) NOT NULL,
+  receipt_date DATE NOT NULL,
+  status ENUM('draft', 'receiving', 'completed', 'discrepancy', 'cancelled') NOT NULL DEFAULT 'draft',
+  received_by INT UNSIGNED NOT NULL,
+  notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_gr_org_number (organization_id, receipt_number),
+  KEY idx_gr_po (purchase_order_id),
+  KEY idx_gr_branch (branch_id),
+  KEY idx_gr_warehouse (warehouse_id),
+  KEY idx_gr_status (status),
+  CONSTRAINT fk_gr_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_gr_branch FOREIGN KEY (branch_id) REFERENCES branches (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_gr_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_gr_po FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_gr_received_by FOREIGN KEY (received_by) REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS goods_receipt_lines (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  goods_receipt_id INT UNSIGNED NOT NULL,
+  purchase_order_line_id INT UNSIGNED NOT NULL,
+  product_id INT UNSIGNED NOT NULL,
+  unit_id INT UNSIGNED NOT NULL,
+  ordered_quantity DECIMAL(14,3) NOT NULL,
+  received_quantity DECIMAL(14,3) NOT NULL DEFAULT 0,
+  batch_number VARCHAR(80) NULL,
+  expiry_date DATE NULL,
+  storage_location_id INT UNSIGNED NULL,
+  notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_grl_gr (goods_receipt_id),
+  KEY idx_grl_po_line (purchase_order_line_id),
+  KEY idx_grl_product (product_id),
+  CONSTRAINT chk_grl_ordered_positive CHECK (ordered_quantity > 0),
+  CONSTRAINT chk_grl_received_nnegative CHECK (received_quantity >= 0),
+  CONSTRAINT fk_grl_gr FOREIGN KEY (goods_receipt_id) REFERENCES goods_receipts (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_grl_po_line FOREIGN KEY (purchase_order_line_id) REFERENCES purchase_order_lines (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_grl_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_grl_unit FOREIGN KEY (unit_id) REFERENCES units (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_grl_location FOREIGN KEY (storage_location_id) REFERENCES storage_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
