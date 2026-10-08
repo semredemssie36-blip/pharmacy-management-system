@@ -8,7 +8,7 @@ import { getPool } from '../database/pool.js';
 const STATUS_TRANSITIONS = {
   draft: new Set(['receiving', 'cancelled']),
   receiving: new Set(['completed', 'discrepancy', 'cancelled']),
-  discrepancy: new Set(['cancelled']),
+  discrepancy: new Set(['receiving', 'cancelled']),
   completed: new Set([]),
   cancelled: new Set([]),
 };
@@ -84,12 +84,20 @@ async function validateCreate({ organizationId, branchId, warehouseId, purchaseO
   const warehouse = warehouseRows[0];
   if (!warehouse) throw new AppError('Warehouse not found', { statusCode: 404, code: 'WAREHOUSE_NOT_FOUND' });
   if (warehouse.branch_id !== Number(branchId)) throw new ValidationError('Validation failed', [{ field: 'warehouseId', message: 'Warehouse belongs to a different branch' }]);
+  if (warehouse.status !== 'active') throw new AppError('Warehouse is inactive', { statusCode: 409, code: 'WAREHOUSE_INACTIVE' });
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   for (const [index, line] of lines.entries()) {
     if (!Number.isInteger(Number(line.purchaseOrderLineId))) details.push({ field: `lines[${index}].purchaseOrderLineId`, message: 'Valid purchaseOrderLineId is required' });
     if (!(Number(line.receivedQuantity) > 0)) details.push({ field: `lines[${index}].receivedQuantity`, message: 'Received quantity must be positive' });
     if (typeof line.batchNumber !== 'string' || !line.batchNumber.trim()) details.push({ field: `lines[${index}].batchNumber`, message: 'Batch number is required' });
-    if (!line.expiryDate || Number.isNaN(new Date(line.expiryDate).getTime())) details.push({ field: `lines[${index}].expiryDate`, message: 'Expiry date is required and must be valid' });
+    if (!line.expiryDate || Number.isNaN(new Date(line.expiryDate).getTime())) {
+      details.push({ field: `lines[${index}].expiryDate`, message: 'Expiry date is required and must be valid' });
+    } else if (new Date(line.expiryDate) < today) {
+      details.push({ field: `lines[${index}].expiryDate`, message: 'Cannot receive already expired stock into available inventory' });
+    }
     if (!Number.isInteger(Number(line.storageLocationId))) details.push({ field: `lines[${index}].storageLocationId`, message: 'Valid storageLocationId is required' });
   }
   if (details.length) throw new ValidationError('Validation failed', details);
@@ -193,12 +201,28 @@ async function start(id, userId) {
   return getById(id, userId);
 }
 
-async function cancel(id, userId) {
+async function markDiscrepancy(id, { notes } = {}, userId) {
+  const receipt = await getById(id, userId);
+  if (!STATUS_TRANSITIONS[receipt.status].has('discrepancy')) {
+    throw new AppError(`Cannot move from ${receipt.status} to discrepancy`, { statusCode: 409, code: 'INVALID_GR_STATUS_TRANSITION' });
+  }
+  const discrepancyNote = notes ? `[Discrepancy]: ${notes}` : '[Discrepancy flagged]';
+  const updatedNotes = receipt.notes ? `${receipt.notes}\n${discrepancyNote}` : discrepancyNote;
+  await getPool().query("UPDATE goods_receipts SET status = 'discrepancy', notes = ? WHERE id = ?", [updatedNotes, id]);
+  return getById(id, userId);
+}
+
+async function cancel(id, { reason, notes } = {}, userId) {
   const receipt = await getById(id, userId);
   if (!STATUS_TRANSITIONS[receipt.status].has('cancelled')) {
     throw new AppError(`Cannot cancel from ${receipt.status}`, { statusCode: 409, code: 'INVALID_GR_STATUS_TRANSITION' });
   }
-  await getPool().query("UPDATE goods_receipts SET status = 'cancelled' WHERE id = ?", [id]);
+  const cancelReason = reason || notes;
+  let updatedNotes = receipt.notes;
+  if (cancelReason) {
+    updatedNotes = updatedNotes ? `${updatedNotes}\n[Cancelled]: ${cancelReason}` : `[Cancelled]: ${cancelReason}`;
+  }
+  await getPool().query("UPDATE goods_receipts SET status = 'cancelled', notes = ? WHERE id = ?", [updatedNotes, id]);
   return getById(id, userId);
 }
 
@@ -314,4 +338,4 @@ async function complete(id, userId) {
   }
 }
 
-export default { list, getById, create, updateDraft, start, complete, cancel };
+export default { list, getById, create, updateDraft, start, complete, cancel, markDiscrepancy };

@@ -16,7 +16,16 @@ async function list({ search, status, supplierId, branchId, page = 1, limit = 20
   if (accessibleBranchIds?.length) { ors.push(`po.branch_id IN (${accessibleBranchIds.map(() => '?').join(',')})`); params.push(...accessibleBranchIds); }
   where.push(`(${ors.join(' OR ')})`);
 
-  if (status) { where.push('po.status = ?'); params.push(status); }
+  if (status) {
+    if (status.includes(',')) {
+      const parts = status.split(',').map((s) => s.trim()).filter(Boolean);
+      where.push(`po.status IN (${parts.map(() => '?').join(',')})`);
+      params.push(...parts);
+    } else {
+      where.push('po.status = ?');
+      params.push(status);
+    }
+  }
   if (supplierId) { where.push('po.supplier_id = ?'); params.push(Number(supplierId)); }
   if (branchId) { where.push('po.branch_id = ?'); params.push(Number(branchId)); }
   if (search) {
@@ -63,14 +72,24 @@ async function findById(id) {
 async function getLines(purchaseOrderId) {
   const [rows] = await getPool().query(
     `SELECT l.id, l.purchase_order_id, l.product_id, l.unit_id, l.ordered_quantity, l.unit_price, l.line_total, l.notes, l.created_at,
-            p.name AS product_name, p.code AS product_code, u.name AS unit_name
+            p.name AS product_name, p.code AS product_code, u.name AS unit_name,
+            COALESCE((
+              SELECT SUM(grl.received_quantity)
+              FROM goods_receipt_lines grl
+              JOIN goods_receipts gr ON gr.id = grl.goods_receipt_id
+              WHERE grl.purchase_order_line_id = l.id AND gr.status = 'completed'
+            ), 0) AS received_quantity
      FROM purchase_order_lines l
      JOIN products p ON p.id = l.product_id
      JOIN units u ON u.id = l.unit_id
      WHERE l.purchase_order_id = ? ORDER BY l.id`,
     [purchaseOrderId],
   );
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    received_quantity: Number(r.received_quantity || 0),
+    remaining_quantity: Math.max(0, Number(r.ordered_quantity) - Number(r.received_quantity || 0)),
+  }));
 }
 
 async function findByPoNumber(organizationId, poNumber) {

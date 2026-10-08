@@ -1,0 +1,80 @@
+-- Task 10 — Sales / POS Foundation: Sales, Sale Lines, and Batch Allocations.
+
+ALTER TABLE products ADD COLUMN selling_price DECIMAL(12,2) NOT NULL DEFAULT 0.00;
+
+CREATE TABLE IF NOT EXISTS sales (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  organization_id INT UNSIGNED NOT NULL,
+  branch_id INT UNSIGNED NOT NULL,
+  warehouse_id INT UNSIGNED NOT NULL,
+  customer_id INT UNSIGNED NULL,
+  sale_number VARCHAR(40) NOT NULL,
+  sale_date DATETIME NOT NULL,
+  status ENUM('draft', 'confirmed', 'payment_pending', 'completed', 'cancelled', 'voided') NOT NULL DEFAULT 'draft',
+  subtotal DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  discount_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  total_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  currency VARCHAR(3) NOT NULL DEFAULT 'ETB',
+  notes TEXT NULL,
+  void_reason TEXT NULL,
+  cancelled_reason TEXT NULL,
+  created_by INT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_sales_org_number (organization_id, sale_number),
+  KEY idx_sales_org_status (organization_id, status),
+  KEY idx_sales_branch (branch_id),
+  KEY idx_sales_warehouse (warehouse_id),
+  KEY idx_sales_customer (customer_id),
+  KEY idx_sales_date (sale_date),
+  KEY idx_sales_created_by (created_by),
+  CONSTRAINT fk_sales_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_sales_branch FOREIGN KEY (branch_id) REFERENCES branches (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sales_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sales_customer FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sales_creator FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sale_lines (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  sale_id INT UNSIGNED NOT NULL,
+  product_id INT UNSIGNED NOT NULL,
+  unit_id INT UNSIGNED NOT NULL,
+  quantity DECIMAL(14,3) NOT NULL,
+  unit_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  line_total DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_sl_sale (sale_id),
+  KEY idx_sl_product (product_id),
+  KEY idx_sl_unit (unit_id),
+  CONSTRAINT chk_sl_quantity_positive CHECK (quantity > 0),
+  CONSTRAINT chk_sl_price_non_negative CHECK (unit_price >= 0),
+  CONSTRAINT chk_sl_discount_non_negative CHECK (discount_amount >= 0),
+  CONSTRAINT fk_sl_sale FOREIGN KEY (sale_id) REFERENCES sales (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_sl_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sl_unit FOREIGN KEY (unit_id) REFERENCES units (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sale_batch_allocations (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  sale_line_id INT UNSIGNED NOT NULL,
+  inventory_id INT UNSIGNED NOT NULL,
+  batch_id INT UNSIGNED NOT NULL,
+  storage_location_id INT UNSIGNED NOT NULL,
+  quantity DECIMAL(14,3) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_sba_line (sale_line_id),
+  KEY idx_sba_inventory (inventory_id),
+  KEY idx_sba_batch (batch_id),
+  KEY idx_sba_location (storage_location_id),
+  CONSTRAINT chk_sba_quantity_positive CHECK (quantity > 0),
+  CONSTRAINT fk_sba_line FOREIGN KEY (sale_line_id) REFERENCES sale_lines (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_sba_inventory FOREIGN KEY (inventory_id) REFERENCES inventory (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sba_batch FOREIGN KEY (batch_id) REFERENCES batches (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sba_location FOREIGN KEY (storage_location_id) REFERENCES storage_locations (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

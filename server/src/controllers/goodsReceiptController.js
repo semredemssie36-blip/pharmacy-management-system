@@ -56,9 +56,16 @@ async function complete(req, res, next) {
 
 async function cancel(req, res, next) {
   try {
-    const receipt = await goodsReceiptService.cancel(parseIdParam(req.params.id), req.user.id);
+    const receipt = await goodsReceiptService.cancel(parseIdParam(req.params.id), req.body ?? {}, req.user.id);
     res.json({ success: true, data: { goodsReceipt: receipt } });
   } catch (err) { next(err); }
 }
 
-export default { list, getById, create, update, start, complete, cancel };
+async function discrepancy(req, res, next) {
+  try {
+    const receipt = await goodsReceiptService.markDiscrepancy(parseIdParam(req.params.id), req.body ?? {}, req.user.id);
+    res.json({ success: true, data: { goodsReceipt: receipt } });
+  } catch (err) { next(err); }
+}
+
+export default { list, getById, create, update, start, complete, cancel, discrepancy };

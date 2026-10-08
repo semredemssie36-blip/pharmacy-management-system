@@ -12,6 +12,7 @@ import productRoutes from './productRoutes.js';
 import inventoryRoutes from './inventoryRoutes.js';
 import purchaseOrderRoutes from './purchaseOrderRoutes.js';
 import goodsReceiptRoutes from './goodsReceiptRoutes.js';
+import saleRoutes from './saleRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -30,6 +31,7 @@ router.use(productRoutes);
 router.use(inventoryRoutes);
 router.use(purchaseOrderRoutes);
 router.use(goodsReceiptRoutes);
+router.use(saleRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

@@ -14,6 +14,7 @@ router.post('/goods-receipts', requirePermission('goods_receipt.create'), goodsR
 router.patch('/goods-receipts/:id', requirePermission('goods_receipt.update'), goodsReceiptController.update);
 router.post('/goods-receipts/:id/start', requirePermission('goods_receipt.update'), goodsReceiptController.start);
 router.post('/goods-receipts/:id/complete', requirePermission('goods_receipt.complete'), goodsReceiptController.complete);
+router.post('/goods-receipts/:id/discrepancy', requirePermission('goods_receipt.update'), goodsReceiptController.discrepancy);
 router.post('/goods-receipts/:id/cancel', requirePermission('goods_receipt.cancel'), goodsReceiptController.cancel);
 
 export default router;

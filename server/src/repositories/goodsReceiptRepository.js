@@ -72,8 +72,10 @@ async function findById(id) {
 
 async function getLines(goodsReceiptId) {
   const [rows] = await getPool().query(
-    `SELECT l.*, p.name AS product_name, u.name AS unit_name, sl.name AS storage_location_name
+    `SELECT l.*, p.name AS product_name, p.code AS product_code, u.name AS unit_name, sl.name AS storage_location_name,
+            pol.ordered_quantity AS po_ordered_quantity
      FROM goods_receipt_lines l
+     JOIN purchase_order_lines pol ON pol.id = l.purchase_order_line_id
      JOIN products p ON p.id = l.product_id
      JOIN units u ON u.id = l.unit_id
      LEFT JOIN storage_locations sl ON sl.id = l.storage_location_id

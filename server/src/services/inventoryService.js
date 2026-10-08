@@ -383,6 +383,220 @@ async function listMovementsForUser(userId, filters) {
   });
 }
 
+async function convertUnitQuantity(connection, productId, fromUnitId, toUnitId, quantity) {
+  if (fromUnitId === toUnitId) return quantity;
+
+  // Forward conversion
+  const [fwd] = await connection.query(
+    'SELECT factor FROM product_unit_conversions WHERE product_id = ? AND from_unit_id = ? AND to_unit_id = ? LIMIT 1',
+    [productId, fromUnitId, toUnitId],
+  );
+  if (fwd.length > 0) {
+    return quantity * Number(fwd[0].factor);
+  }
+
+  // Reverse conversion
+  const [rev] = await connection.query(
+    'SELECT factor FROM product_unit_conversions WHERE product_id = ? AND from_unit_id = ? AND to_unit_id = ? LIMIT 1',
+    [productId, toUnitId, fromUnitId],
+  );
+  if (rev.length > 0) {
+    return quantity / Number(rev[0].factor);
+  }
+
+  throw new ValidationError('Validation failed', [
+    { field: 'unitId', message: `No conversion defined between unit ${fromUnitId} and inventory unit ${toUnitId} for this product` },
+  ]);
+}
+
+async function getAvailableStockForProduct({ organizationId, branchId, warehouseId, productId }) {
+  const params = [organizationId, branchId, productId];
+  let warehouseClause = '';
+  if (warehouseId) {
+    warehouseClause = ' AND inv.warehouse_id = ?';
+    params.push(warehouseId);
+  }
+  const [rows] = await getPool().query(
+    `SELECT COALESCE(SUM(inv.quantity), 0) AS available_quantity
+     FROM inventory inv
+     JOIN batches b ON b.id = inv.batch_id
+     WHERE inv.organization_id = ?
+       AND inv.branch_id = ?
+       AND inv.product_id = ?
+       ${warehouseClause}
+       AND inv.status = 'available'
+       AND b.status = 'active'
+       AND b.expiry_date > CURDATE()`,
+    params,
+  );
+  return Number(rows[0]?.available_quantity || 0);
+}
+
+/**
+ * Task 10 — Sales FEFO stock allocation and deduction.
+ * Executes within a caller-provided transaction connection.
+ * Row-locks eligible available inventory rows in FEFO order (earliest non-expired expiry first).
+ * Deducts stock, writes sale_batch_allocations and stock_movements.
+ */
+async function allocateAndDeductFefoStock({
+  organizationId,
+  branchId,
+  warehouseId,
+  saleId,
+  lines,
+  userId,
+  connection,
+}) {
+  if (!connection) throw new Error('allocateAndDeductFefoStock requires an active connection');
+
+  const createdAllocations = [];
+
+  for (const line of lines) {
+    const saleLineId = line.id;
+    const productId = line.productId || line.product_id;
+    const requestedUnitId = line.unitId || line.unit_id;
+    const requestedQuantity = Number(line.quantity);
+
+    // Fetch and lock eligible inventory rows using FEFO (earliest expiry date first)
+    const [rows] = await connection.query(
+      `SELECT inv.id, inv.organization_id, inv.branch_id, inv.warehouse_id,
+              inv.storage_location_id, inv.product_id, inv.batch_id, inv.unit_id,
+              inv.quantity, b.batch_number, b.expiry_date
+       FROM inventory inv
+       JOIN batches b ON b.id = inv.batch_id
+       WHERE inv.organization_id = ?
+         AND inv.branch_id = ?
+         AND inv.warehouse_id = ?
+         AND inv.product_id = ?
+         AND inv.status = 'available'
+         AND b.status = 'active'
+         AND b.expiry_date > CURDATE()
+         AND inv.quantity > 0
+       ORDER BY b.expiry_date ASC, inv.id ASC
+       FOR UPDATE`,
+      [organizationId, branchId, warehouseId, productId],
+    );
+
+    // Calculate total available quantity in requested unit
+    let remainingNeeded = requestedQuantity;
+
+    let totalAvailableInRequestedUnit = 0;
+    for (const row of rows) {
+      const rowQtyInRequestedUnit = await convertUnitQuantity(connection, productId, row.unit_id, requestedUnitId, Number(row.quantity));
+      totalAvailableInRequestedUnit += rowQtyInRequestedUnit;
+    }
+
+    if (totalAvailableInRequestedUnit < requestedQuantity) {
+      throw new AppError(`Insufficient available stock for product ID ${productId}`, {
+        statusCode: 409,
+        code: 'INSUFFICIENT_STOCK',
+      });
+    }
+
+    for (const row of rows) {
+      if (remainingNeeded <= 0.000001) break;
+
+      const rowQtyInRequestedUnit = await convertUnitQuantity(connection, productId, row.unit_id, requestedUnitId, Number(row.quantity));
+      const takeInRequestedUnit = Math.min(rowQtyInRequestedUnit, remainingNeeded);
+      const takeInRowUnit = await convertUnitQuantity(connection, productId, requestedUnitId, row.unit_id, takeInRequestedUnit);
+
+      // Deduct from inventory
+      await connection.query(
+        'UPDATE inventory SET quantity = quantity - ? WHERE id = ?',
+        [takeInRowUnit, row.id],
+      );
+
+      // Record batch allocation for traceability
+      const [allocRes] = await connection.query(
+        `INSERT INTO sale_batch_allocations (sale_line_id, inventory_id, batch_id, storage_location_id, quantity)
+         VALUES (?, ?, ?, ?, ?)`,
+        [saleLineId, row.id, row.batch_id, row.storage_location_id, takeInRequestedUnit],
+      );
+
+      // Record signed negative stock movement referencing the sale
+      await connection.query(
+        `INSERT INTO stock_movements (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, movement_type, quantity_delta, reference_type, reference_id, reason, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'sale', ?, 'sale', ?, 'POS Sale completed', ?)`,
+        [organizationId, branchId, warehouseId, row.storage_location_id, productId, row.batch_id, row.unit_id, -takeInRowUnit, saleId, userId],
+      );
+
+      createdAllocations.push({
+        id: allocRes.insertId,
+        saleLineId,
+        inventoryId: row.id,
+        batchId: row.batch_id,
+        batchNumber: row.batch_number,
+        expiryDate: row.expiry_date,
+        storageLocationId: row.storage_location_id,
+        quantity: takeInRequestedUnit,
+      });
+
+      remainingNeeded -= takeInRequestedUnit;
+    }
+  }
+
+  return createdAllocations;
+}
+
+/**
+ * Task 10 — Voiding stock reversal.
+ * Atomically reverses all sale_batch_allocations for the specified sale,
+ * restores inventory quantities, and records reversal stock movements.
+ */
+async function reverseSaleStock({ saleId, userId, reason, connection }) {
+  if (!connection) throw new Error('reverseSaleStock requires an active connection');
+
+  const [allocations] = await connection.query(
+    `SELECT sba.id, sba.sale_line_id, sba.inventory_id, sba.batch_id, sba.storage_location_id, sba.quantity,
+            sl.product_id, sl.unit_id AS sale_unit_id,
+            s.organization_id, s.branch_id, s.warehouse_id
+     FROM sale_batch_allocations sba
+     JOIN sale_lines sl ON sl.id = sba.sale_line_id
+     JOIN sales s ON s.id = sl.sale_id
+     WHERE s.id = ?
+     FOR UPDATE`,
+    [saleId],
+  );
+
+  for (const alloc of allocations) {
+    const [invRows] = await connection.query(
+      'SELECT id, unit_id FROM inventory WHERE id = ? FOR UPDATE',
+      [alloc.inventory_id],
+    );
+
+    let targetInventoryId = alloc.inventory_id;
+    let qtyToAdd = Number(alloc.quantity);
+
+    if (invRows.length > 0) {
+      const invUnitId = invRows[0].unit_id;
+      if (invUnitId !== alloc.sale_unit_id) {
+        qtyToAdd = await convertUnitQuantity(connection, alloc.product_id, alloc.sale_unit_id, invUnitId, qtyToAdd);
+      }
+      await connection.query('UPDATE inventory SET quantity = quantity + ? WHERE id = ?', [qtyToAdd, targetInventoryId]);
+    } else {
+      const [upsert] = await connection.query(
+        `INSERT INTO inventory (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, status, quantity)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?)
+         ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)`,
+        [alloc.organization_id, alloc.branch_id, alloc.warehouse_id, alloc.storage_location_id, alloc.product_id, alloc.batch_id, alloc.sale_unit_id, qtyToAdd],
+      );
+      targetInventoryId = upsert.insertId;
+    }
+
+    await connection.query(
+      `INSERT INTO stock_movements (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, movement_type, quantity_delta, reference_type, reference_id, reason, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'customer_return', ?, 'sale', ?, ?, ?)`,
+      [
+        alloc.organization_id, alloc.branch_id, alloc.warehouse_id, alloc.storage_location_id,
+        alloc.product_id, alloc.batch_id, alloc.sale_unit_id,
+        qtyToAdd, saleId, reason ? `Sale voided: ${reason}` : 'Sale voided', userId,
+      ],
+    );
+  }
+
+  return allocations.length;
+}
+
 export default {
   listInventoryForUser,
   getInventoryForUser,
@@ -393,4 +607,8 @@ export default {
   listStockMovementsForUser: listMovementsForUser,
   decreaseAvailableStock,
   receiveStockInternal,
+  getAvailableStockForProduct,
+  convertUnitQuantity,
+  allocateAndDeductFefoStock,
+  reverseSaleStock,
 };

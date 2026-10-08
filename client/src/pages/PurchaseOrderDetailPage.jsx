@@ -126,6 +126,17 @@ function PurchaseOrderDetailPage() {
               </>
             )}
           </Can>
+
+          <Can permission="goods_receipt.create">
+            {['approved', 'partially_received'].includes(po.status) && (
+              <Link
+                to={`/procurement/goods-receipts/new?purchaseOrderId=${po.id}`}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white rounded px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Receive Goods →
+              </Link>
+            )}
+          </Can>
         </div>
       </Section>
     </div>

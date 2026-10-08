@@ -23,6 +23,11 @@ import SuppliersPage from '../pages/SuppliersPage.jsx';
 import CustomersPage from '../pages/CustomersPage.jsx';
 import PurchaseOrdersPage from '../pages/PurchaseOrdersPage.jsx';
 import PurchaseOrderDetailPage from '../pages/PurchaseOrderDetailPage.jsx';
+import GoodsReceiptsPage from '../pages/GoodsReceiptsPage.jsx';
+import GoodsReceiptCreatePage from '../pages/GoodsReceiptCreatePage.jsx';
+import GoodsReceiptDetailPage from '../pages/GoodsReceiptDetailPage.jsx';
+import PosPage from '../pages/PosPage.jsx';
+import SalesPage from '../pages/SalesPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -35,6 +40,8 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'pos', element: <PosPage /> },
+      { path: 'sales', element: <SalesPage /> },
       { path: 'administration/organizations', element: <OrganizationPage /> },
       { path: 'administration/branches', element: <BranchesPage /> },
       { path: 'administration/warehouses', element: <WarehousesPage /> },
@@ -52,6 +59,9 @@ const router = createBrowserRouter([
       { path: 'partners/customers', element: <CustomersPage /> },
       { path: 'procurement/purchase-orders', element: <PurchaseOrdersPage /> },
       { path: 'procurement/purchase-orders/:id', element: <PurchaseOrderDetailPage /> },
+      { path: 'procurement/goods-receipts', element: <GoodsReceiptsPage /> },
+      { path: 'procurement/goods-receipts/new', element: <GoodsReceiptCreatePage /> },
+      { path: 'procurement/goods-receipts/:id', element: <GoodsReceiptDetailPage /> },
       { path: 'master-data/brands', element: <MasterEntityPage config={entityConfig.find((e) => e.routePath === 'brands')} /> },
       { path: 'master-data/generics', element: <MasterEntityPage config={entityConfig.find((e) => e.routePath === 'generics')} /> },
       { path: 'master-data/dosage-forms', element: <MasterEntityPage config={entityConfig.find((e) => e.routePath === 'dosage-forms')} /> },

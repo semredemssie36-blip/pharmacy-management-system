@@ -26,6 +26,19 @@ function MainLayout() {
             System Status
           </Link>
           <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
+            Sales & POS
+          </p>
+          <Can permission="sale.create">
+            <Link to="/pos" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Point of Sale (POS)
+            </Link>
+          </Can>
+          <Can permission="sale.view">
+            <Link to="/sales" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Sales History
+            </Link>
+          </Can>
+          <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
             Organization
           </p>
           <Can permission="organization.view">
@@ -128,6 +141,9 @@ function MainLayout() {
           </p>
           <Can permission="purchase_order.view">
             <Link to="/procurement/purchase-orders" className="block rounded px-3 py-2 hover:bg-slate-800">Purchase Orders</Link>
+          </Can>
+          <Can permission="goods_receipt.view">
+            <Link to="/procurement/goods-receipts" className="block rounded px-3 py-2 hover:bg-slate-800">Goods Receiving</Link>
           </Can>
         </nav>
       </aside>

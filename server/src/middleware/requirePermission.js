@@ -13,7 +13,9 @@ function requirePermission(code) {
         return next(new AppError('Authentication required', { statusCode: 401, code: 'AUTHENTICATION_REQUIRED' }));
       }
       const permissions = await authorizationService.getUserPermissions(req.user.id);
-      if (!permissions.includes(code)) {
+      const codes = Array.isArray(code) ? code : [code];
+      const hasPerm = codes.some((c) => permissions.includes(c));
+      if (!hasPerm) {
         return next(new AppError('You do not have permission to perform this action.', { statusCode: 403, code: 'FORBIDDEN' }));
       }
       next();

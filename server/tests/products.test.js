@@ -99,6 +99,13 @@ before(async () => {
   app = (await import('../src/app.js')).default;
 
   // Reset product master tables (preserve users/roles/permissions used by other suites).
+  await pool.query('DELETE FROM sale_batch_allocations');
+  await pool.query('DELETE FROM sale_lines');
+  await pool.query('DELETE FROM goods_receipt_lines');
+  await pool.query('DELETE FROM purchase_order_lines');
+  await pool.query('DELETE FROM stock_movements');
+  await pool.query('DELETE FROM inventory');
+  await pool.query('DELETE FROM batches');
   await pool.query('DELETE FROM product_relationships');
   await pool.query('DELETE FROM product_unit_conversions');
   await pool.query('DELETE FROM product_units');
@@ -163,6 +170,13 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('DELETE FROM sale_batch_allocations');
+      await pool.query('DELETE FROM sale_lines');
+      await pool.query('DELETE FROM goods_receipt_lines');
+      await pool.query('DELETE FROM purchase_order_lines');
+      await pool.query('DELETE FROM stock_movements');
+      await pool.query('DELETE FROM inventory');
+      await pool.query('DELETE FROM batches');
       await pool.query('DELETE FROM product_relationships');
       await pool.query('DELETE FROM product_unit_conversions');
       await pool.query('DELETE FROM product_units');

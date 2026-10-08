@@ -343,7 +343,12 @@ test('11 completing second receipt reaches fully_received', async () => {
   await agentAdmin.post(`/api/v1/goods-receipts/${gr1}/start`);
   await agentAdmin.post(`/api/v1/goods-receipts/${gr1}/complete`);
 
-  const cre2 = await agentAdmin.post('/api/v1/goods-receipts').send(draftPayload({ lines: [{ purchaseOrderLineId: poLineId, productId, unitId, orderedQuantity: 10, receivedQuantity: 3, batchNumber: 'B2', expiryDate: '2028-01-01', storageLocationId: location1Id }] }));
+  const cre2 = await agentAdmin.post('/api/v1/goods-receipts').send(draftPayload({
+    lines: [
+      { purchaseOrderLineId: poLineId, productId, unitId, orderedQuantity: 10, receivedQuantity: 3, batchNumber: 'B2', expiryDate: '2028-01-01', storageLocationId: location1Id },
+      { purchaseOrderLineId: poLine2Id, productId, unitId, orderedQuantity: 5, receivedQuantity: 5, batchNumber: 'B2', expiryDate: '2028-01-01', storageLocationId: location1Id },
+    ],
+  }));
   const gr2 = cre2.body.data.goodsReceipt.id;
   await agentAdmin.post(`/api/v1/goods-receipts/${gr2}/start`);
   await agentAdmin.post(`/api/v1/goods-receipts/${gr2}/complete`);
@@ -452,3 +457,53 @@ test('20 PO status none-receiving status reports correctly on initial create', a
   const res = await agentAdmin.get(`/api/v1/purchase-orders/${poId}`);
   assert.equal(res.status, 200);
 });
+
+test('21 past expiry date rejected', async () => {
+  const res = await agentAdmin.post('/api/v1/goods-receipts').send(draftPayload({
+    lines: [{
+      purchaseOrderLineId: poLineId,
+      productId,
+      unitId,
+      orderedQuantity: 10,
+      receivedQuantity: 5,
+      batchNumber: 'B-OLD',
+      expiryDate: '2020-01-01',
+      storageLocationId: location1Id,
+    }],
+  }));
+  assert.equal(res.status, 400);
+});
+
+test('22 inactive warehouse is rejected', async () => {
+  await pool.query("UPDATE warehouses SET status='inactive' WHERE id=?", [warehouse1Id]);
+  const res = await agentAdmin.post('/api/v1/goods-receipts').send(draftPayload());
+  assert.equal(res.status, 409);
+  await pool.query("UPDATE warehouses SET status='active' WHERE id=?", [warehouse1Id]);
+});
+
+test('23 discrepancy workflow records notes and allows resumption', async () => {
+  await pool.query('DELETE FROM goods_receipt_lines');
+  await pool.query('DELETE FROM goods_receipts');
+  await pool.query("UPDATE purchase_orders SET status='approved' WHERE id=?", [poId]);
+
+  const create = await agentAdmin.post('/api/v1/goods-receipts').send(draftPayload());
+  assert.equal(create.status, 201);
+  const grId = create.body.data.goodsReceipt.id;
+  await agentAdmin.post(`/api/v1/goods-receipts/${grId}/start`);
+  const disc = await agentAdmin.post(`/api/v1/goods-receipts/${grId}/discrepancy`).send({ notes: 'Broken seals on 2 boxes' });
+  assert.equal(disc.status, 200);
+  assert.equal(disc.body.data.goodsReceipt.status, 'discrepancy');
+  assert.ok(disc.body.data.goodsReceipt.notes.includes('Broken seals'));
+
+  // Resume to receiving
+  const resume = await agentAdmin.post(`/api/v1/goods-receipts/${grId}/start`);
+  assert.equal(resume.status, 200);
+  assert.equal(resume.body.data.goodsReceipt.status, 'receiving');
+
+  // Cancel with reason
+  const cancelled = await agentAdmin.post(`/api/v1/goods-receipts/${grId}/cancel`).send({ reason: 'Rejected by quality control' });
+  assert.equal(cancelled.status, 200);
+  assert.equal(cancelled.body.data.goodsReceipt.status, 'cancelled');
+  assert.ok(cancelled.body.data.goodsReceipt.notes.includes('Rejected by quality control'));
+});
+

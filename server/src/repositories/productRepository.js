@@ -6,7 +6,7 @@ const PRODUCT_FIELDS = `
   p.therapeutic_category_id, p.manufacturer_id, p.registration_number,
   p.prescription_classification, p.controlled_classification, p.antibiotic_classification,
   p.storage_requirement, p.min_stock_level, p.max_stock_level, p.reorder_level,
-  p.status, p.created_at, p.updated_at`;
+  p.selling_price, p.status, p.created_at, p.updated_at`;
 
 const PRODUCT_JOINS = `
   LEFT JOIN brands b ON b.id = p.brand_id
@@ -67,6 +67,7 @@ async function list({ search, status, brandId, genericId, categoryId, dosageForm
   );
   const [items] = await getPool().query(
     `SELECT p.id, p.organization_id, p.code, p.barcode, p.name, p.status,
+            p.selling_price,
             b.name AS brand_name, g.name AS generic_name, df.name AS dosage_form_name,
             c.name AS category_name, p.prescription_classification, p.controlled_classification,
             p.antibiotic_classification, p.storage_requirement, p.min_stock_level, p.max_stock_level,
@@ -99,9 +100,9 @@ async function create(input) {
     'dosage_form_id', 'route_id', 'category_id', 'therapeutic_category_id', 'manufacturer_id',
     'registration_number', 'prescription_classification', 'controlled_classification',
     'antibiotic_classification', 'storage_requirement', 'min_stock_level', 'max_stock_level',
-    'reorder_level', 'status',
+    'reorder_level', 'selling_price', 'status',
   ];
-  const values = columns.map((c) => input[c] ?? null);
+  const values = columns.map((c) => input[c] ?? (c === 'selling_price' ? 0.00 : null));
   const [result] = await getPool().query(
     `INSERT INTO products (${columns.join(', ')}) VALUES (${columns.map(() => '?').join(', ')})`,
     values,
@@ -120,6 +121,7 @@ async function update(id, input) {
     antibioticClassification: 'antibiotic_classification',
     storageRequirement: 'storage_requirement',
     minStockLevel: 'min_stock_level', maxStockLevel: 'max_stock_level', reorderLevel: 'reorder_level',
+    sellingPrice: 'selling_price',
     status: 'status',
   };
   const sets = [];
