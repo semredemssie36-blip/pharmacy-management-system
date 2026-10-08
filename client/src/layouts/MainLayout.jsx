@@ -39,6 +39,29 @@ function MainLayout() {
             </Link>
           </Can>
           <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
+            Clinical Care
+          </p>
+          <Can permission="patient.view">
+            <Link to="/clinical/patients" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Patients
+            </Link>
+          </Can>
+          <Can permission="prescriber.view">
+            <Link to="/clinical/prescribers" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Prescribers / Doctors
+            </Link>
+          </Can>
+          <Can permission="prescription.view">
+            <Link to="/clinical/prescriptions" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Prescriptions
+            </Link>
+          </Can>
+          <Can permission="dispensing.view">
+            <Link to="/clinical/dispensings" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Dispensings
+            </Link>
+          </Can>
+          <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
             Organization
           </p>
           <Can permission="organization.view">

@@ -28,6 +28,10 @@ import GoodsReceiptCreatePage from '../pages/GoodsReceiptCreatePage.jsx';
 import GoodsReceiptDetailPage from '../pages/GoodsReceiptDetailPage.jsx';
 import PosPage from '../pages/PosPage.jsx';
 import SalesPage from '../pages/SalesPage.jsx';
+import PatientsPage from '../pages/PatientsPage.jsx';
+import PatientDetailPage from '../pages/PatientDetailPage.jsx';
+import PrescribersPage from '../pages/PrescribersPage.jsx';
+import PrescriptionsPage from '../pages/PrescriptionsPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -42,6 +46,10 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'pos', element: <PosPage /> },
       { path: 'sales', element: <SalesPage /> },
+      { path: 'clinical/patients', element: <PatientsPage /> },
+      { path: 'clinical/patients/:id', element: <PatientDetailPage /> },
+      { path: 'clinical/prescribers', element: <PrescribersPage /> },
+      { path: 'clinical/prescriptions', element: <PrescriptionsPage /> },
       { path: 'administration/organizations', element: <OrganizationPage /> },
       { path: 'administration/branches', element: <BranchesPage /> },
       { path: 'administration/warehouses', element: <WarehousesPage /> },

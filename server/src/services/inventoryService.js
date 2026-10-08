@@ -597,6 +597,241 @@ async function reverseSaleStock({ saleId, userId, reason, connection }) {
   return allocations.length;
 }
 
+/**
+ * Task 12 — Dispensing FEFO stock allocation and reservation.
+ * Locks eligible available inventory rows in FEFO order,
+ * decrements available stock, increments reserved stock position,
+ * and records dispensing_batch_allocations with status 'reserved'.
+ */
+async function reserveDispensingFefoStock({
+  organizationId,
+  branchId,
+  warehouseId,
+  dispensingId,
+  lines,
+  userId,
+  connection,
+}) {
+  if (!connection) throw new Error('reserveDispensingFefoStock requires an active connection');
+
+  const createdAllocations = [];
+
+  for (const line of lines) {
+    const dispensingLineId = line.id;
+    const productId = line.productId || line.product_id;
+    const requestedUnitId = line.unitId || line.unit_id;
+    const requestedQuantity = Number(line.quantityRequested || line.quantity_requested);
+
+    // Fetch and lock eligible inventory rows using FEFO (earliest expiry date first)
+    const [rows] = await connection.query(
+      `SELECT inv.id, inv.organization_id, inv.branch_id, inv.warehouse_id,
+              inv.storage_location_id, inv.product_id, inv.batch_id, inv.unit_id,
+              inv.quantity, b.batch_number, b.expiry_date
+       FROM inventory inv
+       JOIN batches b ON b.id = inv.batch_id
+       WHERE inv.organization_id = ?
+         AND inv.branch_id = ?
+         AND inv.warehouse_id = ?
+         AND inv.product_id = ?
+         AND inv.status = 'available'
+         AND b.status = 'active'
+         AND b.expiry_date > CURDATE()
+         AND inv.quantity > 0
+       ORDER BY b.expiry_date ASC, inv.id ASC
+       FOR UPDATE`,
+      [organizationId, branchId, warehouseId, productId],
+    );
+
+    let remainingNeeded = requestedQuantity;
+    let totalAvailableInRequestedUnit = 0;
+
+    for (const row of rows) {
+      const rowQtyInRequestedUnit = await convertUnitQuantity(connection, productId, row.unit_id, requestedUnitId, Number(row.quantity));
+      totalAvailableInRequestedUnit += rowQtyInRequestedUnit;
+    }
+
+    if (totalAvailableInRequestedUnit < requestedQuantity) {
+      throw new AppError(`Insufficient available stock for product ID ${productId}`, {
+        statusCode: 409,
+        code: 'INSUFFICIENT_STOCK',
+      });
+    }
+
+    for (const row of rows) {
+      if (remainingNeeded <= 0.000001) break;
+
+      const rowQtyInRequestedUnit = await convertUnitQuantity(connection, productId, row.unit_id, requestedUnitId, Number(row.quantity));
+      const takeInRequestedUnit = Math.min(rowQtyInRequestedUnit, remainingNeeded);
+      const takeInRowUnit = await convertUnitQuantity(connection, productId, requestedUnitId, row.unit_id, takeInRequestedUnit);
+
+      // Decrement available stock
+      await connection.query(
+        'UPDATE inventory SET quantity = quantity - ? WHERE id = ?',
+        [takeInRowUnit, row.id],
+      );
+
+      // Increment (or insert) reserved stock for this exact position
+      await connection.query(
+        `INSERT INTO inventory (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, status, quantity)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'reserved', ?)
+         ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)`,
+        [organizationId, branchId, warehouseId, row.storage_location_id, productId, row.batch_id, row.unit_id, takeInRowUnit],
+      );
+
+      // Record batch allocation with status 'reserved'
+      const [allocRes] = await connection.query(
+        `INSERT INTO dispensing_batch_allocations (dispensing_line_id, inventory_id, batch_id, storage_location_id, unit_id, quantity, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'reserved')`,
+        [dispensingLineId, row.id, row.batch_id, row.storage_location_id, requestedUnitId, takeInRequestedUnit],
+      );
+
+      // Update dispensing line allocated quantity
+      await connection.query(
+        'UPDATE dispensing_lines SET quantity_allocated = quantity_allocated + ? WHERE id = ?',
+        [takeInRequestedUnit, dispensingLineId],
+      );
+
+      createdAllocations.push({
+        id: allocRes.insertId,
+        dispensingLineId,
+        inventoryId: row.id,
+        batchId: row.batch_id,
+        batchNumber: row.batch_number,
+        expiryDate: row.expiry_date,
+        storageLocationId: row.storage_location_id,
+        quantity: takeInRequestedUnit,
+        unitId: requestedUnitId,
+      });
+
+      remainingNeeded -= takeInRequestedUnit;
+    }
+  }
+
+  return createdAllocations;
+}
+
+/**
+ * Task 12 — Release dispensing stock reservations.
+ * Atomically releases all reserved allocations for a dispensing:
+ * decrements 'reserved' inventory rows, returns quantity to 'available' rows,
+ * and sets allocation status to 'released'.
+ */
+async function releaseDispensingReservations({ dispensingId, connection }) {
+  if (!connection) throw new Error('releaseDispensingReservations requires an active connection');
+
+  const [allocations] = await connection.query(
+    `SELECT dba.id, dba.dispensing_line_id, dba.inventory_id, dba.batch_id, dba.storage_location_id,
+            dba.unit_id, dba.quantity, dl.product_id,
+            d.organization_id, d.branch_id, d.warehouse_id
+     FROM dispensing_batch_allocations dba
+     JOIN dispensing_lines dl ON dl.id = dba.dispensing_line_id
+     JOIN dispensings d ON d.id = dl.dispensing_id
+     WHERE d.id = ? AND dba.status = 'reserved'
+     FOR UPDATE`,
+    [dispensingId],
+  );
+
+  for (const alloc of allocations) {
+    const [invRows] = await connection.query(
+      'SELECT id, unit_id FROM inventory WHERE id = ? FOR UPDATE',
+      [alloc.inventory_id],
+    );
+
+    let qtyToRestore = Number(alloc.quantity);
+    let invUnitId = alloc.unit_id;
+
+    if (invRows.length > 0) {
+      invUnitId = invRows[0].unit_id;
+      if (invUnitId !== alloc.unit_id) {
+        qtyToRestore = await convertUnitQuantity(connection, alloc.product_id, alloc.unit_id, invUnitId, qtyToRestore);
+      }
+      await connection.query('UPDATE inventory SET quantity = quantity + ? WHERE id = ?', [qtyToRestore, alloc.inventory_id]);
+    } else {
+      await connection.query(
+        `INSERT INTO inventory (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, status, quantity)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?)
+         ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)`,
+        [alloc.organization_id, alloc.branch_id, alloc.warehouse_id, alloc.storage_location_id, alloc.product_id, alloc.batch_id, alloc.unit_id, qtyToRestore],
+      );
+    }
+
+    // Decrement reserved inventory
+    await connection.query(
+      `UPDATE inventory
+       SET quantity = GREATEST(0, quantity - ?)
+       WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+         AND storage_location_id = ? AND product_id = ? AND batch_id = ?
+         AND unit_id = ? AND status = 'reserved'`,
+      [qtyToRestore, alloc.organization_id, alloc.branch_id, alloc.warehouse_id, alloc.storage_location_id, alloc.product_id, alloc.batch_id, invUnitId],
+    );
+
+    // Mark allocation as released
+    await connection.query('UPDATE dispensing_batch_allocations SET status = "released" WHERE id = ?', [alloc.id]);
+  }
+
+  // Reset quantity_allocated on dispensing lines
+  await connection.query('UPDATE dispensing_lines SET quantity_allocated = 0 WHERE dispensing_id = ?', [dispensingId]);
+
+  return allocations.length;
+}
+
+/**
+ * Task 12 — Finalize physical stock deduction.
+ * When dispensing completes (in Task 13 upon payment/final completion),
+ * consumes reserved stock and records append-only stock_movements ledger rows.
+ */
+async function finalizeDispensingStockDeduction({ dispensingId, userId, connection }) {
+  if (!connection) throw new Error('finalizeDispensingStockDeduction requires an active connection');
+
+  const [allocations] = await connection.query(
+    `SELECT dba.id, dba.dispensing_line_id, dba.inventory_id, dba.batch_id, dba.storage_location_id,
+            dba.unit_id, dba.quantity, dl.product_id,
+            d.organization_id, d.branch_id, d.warehouse_id
+     FROM dispensing_batch_allocations dba
+     JOIN dispensing_lines dl ON dl.id = dba.dispensing_line_id
+     JOIN dispensings d ON d.id = dl.dispensing_id
+     WHERE d.id = ? AND dba.status = 'reserved'
+     FOR UPDATE`,
+    [dispensingId],
+  );
+
+  for (const alloc of allocations) {
+    const qty = Number(alloc.quantity);
+
+    // Decrement reserved inventory
+    await connection.query(
+      `UPDATE inventory
+       SET quantity = GREATEST(0, quantity - ?)
+       WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+         AND storage_location_id = ? AND product_id = ? AND batch_id = ?
+         AND unit_id = ? AND status = 'reserved'`,
+      [qty, alloc.organization_id, alloc.branch_id, alloc.warehouse_id, alloc.storage_location_id, alloc.product_id, alloc.batch_id, alloc.unit_id],
+    );
+
+    // Mark allocation as dispensed
+    await connection.query('UPDATE dispensing_batch_allocations SET status = "dispensed" WHERE id = ?', [alloc.id]);
+
+    // Record signed negative movement in stock_movements
+    await connection.query(
+      `INSERT INTO stock_movements (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, movement_type, quantity_delta, reference_type, reference_id, reason, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'dispensing', ?, 'dispensing', ?, 'Prescription Dispensing Completed', ?)`,
+      [
+        alloc.organization_id, alloc.branch_id, alloc.warehouse_id, alloc.storage_location_id,
+        alloc.product_id, alloc.batch_id, alloc.unit_id,
+        -qty, dispensingId, userId,
+      ],
+    );
+  }
+
+  // Update dispensing lines dispensed quantity
+  await connection.query(
+    'UPDATE dispensing_lines SET quantity_dispensed = quantity_allocated WHERE dispensing_id = ?',
+    [dispensingId],
+  );
+
+  return allocations.length;
+}
+
 export default {
   listInventoryForUser,
   getInventoryForUser,
@@ -611,4 +846,7 @@ export default {
   convertUnitQuantity,
   allocateAndDeductFefoStock,
   reverseSaleStock,
+  reserveDispensingFefoStock,
+  releaseDispensingReservations,
+  finalizeDispensingStockDeduction,
 };

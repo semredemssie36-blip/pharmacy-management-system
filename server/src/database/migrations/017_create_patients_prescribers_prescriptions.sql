@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS patients (
   KEY idx_patients_name (first_name, last_name),
   KEY idx_patients_dob (date_of_birth),
   KEY idx_patients_status (status),
-  CONSTRAINT fk_patients_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE RESTRICT,
+  CONSTRAINT fk_patients_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_patients_merged_into FOREIGN KEY (merged_into_patient_id) REFERENCES patients (id) ON DELETE SET NULL,
   CONSTRAINT fk_patients_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS prescribers (
   KEY idx_prescribers_org_license (organization_id, license_number),
   KEY idx_prescribers_org_name (organization_id, name),
   KEY idx_prescribers_status (status),
-  CONSTRAINT fk_prescribers_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE RESTRICT,
+  CONSTRAINT fk_prescribers_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_prescribers_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -93,10 +93,10 @@ CREATE TABLE IF NOT EXISTS prescriptions (
   KEY idx_prescriptions_branch (branch_id),
   KEY idx_prescriptions_status (status),
   KEY idx_prescriptions_dates (prescription_date, expiry_date),
-  CONSTRAINT fk_prescriptions_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_prescriptions_branch FOREIGN KEY (branch_id) REFERENCES branches (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_prescriptions_patient FOREIGN KEY (patient_id) REFERENCES patients (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_prescriptions_prescriber FOREIGN KEY (prescriber_id) REFERENCES prescribers (id) ON DELETE RESTRICT,
+  CONSTRAINT fk_prescriptions_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_prescriptions_branch FOREIGN KEY (branch_id) REFERENCES branches (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_prescriptions_patient FOREIGN KEY (patient_id) REFERENCES patients (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_prescriptions_prescriber FOREIGN KEY (prescriber_id) REFERENCES prescribers (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_prescriptions_validated_by FOREIGN KEY (validated_by) REFERENCES users (id) ON DELETE SET NULL,
   CONSTRAINT fk_prescriptions_cancelled_by FOREIGN KEY (cancelled_by) REFERENCES users (id) ON DELETE SET NULL,
   CONSTRAINT fk_prescriptions_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
@@ -128,8 +128,8 @@ CREATE TABLE IF NOT EXISTS prescription_lines (
   KEY idx_pl_product (product_id),
   KEY idx_pl_unit (unit_id),
   CONSTRAINT fk_pl_prescription FOREIGN KEY (prescription_id) REFERENCES prescriptions (id) ON DELETE CASCADE,
-  CONSTRAINT fk_pl_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT,
-  CONSTRAINT fk_pl_unit FOREIGN KEY (unit_id) REFERENCES units (id) ON DELETE SET NULL
+  CONSTRAINT fk_pl_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_pl_unit FOREIGN KEY (unit_id) REFERENCES units (id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS prescription_refills (
