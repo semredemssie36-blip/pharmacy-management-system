@@ -1,0 +1,2442 @@
+============================================================
+STAGE 10 — IMPLEMENTATION PLAN & MODULE DEPENDENCY
+============================================================
+
+Project:
+Pharmacy Management System
+
+Purpose:
+This document defines the exact order in which the Pharmacy Management
+System will be implemented.
+
+This is the final planning stage before actual implementation begins.
+
+The implementation must follow the business architecture defined in
+Stages 01–09.
+
+IMPORTANT:
+
+The system must NOT be built as one giant CRUD generation task.
+
+Implementation must proceed in controlled vertical slices.
+
+Each slice should become:
+
+- Database
+- Backend
+- API
+- Authorization
+- Business rules
+- Frontend
+- Validation
+- Testing
+
+before moving too far into the next dependent module.
+
+
+============================================================
+1. IMPLEMENTATION PRINCIPLE
+============================================================
+
+The project is a real Pharmacy ERP-style system.
+
+It is NOT:
+
+- A simple CRUD application
+- A collection of unrelated pages
+- A frontend prototype
+- A collection of fake dashboards
+- A collection of disconnected forms
+
+The implementation must preserve:
+
+Business process
+        ↓
+Business rules
+        ↓
+Database
+        ↓
+Backend service
+        ↓
+API
+        ↓
+Frontend
+        ↓
+User action
+        ↓
+Business effect
+        ↓
+Audit / notification
+
+
+============================================================
+2. IMPLEMENTATION ORDER
+============================================================
+
+The implementation will follow this high-level sequence:
+
+PHASE 1
+Project Foundation
+
+PHASE 2
+Authentication
+
+PHASE 3
+Organization / Branch / Warehouse
+
+PHASE 4
+Users / Roles / Permissions / Scope
+
+PHASE 5
+Product Master
+
+PHASE 6
+Inventory Foundation
+
+PHASE 7
+Suppliers and Customers
+
+PHASE 8
+Procurement
+
+PHASE 9
+Goods Receiving
+
+PHASE 10
+Sales / POS
+
+PHASE 11
+Patients / Prescriptions
+
+PHASE 12
+Dispensing
+
+PHASE 13
+Payments / Credit
+
+PHASE 14
+Returns
+
+PHASE 15
+Stock Transfers
+
+PHASE 16
+Stock Counts / Adjustments
+
+PHASE 17
+Quarantine / Expiry / Recall
+
+PHASE 18
+Approvals / Overrides
+
+PHASE 19
+Audit Trail
+
+PHASE 20
+Notifications
+
+PHASE 21
+Reports / Analytics
+
+PHASE 22
+Search / Import / Export
+
+PHASE 23
+Testing / Security / Stabilization
+
+PHASE 24
+Deployment / Demonstration
+
+
+============================================================
+3. WHY THIS ORDER
+============================================================
+
+Modules have dependencies.
+
+For example:
+
+Sales
+requires:
+
+Product
++
+Pricing
++
+Inventory
++
+Customer
++
+Payment
+
+
+Dispensing
+requires:
+
+Patient
++
+Prescription
++
+Product
++
+Inventory
++
+FEFO
++
+Pharmacist verification
++
+Payment where applicable
+
+
+Goods Receiving
+requires:
+
+Supplier
++
+Purchase Order
++
+Product
++
+Batch
++
+Warehouse
++
+Inventory
+
+
+Therefore, dependent modules must not be implemented before their
+foundations exist.
+
+
+============================================================
+4. PHASE 1 — PROJECT FOUNDATION
+============================================================
+
+Goal:
+
+Create the technical foundation of the project.
+
+Structure:
+
+pharmacy-erp/
+    client/
+    server/
+    docs/
+    scripts/
+
+
+Frontend foundation:
+
+- React
+- Vite
+- Tailwind CSS
+- React Router
+- Application shell
+- Layout
+- Sidebar
+- Top navigation
+- Error boundary where appropriate
+- API client
+- Authentication state structure
+
+
+Backend foundation:
+
+- Node.js
+- Express.js
+- Environment configuration
+- Application entry point
+- Routing
+- Middleware
+- Error handling
+- Validation framework
+- Database connection
+- Logging foundation
+
+
+Development infrastructure:
+
+- Git
+- .gitignore
+- Environment files
+- README
+- Development scripts
+
+
+Do NOT implement all business modules in this phase.
+
+
+============================================================
+5. PHASE 2 — AUTHENTICATION
+============================================================
+
+Goal:
+
+Create secure user authentication.
+
+Implement:
+
+- Login
+- Logout
+- Current user
+- Authentication state
+- Protected routes
+- Password hashing
+- Authentication middleware
+
+
+Frontend:
+
+Login page
+
+Protected application shell
+
+
+Backend:
+
+POST /api/v1/auth/login
+
+POST /api/v1/auth/logout
+
+GET /api/v1/auth/me
+
+
+Acceptance:
+
+A user can securely log in and access the application.
+
+An unauthenticated user cannot access protected resources.
+
+
+============================================================
+6. PHASE 3 — ORGANIZATION / BRANCH / WAREHOUSE
+============================================================
+
+Goal:
+
+Create the organizational foundation.
+
+
+Implement:
+
+Organization
+
+Branches
+
+Warehouses
+
+Storage locations
+
+Storage conditions
+
+
+Example:
+
+ABC Pharmacy
+
+    Piassa Branch
+        Main Warehouse
+            Shelf A
+            Shelf B
+
+    Megenagna Branch
+        Main Warehouse
+            Shelf A
+            Shelf B
+
+
+Important:
+
+Stock belongs to a warehouse/location.
+
+The system must support multiple branches.
+
+
+Acceptance:
+
+The administrator can create:
+
+- Branch
+- Warehouse
+- Storage location
+
+and establish the correct relationships.
+
+
+============================================================
+7. PHASE 4 — USERS / ROLES / PERMISSIONS / SCOPE
+============================================================
+
+Goal:
+
+Implement the authorization foundation.
+
+
+Implement:
+
+Users
+
+Roles
+
+Permissions
+
+Role-permission assignment
+
+User-role assignment
+
+Branch scope
+
+Warehouse scope
+
+
+Permission model:
+
+MODULE
+→ RESOURCE
+→ ACTION
+
+
+Examples:
+
+Inventory
+→ Stock
+→ View
+
+Inventory
+→ Adjustment
+→ Create
+
+Inventory
+→ Adjustment
+→ Approve
+
+
+Acceptance:
+
+Two users with different permissions must receive different access.
+
+
+Example:
+
+Piassa manager
+
+cannot automatically access
+
+Megenagna branch data.
+
+
+============================================================
+8. PHASE 5 — PRODUCT MASTER
+============================================================
+
+Goal:
+
+Create the central product/medicine master.
+
+
+Implement:
+
+- Products
+- SKU/product code
+- Barcode
+- Brand
+- Generic
+- Active ingredients
+- Strength
+- Dosage form
+- Route
+- Category
+- Therapeutic/pharmacological category
+- Manufacturer
+- Country of origin
+- Registration number
+- Description
+- Prescription classification
+- Controlled/restricted classification
+- Antibiotic classification
+- Storage requirement
+- Minimum stock
+- Maximum stock
+- Reorder level
+
+
+Also implement:
+
+- Units
+- Unit conversions
+- Product relationships
+
+
+Acceptance:
+
+A product can be created and correctly represented throughout the
+system.
+
+
+============================================================
+9. PHASE 6 — INVENTORY FOUNDATION
+============================================================
+
+Goal:
+
+Create the actual stock engine.
+
+
+Implement:
+
+- Batches
+- Expiry
+- Warehouse stock
+- Location stock
+- Stock status
+- Available quantity
+- Reserved quantity
+- Stock movement ledger
+- Inventory service
+
+
+Stock must support statuses such as:
+
+Available
+Reserved
+Quarantined
+Damaged
+Expired
+Recalled
+Returned
+Awaiting Disposal
+Disposed
+
+
+Acceptance:
+
+The system can correctly represent:
+
+Product
++
+Batch
++
+Expiry
++
+Warehouse
++
+Location
++
+Quantity
++
+Status
+
+
+No business module should directly manipulate stock without using the
+inventory/business service.
+
+
+============================================================
+10. PHASE 7 — SUPPLIERS AND CUSTOMERS
+============================================================
+
+Implement:
+
+Suppliers
+
+Customers
+
+Customer types
+
+Pricing tiers
+
+Credit limits
+
+Payment terms
+
+Customer status
+
+Supplier information
+
+
+Customer and Patient are separate concepts.
+
+
+Customer:
+
+Commercial relationship.
+
+
+Patient:
+
+Clinical/prescription relationship.
+
+
+Do not merge these concepts.
+
+
+============================================================
+11. PHASE 8 — PROCUREMENT
+============================================================
+
+Implement:
+
+Supplier
+
+Purchase Order
+
+Purchase Order Items
+
+PO status
+
+PO approval connection
+
+Expected delivery
+
+Supplier pricing
+
+Payment terms
+
+
+PO lifecycle:
+
+Draft
+→ Submitted
+→ Pending Approval
+→ Approved
+→ Partially Received
+→ Fully Received
+
+Possible:
+
+Rejected
+Cancelled
+
+
+IMPORTANT:
+
+Approving a PO does NOT increase inventory.
+
+
+Acceptance:
+
+Users can create and submit a PO.
+
+Authorized users can approve/reject it.
+
+Inventory remains unchanged until actual receiving.
+
+
+============================================================
+12. PHASE 9 — GOODS RECEIVING
+============================================================
+
+Implement:
+
+Goods Receipt
+
+Receipt Items
+
+Batch creation/update
+
+Expiry recording
+
+Quantity received
+
+Discrepancy
+
+Partial receiving
+
+
+Example:
+
+PO:
+
+500 boxes
+
+Supplier delivers:
+
+470 boxes
+
+
+The system records:
+
+Ordered = 500
+
+Received = 470
+
+Outstanding = 30
+
+
+When receipt is completed:
+
+Inventory increases by 470.
+
+
+Stock movement is created.
+
+
+Audit is created.
+
+
+Acceptance:
+
+The system supports:
+
+- Partial receipt
+- Multiple shipments
+- Batch tracking
+- Expiry tracking
+- Discrepancy handling
+
+
+============================================================
+13. PHASE 10 — SALES / POS
+============================================================
+
+Implement:
+
+POS
+
+Sale
+
+Sale items
+
+Barcode search
+
+Product search
+
+Pricing
+
+Discounts
+
+Payment connection
+
+Receipt
+
+Authorized void
+
+
+Sales must respect:
+
+- Stock availability
+- Product status
+- Expiry
+- Pricing
+- Discount rules
+- Customer credit
+- Prescription requirements
+- Controlled medicine rules
+
+
+Acceptance:
+
+A normal sale can move through:
+
+Create
+→ Confirm
+→ Payment
+→ Complete
+
+and produce the correct inventory and financial effects.
+
+
+============================================================
+14. PHASE 11 — PATIENTS / PRESCRIPTIONS
+============================================================
+
+Implement:
+
+Patients
+
+Patient search
+
+Patient history
+
+Duplicate detection
+
+Patient merge
+
+Prescribers
+
+Prescriptions
+
+Prescription items
+
+Prescription validation
+
+Refills
+
+
+Prescription lifecycle:
+
+Draft
+→ Pending
+→ Validated
+→ Partially Dispensed
+→ Fully Dispensed
+
+Other states:
+
+Refill Available
+Expired
+Cancelled
+
+
+Acceptance:
+
+A valid prescription can be registered and validated.
+
+
+Invalid prescriptions must not proceed to dispensing.
+
+
+============================================================
+15. PHASE 12 — DISPENSING
+============================================================
+
+Implement:
+
+Dispensing
+
+Medicine selection
+
+Stock allocation
+
+FEFO
+
+Reservation
+
+Pharmacist verification
+
+Partial dispensing
+
+Refills
+
+Controlled medicine handling
+
+
+Workflow:
+
+Patient
+→ Prescription
+→ Medicine Selection
+→ Stock Allocation
+→ Dispensing
+→ Pharmacist Verification
+→ Payment
+→ Completion
+
+
+FEFO:
+
+First Expiry
+→ First Out
+
+
+The backend must determine the authoritative stock allocation.
+
+
+Acceptance:
+
+The system must prevent:
+
+- Expired stock dispensing
+- Over-dispensing
+- Unauthorized refills
+- Unauthorized controlled medicine dispensing
+
+
+============================================================
+16. PHASE 13 — PAYMENTS / CREDIT
+============================================================
+
+Implement:
+
+Payments
+
+Payment methods
+
+Partial payments
+
+Payment allocation
+
+Refunds
+
+Customer balances
+
+Receivables
+
+Supplier payments
+
+Credit limits
+
+Credit overrides
+
+
+Payment lifecycle:
+
+Pending
+→ Partially Paid
+→ Paid
+
+Possible:
+
+Cancelled
+Refunded
+
+
+Acceptance:
+
+Payment history must remain traceable.
+
+
+Customer balance must be calculated from real transactions.
+
+
+============================================================
+17. PHASE 14 — RETURNS
+============================================================
+
+Implement:
+
+Customer Returns
+
+Supplier Returns
+
+
+Customer Return:
+
+Original sale/dispensing
+→ Return Request
+→ Inspection
+→ Decision
+→ Financial Effect
+→ Inventory Effect
+
+
+Returned product must be evaluated.
+
+
+Possible outcomes:
+
+Saleable
+
+Quarantine
+
+Other restricted state
+
+
+Do NOT automatically restock every returned product.
+
+
+Supplier Return:
+
+Supplier
+→ Return Request
+→ Approval where required
+→ Shipment/Return
+→ Supplier acknowledgment
+→ Inventory/financial effect
+
+
+============================================================
+18. PHASE 15 — STOCK TRANSFERS
+============================================================
+
+Implement:
+
+Stock Transfer
+
+Source warehouse
+
+Destination warehouse
+
+Batch
+
+Quantity
+
+Transfer status
+
+Dispatch
+
+Receive
+
+Discrepancy
+
+
+Example:
+
+Piassa
+→ Megenagna
+
+
+Source stock decreases according to the transfer workflow.
+
+Destination stock increases when received according to the configured
+workflow.
+
+
+Every transfer must be traceable.
+
+
+Acceptance:
+
+The system records:
+
+- Source
+- Destination
+- Product
+- Batch
+- Quantity
+- User
+- Date/time
+- Reason
+- Status
+
+
+============================================================
+19. PHASE 16 — STOCK COUNTS / ADJUSTMENTS
+============================================================
+
+Implement:
+
+Stock Count
+
+Count items
+
+Physical quantity
+
+System quantity
+
+Variance
+
+Adjustment
+
+Approval
+
+
+Example:
+
+System quantity = 100
+
+Physical quantity = 97
+
+Variance = -3
+
+
+The system must preserve:
+
+Before quantity
+
+Counted quantity
+
+Variance
+
+Approved adjustment
+
+After quantity
+
+
+Adjustment reason is mandatory.
+
+
+============================================================
+20. PHASE 17 — QUARANTINE / EXPIRY / RECALL
+============================================================
+
+Implement:
+
+Quarantine
+
+Expiry management
+
+Recall
+
+
+Quarantine:
+
+Stock physically exists but is unavailable.
+
+
+Expiry:
+
+Near-expiry and expired stock must be identifiable.
+
+
+Recall:
+
+Affected batch
+→ Identify stock
+→ Identify locations
+→ Identify affected customers/patients where traceability exists
+→ Notification
+→ Return/reconciliation
+→ Completion
+
+
+These are different business processes.
+
+
+Do not merge them into one generic "bad stock" feature.
+
+
+============================================================
+21. PHASE 18 — APPROVALS / OVERRIDES
+============================================================
+
+Implement reusable approval engine.
+
+
+Approval candidates include:
+
+- Stock adjustments
+- Price changes
+- Discounts
+- Credit-limit overrides
+- Expired/near-expiry overrides
+- FEFO overrides
+- Prescription exceptions
+- Clinical warning overrides
+- Controlled medicine exceptions
+- Returns
+- Purchase orders
+- Stock disposal
+
+
+Approval lifecycle:
+
+Requested
+→ Pending
+→ Approved / Rejected
+
+
+Every approval must preserve:
+
+- Requester
+- Date/time
+- Original value/action
+- Requested value/action
+- Reason
+- Approver
+- Decision
+
+
+Do not hardcode:
+
+"Branch Manager can approve everything."
+
+Approval authority must be configurable.
+
+
+============================================================
+22. PHASE 19 — AUDIT TRAIL
+============================================================
+
+Implement audit recording across the system.
+
+
+Audit important activities such as:
+
+- Login/logout
+- Patient changes
+- Prescription changes
+- Dispensing
+- Prescription verification
+- Sales
+- Purchases
+- Stock movements
+- Adjustments
+- Batch changes
+- Price changes
+- Discounts
+- Returns
+- Payments
+- User/role changes
+- Approvals
+- Overrides
+- Controlled medicine transactions
+
+
+Audit must preserve:
+
+Who
+
+What
+
+When
+
+Previous value where applicable
+
+New value where applicable
+
+Reason where applicable
+
+
+============================================================
+23. PHASE 20 — NOTIFICATIONS
+============================================================
+
+Implement configurable notifications.
+
+
+Examples:
+
+- Low stock
+- Out of stock
+- Overstock
+- Near expiry
+- Expired product
+- Recall
+- Pending prescription
+- Expired prescription
+- Refill available
+- Pending PO
+- Delayed shipment
+- Credit limit breach
+- Overdue customer
+- Supplier payment due
+- Stock discrepancy
+- Controlled medicine discrepancy
+
+
+Notifications must originate from actual business events.
+
+
+============================================================
+24. PHASE 21 — REPORTS / ANALYTICS
+============================================================
+
+Implement reports after the transactional modules exist.
+
+
+Sales reports:
+
+- Daily
+- Weekly
+- Monthly
+- Quarterly
+- Yearly
+- By product
+- By category
+- By branch
+- By warehouse
+- By customer
+- By pharmacist/user
+- By payment method
+
+
+Inventory reports:
+
+- Current stock
+- Stock valuation
+- Stock movement
+- Batch stock
+- Near expiry
+- Expired
+- Damaged
+- Quarantined
+- Recalled
+- Slow moving
+- Fast moving
+- Adjustments
+- Variance
+- Warehouse stock
+
+
+Other reports:
+
+- Procurement
+- Prescription
+- Financial
+- Customer
+- Audit
+
+
+Reports must use real transactional data.
+
+
+============================================================
+25. PHASE 22 — SEARCH / IMPORT / EXPORT
+============================================================
+
+Implement:
+
+Global search
+
+Advanced search
+
+Filtering
+
+Sorting
+
+Pagination
+
+Product search
+
+Patient search
+
+Prescription search
+
+Customer search
+
+Supplier search
+
+Batch search
+
+Barcode search
+
+
+Import:
+
+- Products
+- Patients
+- Customers
+- Suppliers
+- Opening inventory
+- Opening balances where applicable
+
+
+Import lifecycle:
+
+Upload
+→ Validate
+→ Duplicate Detection
+→ Preview
+→ Confirm
+→ Commit
+→ Result
+
+
+Export:
+
+- Excel
+- PDF
+- CSV where applicable
+
+
+============================================================
+26. PHASE 23 — TESTING / SECURITY / STABILIZATION
+============================================================
+
+This phase is NOT optional.
+
+
+Test:
+
+Authentication
+
+Authorization
+
+Branch scope
+
+Warehouse scope
+
+Product management
+
+Inventory
+
+Procurement
+
+Receiving
+
+POS
+
+Prescription
+
+Dispensing
+
+Payments
+
+Returns
+
+Transfers
+
+Adjustments
+
+Quarantine
+
+Expiry
+
+Recall
+
+Approvals
+
+Audit
+
+Notifications
+
+Reports
+
+Search
+
+
+Also test exception cases.
+
+
+============================================================
+27. BUSINESS TEST SCENARIOS
+============================================================
+
+Scenario 1:
+
+User attempts to access another branch.
+
+Expected:
+
+Access denied.
+
+
+Scenario 2:
+
+User attempts to sell expired medicine.
+
+Expected:
+
+Transaction rejected.
+
+
+Scenario 3:
+
+Prescription quantity = 20.
+
+User attempts to dispense 25.
+
+Expected:
+
+Transaction rejected.
+
+
+Scenario 4:
+
+Stock = 10.
+
+User attempts to sell 15.
+
+Expected:
+
+Transaction rejected unless a valid business rule explicitly permits
+another behavior.
+
+
+Scenario 5:
+
+PO approved.
+
+Expected:
+
+Inventory unchanged.
+
+
+Scenario 6:
+
+Goods receipt completed.
+
+Expected:
+
+Inventory increases.
+
+
+Scenario 7:
+
+Stock adjustment requires approval.
+
+Expected:
+
+Stock does not change before required approval.
+
+
+Scenario 8:
+
+Customer return is inspected and found unsuitable.
+
+Expected:
+
+Stock does not become saleable.
+
+
+Scenario 9:
+
+Recall is created for batch X.
+
+Expected:
+
+System identifies affected stock and traceable recipients where data
+exists.
+
+
+Scenario 10:
+
+Two users attempt to sell the same limited stock.
+
+Expected:
+
+Backend prevents incorrect over-allocation.
+
+
+============================================================
+28. VERTICAL SLICE DEVELOPMENT
+============================================================
+
+Do NOT implement:
+
+all database tables first
+
+then all APIs
+
+then all frontend pages.
+
+
+Instead use vertical slices.
+
+
+Example:
+
+PRODUCT SLICE
+
+Database
+↓
+Product repository
+↓
+Product service
+↓
+Product controller
+↓
+Product routes
+↓
+Validation
+↓
+Authorization
+↓
+React product list
+↓
+React product form
+↓
+Testing
+
+
+Then move to the next slice.
+
+
+This allows problems to be discovered early.
+
+
+============================================================
+29. FIRST IMPLEMENTATION SPRINT
+============================================================
+
+The first actual coding sprint should NOT start with POS,
+prescriptions, or reports.
+
+
+First build the foundation.
+
+
+Sprint 1:
+
+1. Project initialization
+2. Backend setup
+3. Frontend setup
+4. Database connection
+5. Environment configuration
+6. Application shell
+7. Authentication
+8. User model
+9. Organization
+10. Branch
+11. Warehouse
+12. Basic roles/permissions
+13. Authorization middleware
+14. Scope middleware
+15. Basic audit infrastructure
+
+
+At the end of Sprint 1:
+
+A real user should be able to:
+
+Login
+→ Enter application
+→ Be recognized
+→ Have a role
+→ Have permissions
+→ Have branch/warehouse scope
+→ See appropriate navigation
+→ Be denied unauthorized actions
+
+
+============================================================
+30. SECOND IMPLEMENTATION SPRINT
+============================================================
+
+Build:
+
+Product Master
++
+Units
++
+Categories
++
+Manufacturers
++
+Basic product relationships
+
+
+Then:
+
+Inventory Foundation
++
+Batches
++
+Stock Status
++
+Stock Movement
+
+
+Acceptance:
+
+A product can exist.
+
+A batch can exist.
+
+Stock can be represented correctly.
+
+Stock movement can be recorded.
+
+
+============================================================
+31. THIRD IMPLEMENTATION SPRINT
+============================================================
+
+Build:
+
+Suppliers
+
+Purchase Orders
+
+PO approval connection
+
+Goods Receiving
+
+Batch creation
+
+Inventory increase
+
+Stock movement
+
+
+Acceptance:
+
+Complete real flow:
+
+Supplier
+→ PO
+→ Approval
+→ Goods Receipt
+→ Batch
+→ Inventory
+→ Stock Movement
+
+
+============================================================
+32. FOURTH IMPLEMENTATION SPRINT
+============================================================
+
+Build:
+
+Customers
+
+Pricing
+
+POS
+
+Discounts
+
+Payments
+
+Customer credit
+
+
+Acceptance:
+
+Complete real flow:
+
+Customer
+→ Product
+→ Price
+→ Discount
+→ Payment/Credit
+→ Sale
+→ Inventory decrease
+→ Stock movement
+→ Receipt
+→ Audit
+
+
+============================================================
+33. FIFTH IMPLEMENTATION SPRINT
+============================================================
+
+Build:
+
+Patients
+
+Prescribers
+
+Prescriptions
+
+Prescription validation
+
+Dispensing
+
+FEFO
+
+Pharmacist verification
+
+Controlled medicine
+
+
+Acceptance:
+
+Complete real flow:
+
+Patient
+→ Prescription
+→ Validation
+→ FEFO
+→ Dispensing
+→ Pharmacist verification
+→ Payment
+→ Inventory decrease
+→ Prescription history
+→ Audit
+
+
+============================================================
+34. SIXTH IMPLEMENTATION SPRINT
+============================================================
+
+Build:
+
+Customer Returns
+
+Supplier Returns
+
+Stock Transfers
+
+Stock Counts
+
+Stock Adjustments
+
+Quarantine
+
+Expiry
+
+Recall
+
+
+Acceptance:
+
+The system can handle abnormal and exceptional stock situations.
+
+
+============================================================
+35. SEVENTH IMPLEMENTATION SPRINT
+============================================================
+
+Build:
+
+Approval Engine
+
+Override workflows
+
+Audit completion
+
+Notifications
+
+Search
+
+Reports
+
+
+Acceptance:
+
+The system becomes operationally manageable.
+
+
+============================================================
+36. FINAL IMPLEMENTATION SPRINT
+============================================================
+
+Perform:
+
+- Full testing
+- Permission testing
+- Branch isolation testing
+- Warehouse isolation testing
+- Inventory concurrency testing
+- Business rule testing
+- UI testing
+- API testing
+- Error handling
+- Security review
+- Performance review
+- Data validation
+- Report verification
+- Audit verification
+- Notification verification
+
+
+Then:
+
+- Fix bugs
+- Improve UX
+- Improve loading states
+- Improve empty states
+- Improve error messages
+- Improve responsive behavior
+- Clean code
+- Remove fake data
+- Remove temporary shortcuts
+- Prepare demo data
+- Prepare deployment
+
+
+============================================================
+37. IMPLEMENTATION PRIORITY
+============================================================
+
+P0 — CORE
+
+Must work first:
+
+- Authentication
+- Users
+- Roles
+- Permissions
+- Scope
+- Organization
+- Branches
+- Warehouses
+- Products
+- Inventory
+- Batches
+- Stock movement
+- Suppliers
+- Purchase Orders
+- Goods Receiving
+- POS
+- Patients
+- Prescriptions
+- Dispensing
+- Payments
+- Customer Returns
+- Supplier Returns
+- Transfers
+- Adjustments
+- Stock Counts
+
+
+P1 — IMPORTANT CONTROL
+
+Then:
+
+- Quarantine
+- Expiry
+- Recall
+- Customer Credit
+- Approvals
+- Audit
+- Notifications
+- Reports
+- Search
+
+
+P2 — ADVANCED
+
+Then where time and requirements allow:
+
+- Advanced promotions
+- Complex insurance workflows
+- Advanced import tracking
+- Currency management
+- Advanced analytics
+- Additional integrations
+
+
+P0 functionality must never be sacrificed to make P2 functionality
+look complete.
+
+
+============================================================
+38. ONE-MONTH EXECUTION PLAN
+============================================================
+
+WEEK 1
+
+Foundation + Core Architecture
+
+Days:
+
+1–2:
+Project setup and authentication
+
+3:
+Organization / branches / warehouses
+
+4:
+Users / roles / permissions / scope
+
+5:
+Product master
+
+6:
+Units / categories / product relationships
+
+7:
+Inventory foundation
+
+
+WEEK 2
+
+Procurement + Inventory + Sales
+
+Days:
+
+8–9:
+Suppliers + Purchase Orders
+
+10:
+Goods Receiving
+
+11:
+Batches + stock movement refinement
+
+12–13:
+Customers + Pricing + POS
+
+14:
+Payments + Credit
+
+
+WEEK 3
+
+Pharmacy Operations + Stock Controls
+
+Days:
+
+15:
+Patients
+
+16:
+Prescribers + Prescriptions
+
+17–18:
+Dispensing + FEFO
+
+19:
+Pharmacist verification
+
+20:
+Controlled medicines
+
+21:
+Returns + Transfers
+
+
+WEEK 4
+
+Controls + Reporting + Stabilization
+
+Days:
+
+22:
+Stock Counts + Adjustments
+
+23:
+Quarantine + Expiry + Recall
+
+24:
+Approval Engine
+
+25:
+Audit + Notifications
+
+26:
+Reports + Search
+
+27:
+Import/Export
+
+28:
+Full testing
+
+29:
+Bug fixing + UX polish
+
+30:
+Demo preparation + deployment
+
+
+This schedule is a target, not permission to skip business correctness.
+
+
+============================================================
+39. DAILY DEVELOPMENT LOOP
+============================================================
+
+For each implementation task:
+
+STEP 1:
+Read relevant previous stage documents.
+
+
+STEP 2:
+Understand the business workflow.
+
+
+STEP 3:
+Identify dependencies.
+
+
+STEP 4:
+Implement database changes.
+
+
+STEP 5:
+Implement backend repository/data access.
+
+
+STEP 6:
+Implement service/business rules.
+
+
+STEP 7:
+Implement validation.
+
+
+STEP 8:
+Implement authorization/scope.
+
+
+STEP 9:
+Implement API route/controller.
+
+
+STEP 10:
+Implement frontend UI.
+
+
+STEP 11:
+Connect frontend to API.
+
+
+STEP 12:
+Test successful workflow.
+
+
+STEP 13:
+Test failure/exception workflow.
+
+
+STEP 14:
+Verify audit.
+
+
+STEP 15:
+Verify inventory/financial effects where applicable.
+
+
+STEP 16:
+Only then move to the next task.
+
+
+============================================================
+40. FEATURE COMPLETION CHECKLIST
+============================================================
+
+A feature is NOT complete simply because its page exists.
+
+
+A feature is complete only when:
+
+[ ] Database exists
+[ ] Backend exists
+[ ] API exists
+[ ] Validation exists
+[ ] Authorization exists
+[ ] Scope exists
+[ ] Business rules exist
+[ ] Status lifecycle exists
+[ ] Approval exists if required
+[ ] Inventory effect exists if applicable
+[ ] Financial effect exists if applicable
+[ ] Audit exists
+[ ] Notification exists if applicable
+[ ] Frontend exists
+[ ] Loading state exists
+[ ] Empty state exists
+[ ] Error state exists
+[ ] Success state exists
+[ ] Tests exist
+[ ] Real data is used
+[ ] No fake business logic remains
+
+
+============================================================
+41. MODULE DEPENDENCY MAP
+============================================================
+
+Authentication
+    ↓
+Users / Roles / Permissions
+    ↓
+Organization / Branch / Warehouse
+    ↓
+Products
+    ↓
+Inventory
+    ↓
+Suppliers
+    ↓
+Procurement
+    ↓
+Goods Receiving
+    ↓
+Batches / Stock
+    ↓
+Customers
+    ↓
+Pricing
+    ↓
+Sales
+    ↓
+Payments
+
+
+Parallel pharmacy branch:
+
+Products
+    ↓
+Patients
+    ↓
+Prescribers
+    ↓
+Prescriptions
+    ↓
+Dispensing
+    ↓
+FEFO
+    ↓
+Payments
+
+
+Inventory control branch:
+
+Inventory
+    ↓
+Transfers
+    ↓
+Counts
+    ↓
+Adjustments
+    ↓
+Quarantine
+    ↓
+Expiry
+    ↓
+Recall
+
+
+Cross-cutting:
+
+Authentication
+Authorization
+Scope
+Approval
+Audit
+Notifications
+Search
+Reports
+
+
+These cross-cutting services should support the business modules instead
+of being duplicated inside each module.
+
+
+============================================================
+42. DO NOT BUILD EVERYTHING AT ONCE
+============================================================
+
+The coding agent must work in controlled increments.
+
+
+Bad approach:
+
+"Build the entire pharmacy ERP now."
+
+
+This creates:
+
+- Missing business rules
+- Broken dependencies
+- Inconsistent permissions
+- Incorrect inventory
+- Fake pages
+- Difficult debugging
+- Large numbers of hidden errors
+
+
+Preferred approach:
+
+"Implement the Product Master vertical slice."
+
+Test it.
+
+Then:
+
+"Implement Inventory Foundation."
+
+Test it.
+
+Then:
+
+"Implement Procurement."
+
+Test it.
+
+
+Continue progressively.
+
+
+============================================================
+43. GIT CHECKPOINTS
+============================================================
+
+Create meaningful commits after stable milestones.
+
+
+Example:
+
+feat: initialize pharmacy erp architecture
+
+feat: implement authentication
+
+feat: implement organization branches warehouses
+
+feat: implement roles permissions and scopes
+
+feat: implement product master
+
+feat: implement inventory foundation
+
+feat: implement procurement
+
+feat: implement goods receiving
+
+feat: implement pos sales
+
+feat: implement prescription workflow
+
+feat: implement dispensing
+
+feat: implement payments
+
+feat: implement returns
+
+feat: implement stock transfers
+
+feat: implement stock controls
+
+feat: implement approvals
+
+feat: implement audit and notifications
+
+feat: implement reports and search
+
+
+Do not wait until the end of the project to create all Git history.
+
+
+============================================================
+44. OPEN CODE IMPLEMENTATION RULE
+============================================================
+
+OpenCode must work from the stage documents.
+
+
+Before implementing a module:
+
+1. Read all previous relevant stages.
+2. Identify the module's dependencies.
+3. Identify business rules.
+4. Identify actors.
+5. Identify permissions.
+6. Identify scope.
+7. Identify statuses.
+8. Identify approval requirements.
+9. Identify inventory effects.
+10. Identify financial effects.
+11. Identify audit requirements.
+12. Identify notification requirements.
+13. Implement the module.
+14. Test it.
+15. Report what was implemented.
+
+
+OpenCode must NOT silently invent missing requirements.
+
+
+If a requirement is genuinely unspecified:
+
+Mark it clearly as:
+
+"DECISION REQUIRED"
+
+
+Do not silently assume a business rule that could affect inventory,
+money, permissions, or compliance.
+
+
+============================================================
+45. IMPORTANT AI AGENT RULE
+============================================================
+
+The AI coding agent must prefer correctness over speed.
+
+
+It must not say:
+
+"Implemented."
+
+when only the frontend page exists.
+
+
+A module is implemented only when its complete required vertical slice
+exists.
+
+
+For example:
+
+POS is NOT complete because the POS screen exists.
+
+
+POS is complete when:
+
+POS UI
++
+API
++
+Validation
++
+Pricing
++
+Discount rules
++
+Stock validation
++
+Inventory effect
++
+Payment
++
+Receipt
++
+Audit
++
+Required authorization
++
+Required tests
+
+are working together.
+
+
+============================================================
+46. FINAL IMPLEMENTATION GATE
+============================================================
+
+Before actual implementation begins, verify that:
+
+[✓] Stage 01 exists
+[✓] Stage 02 exists
+[✓] Stage 03 exists
+[✓] Stage 04 exists
+[✓] Stage 05 exists
+[✓] Stage 06 exists
+[✓] Stage 07 exists
+[✓] Stage 08 exists
+[✓] Stage 09 exists
+[✓] Stage 10 exists
+
+
+Only after these stages are available should the project move into
+implementation.
+
+
+============================================================
+47. FIRST IMPLEMENTATION TASK
+============================================================
+
+The FIRST actual implementation task is:
+
+PROJECT FOUNDATION
+
+
+Not:
+
+POS
+
+Not:
+
+Prescription
+
+Not:
+
+Dashboard
+
+Not:
+
+Reports
+
+Not:
+
+AI features
+
+Not:
+
+Advanced analytics
+
+
+The first implementation should establish the architecture on which the
+rest of the system will depend.
+
+
+============================================================
+48. FINAL IMPLEMENTATION PRINCIPLE
+============================================================
+
+Build the system in this order:
+
+UNDERSTAND
+    ↓
+DESIGN
+    ↓
+CONTRACT
+    ↓
+IMPLEMENT
+    ↓
+TEST
+    ↓
+VERIFY
+    ↓
+EXPAND
+    ↓
+STABILIZE
+
+
+Do not reverse this order.
+
+
+The goal is not to create the largest number of screens.
+
+The goal is to create a pharmacy management system whose business
+behavior is correct, traceable, secure, and maintainable.
+
+
+============================================================
+END OF STAGE 10
+============================================================

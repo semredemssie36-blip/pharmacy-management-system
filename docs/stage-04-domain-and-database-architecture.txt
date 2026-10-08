@@ -1,0 +1,1978 @@
+============================================================
+PHARMACY ERP SYSTEM
+STAGE 04 — DOMAIN MODEL & DATABASE ARCHITECTURE
+============================================================
+
+PROJECT:
+Multi-Branch Pharmacy Management / ERP System
+
+TECHNOLOGY:
+Frontend:
+- React
+- Vite
+- Tailwind CSS
+- React Router
+
+Backend:
+- Node.js
+- Express.js
+
+Database:
+- MySQL
+
+IMPORTANT:
+This stage defines the conceptual domain model and database
+architecture of the Pharmacy ERP.
+
+DO NOT implement the database yet.
+
+DO NOT generate migrations yet.
+
+DO NOT generate models yet.
+
+DO NOT create API endpoints yet.
+
+The purpose of this stage is to establish what information the
+system must store, how the information is related, and which
+business concepts must remain separate.
+
+============================================================
+1. PURPOSE
+============================================================
+
+The database must represent the real pharmacy business.
+
+It must support:
+
+- Multi-branch organization
+- Users and roles
+- Permissions
+- Branch and warehouse scope
+- Products and medicines
+- Suppliers
+- Customers
+- Patients
+- Prescribers
+- Procurement
+- Purchase orders
+- Goods receiving
+- Batch and expiry
+- Inventory
+- Stock movements
+- FEFO
+- Sales/POS
+- Prescriptions
+- Dispensing
+- Payments
+- Returns
+- Transfers
+- Stock counts
+- Stock adjustments
+- Quarantine
+- Product recall
+- Approvals
+- Audit trail
+- Notifications
+- Reporting
+- Pricing
+- Discounts
+- Credit/receivables
+- Supplier payables
+- Other configured financial information
+
+The database must support the business workflows defined in
+Stage 03.
+
+============================================================
+2. DATABASE DESIGN PRINCIPLE
+============================================================
+
+Do NOT design the database by simply creating one table for
+every screen.
+
+A UI page is not automatically a database entity.
+
+Instead, design around:
+
+BUSINESS DOMAIN
+    ↓
+BUSINESS ENTITY
+    ↓
+BUSINESS RELATIONSHIP
+    ↓
+BUSINESS TRANSACTION
+    ↓
+BUSINESS EFFECT
+
+Example:
+
+Purchase Order
+    ↓
+Purchase Order Items
+    ↓
+Goods Receipt
+    ↓
+Goods Receipt Items
+    ↓
+Batch
+    ↓
+Inventory
+    ↓
+Stock Movement
+
+============================================================
+3. HIGH-LEVEL DOMAIN MAP
+============================================================
+
+The system can be divided into these domains:
+
+1. Organization & Access
+2. Master Data
+3. Inventory
+4. Procurement
+5. Sales / POS
+6. Pharmacy / Clinical
+7. Customers
+8. Finance
+9. Returns
+10. Transfers
+11. Quarantine / Expiry / Recall
+12. Approvals
+13. Audit
+14. Notifications
+15. Reporting
+16. System Configuration
+
+These domains are connected.
+
+============================================================
+4. ORGANIZATION DOMAIN
+============================================================
+
+Core concepts:
+
+Organization
+Branch
+Warehouse
+Storage Location
+
+Relationship:
+
+Organization
+    ↓
+Branches
+    ↓
+Warehouses
+    ↓
+Storage Locations
+
+Example:
+
+ABC Pharmacy
+│
+├── Piassa
+│   └── Main Warehouse
+│       ├── Storage Area A
+│       └── Storage Area B
+│
+└── Megenagna
+    └── Main Warehouse
+        ├── Storage Area A
+        └── Storage Area B
+
+A branch may contain one or more warehouses.
+
+A warehouse may contain one or more storage locations.
+
+The exact number must remain configurable.
+
+============================================================
+5. USER AND ACCESS DOMAIN
+============================================================
+
+Core concepts:
+
+User
+Role
+Permission
+Role Permission
+User Role
+User Branch Scope
+User Warehouse Scope
+
+Conceptually:
+
+User
+  ↓
+User Role
+  ↓
+Role
+  ↓
+Role Permission
+  ↓
+Permission
+
+Separately:
+
+User
+  ↓
+Branch Scope
+  ↓
+Branch
+
+and:
+
+User
+  ↓
+Warehouse Scope
+  ↓
+Warehouse
+
+This preserves:
+
+ROLE != DATA SCOPE
+
+============================================================
+6. PERMISSION DOMAIN
+============================================================
+
+A permission should represent:
+
+MODULE
++
+RESOURCE
++
+ACTION
+
+Example:
+
+Inventory
+Stock Adjustment
+Create
+
+Another:
+
+Inventory
+Stock Adjustment
+Approve
+
+Another:
+
+Sales
+Sale
+Complete
+
+The database should support fine-grained permissions.
+
+Do not design permissions as one large boolean field such as:
+
+can_manage_inventory = true
+
+The permission system must remain extensible.
+
+============================================================
+7. PRODUCT MASTER DOMAIN
+============================================================
+
+Core concepts may include:
+
+Product
+Product Category
+Manufacturer
+Product Unit
+Product Classification
+Product Barcode
+Product Pricing
+Product Registration information
+Storage Requirement
+
+A product may contain:
+
+- Product code
+- Barcode
+- Brand name
+- Generic name
+- Active ingredient
+- Strength
+- Dosage form
+- Route
+- Category
+- Manufacturer
+- Registration
+- Prescription classification
+- Controlled classification
+- Storage requirement
+- Minimum stock
+- Maximum stock
+- Reorder level
+
+IMPORTANT:
+
+PRODUCT != INVENTORY
+
+A product is master data.
+
+Inventory represents physical quantities of that product.
+
+============================================================
+8. PRODUCT CLASSIFICATION
+============================================================
+
+The system must support product classifications such as:
+
+- Prescription
+- OTC
+- Controlled / Restricted
+- General / FMCG
+
+Classification may affect:
+
+- Sales
+- Prescription requirements
+- Dispensing
+- Authorization
+- Reporting
+- Audit
+- Stock controls
+
+The database must not force every product into identical behavior.
+
+============================================================
+9. SUPPLIER DOMAIN
+============================================================
+
+Core entity:
+
+Supplier
+
+Supplier information may include:
+
+- Name
+- Contact information
+- Address
+- Registration information
+- Payment terms
+- Currency where applicable
+- Status
+
+Suppliers may be organization-level and may serve multiple
+branches.
+
+Supplier information must remain separate from purchase
+transactions.
+
+============================================================
+10. CUSTOMER DOMAIN
+============================================================
+
+Core entity:
+
+Customer
+
+Customer information may include:
+
+- Name
+- Contact
+- Address
+- Customer type
+- Pricing tier
+- Credit limit
+- Payment terms
+- Territory
+- Status
+
+Customers may include:
+
+- Individual customers
+- Commercial customers
+- Organizations
+
+IMPORTANT:
+
+CUSTOMER != PATIENT
+
+The database must preserve this distinction.
+
+============================================================
+11. PATIENT DOMAIN
+============================================================
+
+Core entity:
+
+Patient
+
+Patient information may include appropriate:
+
+- Identification
+- Contact information
+- Demographic information
+- Relevant pharmacy/clinical information
+- History references
+
+Patient records are used by:
+
+- Prescriptions
+- Dispensing
+- Medication history
+- Recall traceability where available
+
+Access must be permission-controlled.
+
+============================================================
+12. PRESCRIBER DOMAIN
+============================================================
+
+The system should support prescriber information where required.
+
+Possible information:
+
+- Name
+- Professional identification
+- Organization
+- Contact
+- Status
+
+Prescriber information may be referenced by prescriptions.
+
+============================================================
+13. BATCH DOMAIN
+============================================================
+
+Batch is critical to pharmacy inventory.
+
+A batch should be associated with:
+
+- Product
+- Batch number
+- Expiry date
+- Supplier/receipt reference where applicable
+- Manufacturing information where available
+- Status
+
+Batch information is necessary for:
+
+- FEFO
+- Expiry
+- Recall
+- Traceability
+- Returns
+- Stock movement
+- Dispensing
+- Reporting
+
+============================================================
+14. INVENTORY DOMAIN
+============================================================
+
+Inventory must represent product quantities within an
+organizational location.
+
+Conceptually:
+
+Inventory
+  ↓
+Product
+  ↓
+Batch
+  ↓
+Warehouse
+  ↓
+Storage Location
+
+Inventory may need to track:
+
+- Product
+- Batch
+- Branch
+- Warehouse
+- Location
+- Quantity
+- Available quantity
+- Reserved quantity
+- Quarantined quantity
+- Recalled quantity
+- Expired quantity
+- Status
+
+The exact implementation must avoid double-counting quantities.
+
+============================================================
+15. INVENTORY LOCATION PRINCIPLE
+============================================================
+
+The same product may exist in multiple locations.
+
+Example:
+
+Amoxicillin 500mg
+
+Piassa Warehouse:
+Batch A:
+100
+
+Piassa Pharmacy:
+Batch A:
+20
+
+Megenagna Warehouse:
+Batch B:
+200
+
+These are not one undifferentiated quantity.
+
+The system must preserve location context.
+
+============================================================
+16. STOCK MOVEMENT DOMAIN
+============================================================
+
+Stock movement is one of the most important transactional
+entities.
+
+Every important inventory change should have a movement record.
+
+Possible movement types:
+
+- Opening balance
+- Purchase receipt
+- Sale
+- Dispensing
+- Customer return
+- Supplier return
+- Transfer in
+- Transfer out
+- Adjustment
+- Damage
+- Expiry
+- Recall
+- Disposal
+
+A stock movement should conceptually contain:
+
+- Product
+- Batch
+- Quantity
+- Movement type
+- Source
+- Destination where applicable
+- Branch
+- Warehouse
+- Location
+- Reference transaction
+- User
+- Date/time
+- Reason where applicable
+
+Stock movement provides inventory history.
+
+============================================================
+17. STOCK MOVEMENT PRINCIPLE
+============================================================
+
+Do not rely only on the current inventory quantity.
+
+The system should preserve transaction history.
+
+Example:
+
+Current quantity:
+100
+
+But history may show:
+
++200 Purchase Receipt
+-50 Sale
+-30 Dispensing
+-20 Transfer Out
+
+The movement history explains how the current quantity was
+produced.
+
+============================================================
+18. FEFO DOMAIN
+============================================================
+
+FEFO is primarily a business allocation rule based on batch
+expiry.
+
+The database must preserve enough information to determine:
+
+- Which batches exist
+- Which batches are available
+- Expiry date
+- Quantity
+- Location
+- Status
+
+The system should be able to identify the earliest eligible
+expiry batch.
+
+FEFO itself should not be treated as merely a UI sorting option.
+
+It affects actual stock allocation.
+
+============================================================
+19. PROCUREMENT DOMAIN
+============================================================
+
+Core entities:
+
+Supplier
+Purchase Order
+Purchase Order Item
+Purchase Approval
+Goods Receipt
+Goods Receipt Item
+
+Relationship:
+
+Supplier
+  ↓
+Purchase Order
+  ↓
+Purchase Order Items
+  ↓
+Approval
+  ↓
+Goods Receipt
+  ↓
+Goods Receipt Items
+  ↓
+Batch
+  ↓
+Inventory
+  ↓
+Stock Movement
+
+============================================================
+20. PURCHASE ORDER
+============================================================
+
+Purchase Order should preserve:
+
+- Supplier
+- Organization
+- Branch
+- Warehouse where applicable
+- Order number
+- Date
+- Status
+- Currency
+- Expected delivery
+- Notes
+- Total
+- Created by
+- Submitted by
+- Approved by where applicable
+
+Purchase Order Items should preserve:
+
+- Product
+- Ordered quantity
+- Purchase price
+- Currency
+- Unit
+- Tax/charges where applicable
+- Expected information where required
+
+IMPORTANT:
+
+Purchase Order is NOT inventory.
+
+============================================================
+21. GOODS RECEIVING DOMAIN
+============================================================
+
+Goods Receipt should preserve what was actually received.
+
+Core concepts:
+
+Goods Receipt
+Goods Receipt Item
+
+A receiving item may reference:
+
+- Purchase Order Item
+- Product
+- Batch
+- Quantity ordered
+- Quantity received
+- Quantity accepted
+- Quantity rejected
+- Expiry
+- Warehouse
+- Location
+- Discrepancy
+
+The database must support partial receiving.
+
+Example:
+
+PO:
+500
+
+Receipt 1:
+300
+
+Receipt 2:
+170
+
+Total received:
+470
+
+Remaining:
+30
+
+The database must preserve both receiving events.
+
+============================================================
+22. SALES DOMAIN
+============================================================
+
+Core entities:
+
+Sale
+Sale Item
+Sale Payment
+Sale Return
+Sale Return Item
+Receipt
+
+A sale should preserve:
+
+- Customer where applicable
+- Branch
+- Cashier
+- Date/time
+- Status
+- Pricing information
+- Discount
+- Total
+- Payment status
+
+Sale Item should preserve:
+
+- Product
+- Quantity
+- Unit price
+- Discount
+- Total
+- Batch where traceability requires it
+
+A completed sale must connect to inventory movement.
+
+============================================================
+23. SALE VS INVENTORY
+============================================================
+
+A sale transaction does not simply store:
+
+product_id
+quantity
+
+and forget the inventory.
+
+The system should preserve the relationship between the sale and
+the stock movement/batch allocation.
+
+This is important for:
+
+- Traceability
+- Returns
+- Recall
+- Reports
+- Inventory
+- Audit
+
+============================================================
+24. PRESCRIPTION DOMAIN
+============================================================
+
+Core concepts:
+
+Prescription
+Prescription Item
+Patient
+Prescriber
+Dispensing
+Dispensing Item
+
+Prescription should preserve:
+
+- Patient
+- Prescriber
+- Branch
+- Date
+- Prescription reference
+- Status
+- Notes
+- Validation information
+
+Prescription Item should preserve:
+
+- Product/medicine
+- Quantity
+- Dosage/directions
+- Strength where applicable
+- Refill information where applicable
+- Dispensed quantity
+- Remaining quantity
+
+============================================================
+25. DISPENSING DOMAIN
+============================================================
+
+Core entities:
+
+Dispensing
+Dispensing Item
+Batch Allocation
+Verification
+
+Relationship:
+
+Prescription
+  ↓
+Dispensing
+  ↓
+Dispensing Items
+  ↓
+Batch Allocation
+  ↓
+Stock Movement
+
+This allows the system to know which batch was used for a
+dispensing transaction.
+
+============================================================
+26. TECHNICIAN AND PHARMACIST RESPONSIBILITY
+============================================================
+
+The data model should allow the system to record:
+
+- Who prepared dispensing
+- Who verified dispensing
+- When it happened
+- Verification status
+- Rejection reason where applicable
+
+This supports separation of duties.
+
+============================================================
+27. PARTIAL DISPENSING
+============================================================
+
+The data model must support:
+
+Prescribed quantity:
+20
+
+Dispensed:
+12
+
+Remaining:
+8
+
+The prescription must not be considered fully completed.
+
+The database must preserve the relationship between:
+
+Prescription
+→ prescribed quantity
+→ dispensing event
+→ dispensed quantity
+→ remaining quantity
+
+============================================================
+28. CONTROLLED MEDICINE DOMAIN
+============================================================
+
+Controlled/restricted medicine tracking may require additional
+records or flags.
+
+The database must be able to support:
+
+- Classification
+- Authorization
+- Issue/dispensing history
+- Appropriate register information
+- Audit
+
+The exact structure will be refined during the pharmacy/
+dispensing implementation stage.
+
+============================================================
+29. PAYMENT DOMAIN
+============================================================
+
+Core concepts:
+
+Payment
+Payment Allocation
+Payment Method
+Refund
+
+Payments may relate to:
+
+- Sales
+- Customer accounts
+- Supplier transactions
+- Refunds
+
+Payment should preserve:
+
+- Amount
+- Method
+- Date/time
+- Reference
+- User
+- Status
+
+============================================================
+30. PAYMENT ALLOCATION
+============================================================
+
+A payment may need to be allocated to one or more outstanding
+transactions.
+
+Example:
+
+Customer pays:
+10,000 ETB
+
+Outstanding invoices:
+
+Invoice A:
+6,000
+
+Invoice B:
+4,000
+
+Payment allocations:
+
+6,000 → Invoice A
+4,000 → Invoice B
+
+The database should not assume:
+
+One payment = exactly one invoice
+
+unless the business rule explicitly requires it.
+
+============================================================
+31. CUSTOMER CREDIT DOMAIN
+============================================================
+
+Customer account may contain:
+
+- Credit limit
+- Payment terms
+- Outstanding balance
+- Available credit
+
+Credit transactions must remain traceable.
+
+The system should support:
+
+- Credit sale
+- Customer payment
+- Payment allocation
+- Credit adjustment where authorized
+- Credit override
+
+============================================================
+32. SUPPLIER PAYABLE DOMAIN
+============================================================
+
+Supplier transactions may create payable balances.
+
+The system should support:
+
+- Purchase amount
+- Supplier payment
+- Partial payment
+- Payment allocation
+- Outstanding balance
+- Supplier return financial effect
+
+============================================================
+33. RETURN DOMAIN
+============================================================
+
+Returns should be treated as transactions.
+
+Customer Return may reference:
+
+- Original sale
+- Sale item
+- Product
+- Batch
+- Quantity
+- Reason
+- Condition
+- Status
+- Refund/payment effect
+
+Supplier Return may reference:
+
+- Supplier
+- Original receipt/purchase
+- Product
+- Batch
+- Quantity
+- Reason
+- Status
+- Financial effect
+
+============================================================
+34. QUARANTINE DOMAIN
+============================================================
+
+Quarantine represents stock that is physically present but
+blocked from normal sale/dispensing.
+
+A quarantine record may contain:
+
+- Product
+- Batch
+- Quantity
+- Location
+- Reason
+- Source transaction
+- Date
+- User
+- Status
+- Resolution
+- Resolution date
+- Resolution user
+
+Possible resolutions:
+
+- Released
+- Supplier Return
+- Disposal
+
+============================================================
+35. EXPIRY DOMAIN
+============================================================
+
+Expiry information primarily belongs to batch-level stock.
+
+The database must support identifying:
+
+- Expiry date
+- Remaining quantity
+- Location
+- Near-expiry status
+- Expired status
+
+Near-expiry should preferably be calculated from configurable
+rules rather than permanently stored as an unchangeable fact.
+
+============================================================
+36. RECALL DOMAIN
+============================================================
+
+Core concept:
+
+Product Recall
+
+A recall may reference:
+
+- Product
+- Batch
+- Reason
+- Recall date
+- Status
+- Affected branches
+- Affected warehouses
+- Affected stock
+- Customer/patient traceability where available
+- Resolution
+
+The database should allow one recall to affect multiple
+locations.
+
+============================================================
+37. TRANSFER DOMAIN
+============================================================
+
+Core entities:
+
+Stock Transfer
+Stock Transfer Item
+Transfer Dispatch
+Transfer Receipt
+Transfer Discrepancy where required
+
+Transfer should preserve:
+
+- Source
+- Destination
+- Product
+- Batch
+- Quantity
+- Status
+- Requester
+- Approver
+- Dispatcher
+- Receiver
+- Dates
+
+Transfer must remain traceable from request through completion.
+
+============================================================
+38. STOCK COUNT DOMAIN
+============================================================
+
+Core concepts:
+
+Stock Count
+Stock Count Item
+Stock Variance
+Stock Adjustment
+
+A stock count may contain:
+
+- Branch
+- Warehouse
+- Location
+- Count date
+- User
+- Status
+
+Count item:
+
+- Product
+- Batch
+- System quantity
+- Physical quantity
+- Variance
+- Reason
+
+An approved variance may produce an adjustment.
+
+============================================================
+39. APPROVAL DOMAIN
+============================================================
+
+Approvals should be generic enough to support many business
+modules.
+
+Core conceptual entities:
+
+Approval Request
+Approval Action
+Approval Rule
+
+An Approval Request may reference:
+
+- Request type
+- Resource type
+- Resource ID
+- Requested by
+- Assigned approver or approver role
+- Status
+- Reason
+- Date
+
+Approval Action may preserve:
+
+- Approver
+- Action
+- Comment
+- Date/time
+
+The approval system should not be hard-coded to one module.
+
+============================================================
+40. AUDIT DOMAIN
+============================================================
+
+Core concept:
+
+Audit Log
+
+Audit should preserve important events such as:
+
+- User
+- Action
+- Resource
+- Resource ID
+- Timestamp
+- Previous value
+- New value
+- Reason
+- IP/device information where appropriate
+- Related transaction
+- Approval reference where applicable
+
+The exact audit structure will be finalized during the
+technical implementation stage.
+
+============================================================
+41. NOTIFICATION DOMAIN
+============================================================
+
+Core concepts:
+
+Notification
+Notification Recipient
+Notification Type
+
+Notifications may reference:
+
+- User
+- Event
+- Business record
+- Severity
+- Read status
+- Date/time
+
+Examples:
+
+- Low stock
+- Pending approval
+- Near expiry
+- Expired stock
+- Recall
+- Credit breach
+- Stock discrepancy
+
+============================================================
+42. PRICING DOMAIN
+============================================================
+
+Pricing may include:
+
+- Purchase price
+- Selling price
+- Wholesale price
+- Retail price
+- Customer-specific price
+- Price tier
+- Effective date
+- Expiry/end date
+- Price history
+
+The system must preserve historical pricing where required.
+
+A price change should not rewrite historical sales.
+
+Historical transactions must preserve the price used at the
+time of the transaction.
+
+============================================================
+43. DISCOUNT DOMAIN
+============================================================
+
+Discount rules may include:
+
+- Percentage
+- Fixed amount
+- Customer-specific discount
+- Product-specific discount
+- Quantity promotion
+- Time-based promotion
+- Bundle/free-item promotion
+
+Discount authorization must be separate from merely storing a
+discount value.
+
+The system must preserve the discount actually applied to a
+transaction.
+
+============================================================
+44. CURRENCY DOMAIN
+============================================================
+
+Where foreign currency purchasing is supported, the system may
+need:
+
+- Currency
+- Exchange rate
+- Transaction exchange rate
+- Purchase currency
+- Local reporting currency
+
+Example:
+
+Supplier purchase:
+USD
+
+Local sale:
+ETB
+
+The exchange rate used for the transaction must remain
+traceable.
+
+Do not rely on today's exchange rate to reconstruct an old
+transaction.
+
+============================================================
+45. INSURANCE / THIRD-PARTY PAYER DOMAIN
+============================================================
+
+If required by the client scope, the system may support:
+
+- Insurance provider
+- Patient insurance
+- Membership/reference
+- Covered medicines
+- Non-covered medicines
+- Co-payment
+- Insurer amount
+- Claims
+- Claim status
+- Reconciliation
+
+This should remain a separate domain from normal cash sales.
+
+============================================================
+46. REPORTING DOMAIN
+============================================================
+
+Reports should primarily query transactional and master data.
+
+Examples:
+
+Sales
+Inventory
+Procurement
+Prescription
+Dispensing
+Customer
+Financial
+Audit
+Expiry
+Stock Movement
+Branch Comparison
+
+Reports should not require duplicating every operational record
+into unrelated reporting tables unless a technical reason exists.
+
+============================================================
+47. DATABASE RELATIONSHIP OVERVIEW
+============================================================
+
+High-level relationship:
+
+Organization
+│
+├── Branch
+│   ├── Warehouse
+│   │   └── Storage Location
+│   │
+│   └── Users / Scope
+│
+├── Products
+│   ├── Categories
+│   ├── Manufacturers
+│   ├── Pricing
+│   └── Product classifications
+│
+├── Suppliers
+│   └── Purchase Orders
+│       └── Purchase Order Items
+│           └── Goods Receipts
+│               └── Receipt Items
+│                   └── Batches
+│                       └── Inventory
+│
+├── Customers
+│   ├── Sales
+│   │   ├── Sale Items
+│   │   └── Payments
+│   │
+│   └── Credit / Receivables
+│
+├── Patients
+│   └── Prescriptions
+│       └── Prescription Items
+│           └── Dispensing
+│               └── Dispensing Items
+│                   └── Batch Allocations
+│
+└── Inventory
+    ├── Stock Movements
+    ├── Transfers
+    ├── Stock Counts
+    ├── Adjustments
+    ├── Quarantine
+    ├── Expiry
+    └── Recall
+
+Cross-cutting:
+
+Approvals
+Audit
+Notifications
+Payments
+Reports
+
+============================================================
+48. IMPORTANT RELATIONSHIPS
+============================================================
+
+The following relationships are particularly important.
+
+PRODUCT
+  → many BATCHES
+
+BATCH
+  → inventory at authorized locations
+
+SUPPLIER
+  → many PURCHASE ORDERS
+
+PURCHASE ORDER
+  → many PURCHASE ORDER ITEMS
+
+PURCHASE ORDER
+  → one or more GOODS RECEIPTS
+
+GOODS RECEIPT
+  → many RECEIPT ITEMS
+
+RECEIPT ITEM
+  → BATCH
+
+PATIENT
+  → many PRESCRIPTIONS
+
+PRESCRIPTION
+  → many PRESCRIPTION ITEMS
+
+PRESCRIPTION
+  → one or more DISPENSING EVENTS
+
+DISPENSING
+  → many BATCH ALLOCATIONS
+
+CUSTOMER
+  → many SALES
+
+SALE
+  → many SALE ITEMS
+
+SALE
+  → one or more PAYMENTS depending on business rules
+
+SALE
+  → possible RETURN
+
+INVENTORY
+  → many STOCK MOVEMENTS
+
+TRANSFER
+  → TRANSFER ITEMS
+
+STOCK COUNT
+  → COUNT ITEMS
+
+ADJUSTMENT
+  → STOCK MOVEMENT
+
+APPROVAL
+  → BUSINESS RESOURCE
+
+AUDIT
+  → BUSINESS EVENT / RESOURCE
+
+============================================================
+49. HISTORICAL DATA PRINCIPLE
+============================================================
+
+Historical transactions must not be destroyed simply because
+master data changes.
+
+Example:
+
+Product selling price today:
+150 ETB
+
+Old sale:
+120 ETB
+
+The old sale must continue showing:
+
+120 ETB
+
+Changing the product's current price must not rewrite the
+historical transaction.
+
+Similarly:
+
+- Old customer information
+- Old supplier information
+- Old product information
+- Old exchange rates
+- Old discounts
+
+must not incorrectly rewrite completed historical transactions.
+
+============================================================
+50. STATUS PRINCIPLE
+============================================================
+
+Transactional entities should have meaningful statuses.
+
+Examples:
+
+Purchase Order:
+- Draft
+- Submitted
+- Pending Approval
+- Approved
+- Partially Received
+- Fully Received
+- Rejected
+- Cancelled
+
+Prescription:
+- Draft
+- Pending Validation
+- Validated
+- Partially Dispensed
+- Completed
+- Rejected
+- On Hold
+
+Transfer:
+- Draft
+- Submitted
+- Pending Approval
+- Approved
+- Dispatched
+- In Transit
+- Partially Received
+- Received
+- Completed
+- Rejected
+- Cancelled
+
+These are conceptual examples.
+
+Final status lists must be validated against the business
+requirements during implementation.
+
+============================================================
+51. DATABASE TRANSACTION INTEGRITY
+============================================================
+
+Some business operations affect multiple records.
+
+Example:
+
+Complete Sale:
+
+1. Create/update sale
+2. Create sale items
+3. Allocate stock
+4. Create stock movement
+5. Record payment
+6. Update financial state
+7. Create audit record
+
+These operations must be handled atomically where appropriate.
+
+If the operation fails halfway, the system must not leave
+inventory and financial records inconsistent.
+
+Technical database transactions will be implemented later.
+
+============================================================
+52. SOFT DELETE / ARCHIVE PRINCIPLE
+============================================================
+
+Important master data may need to be deactivated rather than
+physically deleted.
+
+Examples:
+
+- Product
+- Supplier
+- Customer
+- User
+- Branch
+- Warehouse
+
+Historical transactions must continue to reference historical
+records.
+
+Business transactions should generally not be physically
+deleted after completion.
+
+Correction should use appropriate business workflows.
+
+============================================================
+53. UNIQUE IDENTIFIERS
+============================================================
+
+Important business entities should have unique identifiers.
+
+Examples:
+
+- Product code
+- Barcode where applicable
+- Purchase Order number
+- Goods Receipt number
+- Sale number
+- Prescription number
+- Dispensing number
+- Transfer number
+- Adjustment number
+- Return number
+- Payment reference
+- Recall number
+
+Identifier generation must avoid collisions.
+
+============================================================
+54. DATA VALIDATION PRINCIPLE
+============================================================
+
+Database constraints should protect critical business rules.
+
+Examples:
+
+- Required fields
+- Valid references
+- Unique identifiers
+- Positive quantities where appropriate
+- Valid dates
+- Valid relationships
+- Valid statuses
+- Foreign key integrity
+
+Application validation is required too.
+
+Database constraints are an additional protection layer.
+
+============================================================
+55. DO NOT OVER-NORMALIZE WITHOUT REASON
+============================================================
+
+The database should be properly normalized for business data,
+but the implementation should remain practical.
+
+Do not create dozens of meaningless tables simply because
+normalization is theoretically possible.
+
+Every table should represent a meaningful business concept,
+support a relationship, or provide a necessary technical
+function.
+
+============================================================
+56. DO NOT DENORMALIZE WITHOUT REASON
+============================================================
+
+Do not duplicate important business values unnecessarily.
+
+If a value must be duplicated for historical correctness,
+reporting performance, or transaction snapshots, that should be
+an explicit design decision.
+
+Example:
+
+A sale item may preserve the actual unit price used at the time
+of sale even though the product has a current price.
+
+This is intentional historical data, not accidental duplication.
+
+============================================================
+57. DATABASE DESIGN REVIEW REQUIREMENT
+============================================================
+
+Before implementation, the database design must be reviewed
+against:
+
+Stage 01:
+System Overview
+
+Stage 02:
+Actors, Permissions and Data Scope
+
+Stage 03:
+Business Rules and Workflows
+
+The database must support all important workflows.
+
+If a business workflow cannot be represented by the proposed
+domain model, the design must be revisited before coding.
+
+============================================================
+58. EXAMPLE TRACEABILITY CHAIN
+============================================================
+
+The database should allow a user to trace:
+
+Supplier
+  ↓
+Purchase Order
+  ↓
+Goods Receipt
+  ↓
+Batch
+  ↓
+Inventory
+  ↓
+Stock Movement
+  ↓
+Sale / Dispensing
+  ↓
+Customer / Patient
+  ↓
+Return / Recall where applicable
+  ↓
+Audit
+
+This is critical for pharmacy traceability.
+
+============================================================
+59. RECALL TRACEABILITY
+============================================================
+
+The database should make it possible, where available, to answer:
+
+"Where is this batch now?"
+
+and:
+
+"Where did this batch go?"
+
+For example:
+
+Batch:
+AMX-2026-05
+
+Current:
+Piassa Warehouse = 40
+Megenagna Warehouse = 30
+
+Historical:
+Piassa sale = 20
+Piassa dispensing = 10
+Megenagna transfer = 50
+
+The exact traceability level depends on the transaction records.
+
+============================================================
+60. INVENTORY TRACEABILITY
+============================================================
+
+For a stock quantity, the system should be able to identify:
+
+- Product
+- Batch
+- Expiry
+- Location
+- Current state
+- Source
+- Movement history
+
+This supports:
+
+- FEFO
+- Recall
+- Expiry
+- Returns
+- Auditing
+- Stock reconciliation
+
+============================================================
+61. DATABASE DESIGN ANTI-PATTERNS
+============================================================
+
+DO NOT create a design where:
+
+1. Stock is directly overwritten without movements.
+
+2. Purchase orders directly increase inventory.
+
+3. Completed sales can be freely edited.
+
+4. Customer and patient are forced into one entity without
+   considering their different business meanings.
+
+5. Branch managers automatically see every branch.
+
+6. Approval is represented only by a boolean such as:
+   approved = true
+
+without preserving approval history.
+
+7. Audit is only:
+   updated_at
+
+8. Batch and expiry information are ignored.
+
+9. FEFO exists only as a frontend sorting option.
+
+10. Financial transactions are disconnected from their source
+    business transactions.
+
+11. Historical transaction prices change when current prices
+    change.
+
+12. Returns simply delete or reverse records without preserving
+    return history.
+
+============================================================
+62. PROPOSED DOMAIN GROUPING
+============================================================
+
+For backend architecture, domains may eventually be organized
+as:
+
+organization/
+access/
+products/
+suppliers/
+customers/
+patients/
+prescribers/
+inventory/
+procurement/
+sales/
+prescriptions/
+dispensing/
+payments/
+returns/
+transfers/
+quarantine/
+expiry/
+recalls/
+pricing/
+approvals/
+audit/
+notifications/
+reports/
+
+This is a conceptual organization.
+
+The exact backend folder structure will be finalized during
+technical architecture.
+
+============================================================
+63. DATABASE IMPLEMENTATION PRINCIPLE
+============================================================
+
+When the implementation stage begins:
+
+1. Review this domain model.
+2. Identify final entities.
+3. Identify attributes.
+4. Identify relationships.
+5. Identify primary keys.
+6. Identify foreign keys.
+7. Identify indexes.
+8. Identify unique constraints.
+9. Identify status values.
+10. Identify audit requirements.
+11. Identify transaction boundaries.
+12. Review against all business workflows.
+13. Only then create migrations.
+
+DO NOT allow the AI agent to generate a random database from
+the UI screens.
+
+============================================================
+64. AI AGENT INSTRUCTION
+============================================================
+
+When later asked to implement the database:
+
+The AI agent must:
+
+- Read Stage 01
+- Read Stage 02
+- Read Stage 03
+- Read Stage 04
+
+before designing or changing the database.
+
+The agent must preserve:
+
+- Multi-branch architecture
+- Role/data-scope separation
+- Batch tracking
+- Expiry tracking
+- Stock movements
+- FEFO requirements
+- Procurement/receiving separation
+- POS/dispensing separation
+- Patient/customer distinction
+- Approval workflows
+- Auditability
+- Financial relationships
+- Historical transaction integrity
+
+The agent must not simplify these concepts into generic CRUD
+tables.
+
+============================================================
+65. STAGE 04 IMPLEMENTATION RULE
+============================================================
+
+DO NOT implement the database in this stage.
+
+DO NOT generate:
+
+- SQL migrations
+- Sequelize/Prisma models
+- Express routes
+- Controllers
+- React components
+
+This stage is the conceptual data architecture.
+
+Actual database implementation will happen in a later
+development stage after the architecture is reviewed.
+
+============================================================
+66. FINAL DOMAIN PRINCIPLE
+============================================================
+
+The database is not simply storing screens.
+
+It is storing the history and current state of the pharmacy
+business.
+
+Therefore:
+
+MASTER DATA
+    ↓
+BUSINESS TRANSACTIONS
+    ↓
+BUSINESS EFFECTS
+    ↓
+INVENTORY / FINANCE
+    ↓
+APPROVAL
+    ↓
+AUDIT
+    ↓
+REPORTING
+
+must remain connected.
+
+The database must make it possible to answer:
+
+- What happened?
+- Who did it?
+- When did it happen?
+- Which branch?
+- Which warehouse?
+- Which product?
+- Which batch?
+- Which patient/customer?
+- Which supplier?
+- Which transaction?
+- Who approved it?
+- What changed?
+- What is the current state?
+
+============================================================
+END OF STAGE 04
+============================================================

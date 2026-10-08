@@ -1,0 +1,3037 @@
+============================================================
+STAGE 06 — UX/UI ARCHITECTURE & SCREEN SPECIFICATION
+PHARMACY MANAGEMENT / ERP SYSTEM
+============================================================
+
+Purpose:
+Define the complete UX/UI structure of the Pharmacy Management
+System before implementation.
+
+This document defines:
+
+- navigation
+- page structure
+- screens
+- dashboards
+- forms
+- tables
+- detail pages
+- workflows
+- buttons/actions
+- status displays
+- approval interfaces
+- search
+- filters
+- notifications
+- error states
+- empty states
+- loading states
+- confirmation dialogs
+- role-aware UI
+- branch-aware UI
+- warehouse-aware UI
+- workflow-aware UI
+
+This is NOT a visual design implementation document.
+
+The purpose is to make sure the development agent understands what
+the user should see and what the user should be able to do.
+
+============================================================
+0. CRITICAL INSTRUCTION TO THE AI DEVELOPMENT AGENT
+============================================================
+
+Before implementing any UI, the agent MUST read:
+
+- Stage 01 — System Overview
+- Stage 02 — Actors, Roles, Permissions & Data Scope
+- Stage 03 — Business Rules & Workflows
+- Stage 04 — Domain Model & Database Architecture
+- Stage 05 — Technical Architecture & Project Foundation
+- Stage 06 — UX/UI Architecture & Screen Specification
+
+The agent MUST NOT design the interface independently without
+considering the previous stages.
+
+The UI must represent the actual business system.
+
+Do NOT create:
+
+- decorative dashboards with fake numbers
+- buttons that do nothing
+- fake approval workflows
+- fake inventory updates
+- fake payment completion
+- fake reports
+- fake notifications
+- fake stock balances
+- fake prescription completion
+
+Every important UI action must correspond to a real backend
+operation and business rule.
+
+============================================================
+1. CORE UX PRINCIPLES
+============================================================
+
+The application is an ERP-style pharmacy system.
+
+It must feel like a professional business application.
+
+The UI must prioritize:
+
+1. clarity
+2. speed
+3. accuracy
+4. traceability
+5. safety
+6. role awareness
+7. branch awareness
+8. workflow awareness
+9. error prevention
+10. auditability
+
+The application should not feel like a simple CRUD administration
+panel.
+
+Users perform business operations.
+
+Examples:
+
+Storekeeper:
+Receive → inspect → record batch → assign location → update stock
+
+Pharmacist:
+Open prescription → validate → review medicine → verify dispensing
+
+Cashier:
+Open POS → scan → price → discount → payment → receipt
+
+Procurement Officer:
+Review replenishment → create PO → submit → monitor approval
+
+Manager:
+Review dashboard → investigate exceptions → approve/reject where
+authorized → monitor branch performance
+
+============================================================
+2. GLOBAL APPLICATION LAYOUT
+============================================================
+
+The primary application should use a desktop-first ERP layout.
+
+General structure:
+
++--------------------------------------------------------------+
+| LOGO | GLOBAL SEARCH | BRANCH | NOTIFICATIONS | USER PROFILE |
++--------------------+-----------------------------------------+
+|                    |                                         |
+| SIDEBAR            |             MAIN CONTENT                |
+|                    |                                         |
+| Dashboard          |                                         |
+| Operations         |                                         |
+| Pharmacy           |                                         |
+| Inventory          |                                         |
+| Procurement        |                                         |
+| Sales              |                                         |
+| Customers          |                                         |
+| Finance            |                                         |
+| Reports            |                                         |
+| Notifications      |                                         |
+| Administration     |                                         |
+| Settings           |                                         |
+|                    |                                         |
++--------------------+-----------------------------------------+
+
+============================================================
+3. TOP BAR
+============================================================
+
+The top bar should contain:
+
+3.1 Application identity
+
+Display:
+
+- pharmacy/company name
+- application logo
+- optional current branch
+
+Example:
+
+ABC Pharmacy
+Piassa Branch
+
+3.2 Global search
+
+Global search must allow authorized users to search important
+business records.
+
+Searchable areas include:
+
+- products
+- medicines
+- barcode
+- product code
+- batches
+- patients
+- prescriptions
+- customers
+- suppliers
+- invoices
+- purchase orders
+- stock references
+- transactions
+
+Search results should indicate the record type.
+
+Example:
+
+Search: "AMX-500"
+
+Results:
+
+PRODUCT
+Amoxicillin 500mg
+
+BATCH
+AMX-2026-05
+
+STOCK
+Piassa Warehouse
+
+The user should be able to open the appropriate record.
+
+3.3 Branch selector
+
+The UI must respect the user's data scope.
+
+Example:
+
+Current Branch:
+[ Piassa Branch ▼ ]
+
+If the user only has Piassa access:
+
+Piassa Branch
+
+must be available.
+
+Megenagna should not appear.
+
+If the user has organization-wide access:
+
+[ All Branches ▼ ]
+[ Piassa Branch ]
+[ Megenagna Branch ]
+
+The frontend must NEVER use the branch selector as a security
+mechanism.
+
+Backend authorization remains authoritative.
+
+3.4 Notifications
+
+Display:
+
+- unread notification count
+- recent important notifications
+- notification type
+- timestamp
+- read/unread status
+- link to related record
+
+Examples:
+
+LOW STOCK
+Amoxicillin 500mg below reorder level.
+
+NEAR EXPIRY
+20 units of Product X expire within 60 days.
+
+APPROVAL
+Stock adjustment request requires review.
+
+CREDIT WARNING
+Customer ABC exceeded available credit.
+
+3.5 User menu
+
+Display:
+
+- user name
+- role
+- current branch/scope
+- profile
+- account settings
+- logout
+
+============================================================
+4. SIDEBAR NAVIGATION
+============================================================
+
+Recommended high-level navigation:
+
+Dashboard
+
+Operations
+    Sales / POS
+    Prescriptions
+    Dispensing
+    Returns
+    Stock Requests
+
+Pharmacy
+    Medicines / Products
+    Patients
+    Prescribers / Doctors
+    Medication History
+    Controlled Medicines
+
+Inventory
+    Stock Overview
+    Batches
+    Expiry Management
+    Warehouses
+    Storage Locations
+    Stock Transfers
+    Stock Counts
+    Stock Adjustments
+    Quarantine
+    Product Recall
+
+Procurement
+    Suppliers
+    Purchase Orders
+    Goods Receiving
+    Supplier Returns
+    Replenishment
+
+Customers
+    Customers
+    Customer Groups
+    Credit Accounts
+    Customer Transactions
+
+Finance
+    Payments
+    Receivables
+    Supplier Payables
+    Refunds
+    Profitability
+
+Reports
+    Sales Reports
+    Inventory Reports
+    Procurement Reports
+    Prescription Reports
+    Financial Reports
+    Customer Reports
+    Audit Reports
+
+Notifications
+
+Administration
+    Users
+    Roles & Permissions
+    Approval Center
+    Audit Trail
+    Organization
+
+Settings
+    Branches
+    Warehouses
+    Units
+    Categories
+    Pricing
+    Payment Methods
+    Storage Conditions
+    System Configuration
+
+IMPORTANT:
+
+This navigation is a UX grouping.
+
+Actual visibility depends on:
+
+Role
++
+Permission
++
+Data Scope
+
+A user must never see operational functionality that they are not
+authorized to use.
+
+============================================================
+5. DASHBOARD
+============================================================
+
+The dashboard is role-aware.
+
+There should NOT be one identical dashboard for every role.
+
+------------------------------------------------------------
+5.1 SYSTEM ADMINISTRATOR DASHBOARD
+------------------------------------------------------------
+
+Possible sections:
+
+SYSTEM OVERVIEW
+
+- total users
+- active users
+- branches
+- warehouses
+- roles
+- pending approvals
+- recent system activity
+- security/audit events
+
+SYSTEM ALERTS
+
+- failed operations
+- configuration warnings
+- important audit events
+- pending administrative actions
+
+The administrator dashboard should focus on system governance.
+
+------------------------------------------------------------
+5.2 BRANCH MANAGER DASHBOARD
+------------------------------------------------------------
+
+Possible sections:
+
+BRANCH PERFORMANCE
+
+- today's sales
+- sales trend
+- inventory value
+- low-stock products
+- near-expiry stock
+- pending approvals
+- outstanding customer balances
+- purchase activity
+
+BRANCH ALERTS
+
+- stock shortages
+- stock discrepancies
+- pending purchase orders
+- pending returns
+- credit warnings
+- near expiry
+- recalled products
+
+The dashboard must respect the manager's branch scope.
+
+------------------------------------------------------------
+5.3 PHARMACIST DASHBOARD
+------------------------------------------------------------
+
+Focus on pharmacy operations.
+
+Sections:
+
+- pending prescriptions
+- prescriptions waiting for verification
+- partial dispensing
+- refill requests/availability
+- controlled medicine activity
+- dispensing alerts
+- clinical exceptions
+- recent dispensing activity
+
+------------------------------------------------------------
+5.4 PHARMACY TECHNICIAN DASHBOARD
+------------------------------------------------------------
+
+Focus on preparation work.
+
+Display:
+
+- pending prescriptions
+- prescriptions ready for preparation
+- partially prepared prescriptions
+- pharmacist verification queue
+- dispensing activity
+
+------------------------------------------------------------
+5.5 CASHIER DASHBOARD
+------------------------------------------------------------
+
+Focus on sales.
+
+Display:
+
+- today's sales
+- current transactions
+- pending payments
+- returns requiring action
+- recent receipts
+- customer credit warnings where applicable
+
+Primary action:
+
+[ Open POS ]
+
+------------------------------------------------------------
+5.6 STOREKEEPER DASHBOARD
+------------------------------------------------------------
+
+Display:
+
+- current stock
+- low stock
+- near expiry
+- expired stock
+- quarantine
+- stock transfers
+- pending receiving
+- stock counts
+- adjustment requests
+- recalled stock
+
+Primary actions:
+
+[ Receive Stock ]
+
+[ Stock Transfer ]
+
+[ Stock Count ]
+
+------------------------------------------------------------
+5.7 PROCUREMENT DASHBOARD
+------------------------------------------------------------
+
+Display:
+
+- replenishment requirements
+- low stock
+- purchase orders
+- pending approvals
+- supplier deliveries
+- partial deliveries
+- supplier returns
+
+Primary action:
+
+[ Create Purchase Order ]
+
+------------------------------------------------------------
+5.8 FINANCE DASHBOARD
+------------------------------------------------------------
+
+Display:
+
+- sales value
+- customer receivables
+- supplier payables
+- payments
+- refunds
+- outstanding balances
+- profitability
+
+Important:
+
+The system provides management-level financial visibility.
+
+It is NOT automatically a complete accounting/general ledger system.
+
+------------------------------------------------------------
+5.9 MANAGEMENT DASHBOARD
+------------------------------------------------------------
+
+Focus on organization-level analytics where authorized.
+
+Display:
+
+- sales
+- profitability
+- branch comparison
+- inventory valuation
+- stock movement
+- procurement
+- customer balances
+- product performance
+- near-expiry exposure
+- operational exceptions
+
+============================================================
+6. STANDARD LIST PAGE
+============================================================
+
+All major modules should follow a consistent table structure.
+
+Example:
+
+PRODUCTS
+
+------------------------------------------------------------
+Products                              [ + Add Product ]
+------------------------------------------------------------
+
+[ Search product... ]
+
+Filters:
+[ Category ] [ Status ] [ Supplier ] [ Prescription ]
+[ Controlled ] [ Storage ]
+
+------------------------------------------------------------
+Code | Product | Category | Stock | Status | Actions
+------------------------------------------------------------
+
+Rows should support:
+
+- view
+- edit
+- archive/deactivate
+- relevant business actions
+
+Actions must depend on permissions.
+
+Do NOT show Edit/Delete buttons merely because the user can see
+the page.
+
+============================================================
+7. STANDARD DETAIL PAGE
+============================================================
+
+A record detail page should show:
+
+Header:
+
+Product Name
+Product Code
+Status
+
+Actions:
+[ Edit ]
+[ View Stock ]
+[ View Batches ]
+[ View History ]
+
+Tabs/sections where appropriate:
+
+Overview
+Inventory
+Batches
+Pricing
+Movements
+History
+Related Records
+
+The same pattern should be reused for:
+
+- products
+- suppliers
+- customers
+- patients
+- purchase orders
+- prescriptions
+- sales
+- batches
+- stock transfers
+- returns
+
+============================================================
+8. PRODUCT / MEDICINE MANAGEMENT UI
+============================================================
+
+Product list:
+
+Columns may include:
+
+- Product Code
+- Barcode
+- Brand Name
+- Generic Name
+- Strength
+- Dosage Form
+- Category
+- Prescription Classification
+- Controlled Classification
+- Stock
+- Status
+
+Product form sections:
+
+BASIC INFORMATION
+
+- product code/SKU
+- barcode
+- brand name
+- generic name
+- active ingredient
+- description
+
+MEDICINE INFORMATION
+
+- strength
+- dosage form
+- route
+- category
+- therapeutic category
+- manufacturer
+- country of origin
+- registration number
+
+CLASSIFICATION
+
+- prescription classification
+- controlled/restricted classification
+- antibiotic classification
+
+STORAGE
+
+- storage requirement
+- temperature/condition
+
+STOCK CONTROL
+
+- minimum stock
+- maximum stock
+- reorder level
+
+UNITS
+
+- purchase unit
+- inventory unit
+- selling unit
+- conversion rules
+
+RELATIONSHIPS
+
+- equivalent medicines
+- alternative medicines
+- related strengths
+- related dosage forms
+- combination medicines
+
+The form must validate required fields and business rules.
+
+============================================================
+9. PATIENT MANAGEMENT UI
+============================================================
+
+Patient list:
+
+Search by:
+
+- Patient ID
+- Name
+- Telephone
+- identification/reference number
+- configured identifiers
+
+Columns:
+
+- Patient ID
+- Name
+- Telephone
+- Status
+- Last activity
+- Actions
+
+Patient detail:
+
+PROFILE
+
+- Patient ID
+- full name
+- sex
+- date of birth
+- age
+- contact
+- address
+- emergency contact
+- insurance
+- notes
+- status
+
+HISTORY
+
+- prescriptions
+- dispensing
+- medication history
+- refills
+- returned medicines
+- pharmacist notes
+- payment/transaction history where applicable
+
+DUPLICATE CONTROL
+
+If the system identifies possible duplicates:
+
+Display warning:
+
+Possible duplicate patient records found.
+
+[ Review Matches ]
+
+Authorized users may merge records.
+
+Merging MUST preserve relevant historical transactions.
+
+============================================================
+10. PRESCRIPTION UI
+============================================================
+
+Prescription list:
+
+Filters:
+
+- status
+- date
+- patient
+- prescriber
+- branch
+- prescription number
+
+Statuses supported by the requirements include:
+
+- Draft
+- Pending
+- Validated
+- Partially Dispensed
+- Fully Dispensed
+- Refill Available
+- Expired
+- Cancelled
+
+Prescription detail:
+
+HEADER
+
+Prescription Number
+Patient
+Prescriber
+Date
+Expiry Date
+Status
+
+MEDICINES
+
+Columns:
+
+- medicine
+- generic/brand
+- strength
+- dosage form
+- route
+- quantity prescribed
+- quantity dispensed
+- remaining quantity
+- dosage
+- frequency
+- duration
+- instructions
+- permitted refills
+- remaining refills
+
+DOCUMENT
+
+Display prescription image/document where available.
+
+ACTIONS
+
+Depending on permission/status:
+
+[ Validate ]
+
+[ Start Dispensing ]
+
+[ Partial Dispense ]
+
+[ Refill ]
+
+[ Cancel ]
+
+[ View History ]
+
+============================================================
+11. PRESCRIPTION VALIDATION UI
+============================================================
+
+Validation screen should make clinical checking clear.
+
+CHECK:
+
+Patient
+Prescriber
+Prescription validity
+Medicine
+Strength
+Quantity
+Dosage
+Refill authorization
+Restrictions
+
+Potential warnings should be clearly visible.
+
+Example:
+
+WARNING
+
+Prescription expiry date has passed.
+
+The user should not accidentally continue.
+
+If an override is permitted:
+
+[ Request Override ]
+
+The system should NOT simply provide:
+
+[ Ignore Warning ]
+
+without authorization.
+
+============================================================
+12. DISPENSING UI
+============================================================
+
+Dispensing screen:
+
+PATIENT
+Prescription Number
+Pharmacist/Technician
+
+MEDICINE
+
+Medicine
+Strength
+Quantity Prescribed
+Quantity Already Dispensed
+Remaining Quantity
+
+STOCK ALLOCATION
+
+Display eligible batches:
+
+Batch
+Expiry
+Available Quantity
+Location
+
+FEFO should be applied automatically.
+
+Example:
+
+Batch A
+Expiry: 2027-03
+Available: 10
+
+Batch B
+Expiry: 2028-05
+Available: 100
+
+System allocation:
+
+10 from Batch A
+10 from Batch B
+
+The user should understand why those batches were selected.
+
+Expired stock must not be available for normal dispensing.
+
+Near-expiry products should produce the configured warning/block.
+
+============================================================
+13. PHARMACIST VERIFICATION UI
+============================================================
+
+Verification screen should summarize:
+
+Patient
+Prescription
+Medicine
+Batch
+Expiry
+Quantity
+Dosage
+Instructions
+Price
+Discount
+Payment status
+
+Actions:
+
+[ Verify & Complete ]
+
+[ Reject ]
+
+[ Request Modification ]
+
+If rejected:
+
+Reason is required.
+
+Verification history must be visible.
+
+Display:
+
+Verified by
+Date/time
+Decision
+Reason
+
+============================================================
+14. DISPENSING LABEL UI
+============================================================
+
+The system should support generating/printing labels.
+
+Configurable label information may include:
+
+- patient name
+- medicine
+- strength
+- dosage form
+- directions
+- quantity
+- dispensing date
+- expiry information where appropriate
+- pharmacy information
+
+============================================================
+15. POS / SALES UI
+============================================================
+
+POS must be optimized for speed.
+
+Suggested layout:
+
++----------------------------------------------------------+
+| Search / Scan Barcode                                    |
++----------------------------------------------------------+
+| Product | Qty | Price | Discount | Total                |
+|----------------------------------------------------------|
+| Amoxicillin | 2 | 100 | 0 | 200                       |
+| Paracetamol | 1 | 50  | 0 | 50                        |
++----------------------------------------------------------+
+| Subtotal: 250                                            |
+| Discount: 0                                              |
+| Total: 250                                               |
+|                                                          |
+| [ Cash ] [ Electronic ] [ Credit ]                      |
+|                                                          |
+|                     [ COMPLETE SALE ]                    |
++----------------------------------------------------------+
+
+POS must support:
+
+- product search
+- barcode scanning
+- quantity
+- pricing
+- discounts
+- totals
+- payment
+- receipt
+- authorized void
+- returns where applicable
+
+The UI must identify products with special classifications.
+
+For example:
+
+Prescription medicine
+Controlled/restricted medicine
+OTC
+General FMCG
+
+Business rules must determine what can be sold directly.
+
+============================================================
+16. DISCOUNT UI
+============================================================
+
+When discount is applied:
+
+Display:
+
+Original Price
+Discount
+Discount Type
+Final Price
+User
+
+If discount exceeds the user's authority:
+
+Display:
+
+Approval Required
+
+The cashier should not be able to bypass the approval workflow.
+
+Approval information:
+
+Requested by
+Requested amount
+Original amount
+Reason
+Status
+Approver
+Decision
+
+============================================================
+17. CUSTOMER MANAGEMENT UI
+============================================================
+
+Customers are NOT the same as patients.
+
+Customer list:
+
+- customer code
+- name
+- customer type
+- pricing tier
+- credit limit
+- outstanding balance
+- available credit
+- status
+
+Customer detail:
+
+Profile
+Pricing
+Credit
+Transactions
+Payments
+Invoices
+Returns
+History
+
+Credit section:
+
+Credit Limit
+Outstanding
+Available Credit
+Payment Terms
+
+============================================================
+18. INVENTORY DASHBOARD
+============================================================
+
+Inventory overview should provide:
+
+Total Stock
+Available Stock
+Reserved Stock
+Quarantined Stock
+Recalled Stock
+Expired Stock
+
+Alerts:
+
+Low Stock
+Out of Stock
+Near Expiry
+Expired
+Damaged
+Quarantined
+Recalled
+
+Filters:
+
+Branch
+Warehouse
+Location
+Product
+Category
+Batch
+
+============================================================
+19. BATCH MANAGEMENT UI
+============================================================
+
+Batch list:
+
+- Product
+- Batch Number
+- Expiry Date
+- Warehouse
+- Location
+- Quantity
+- Status
+
+Batch detail:
+
+Product
+Batch
+Expiry
+Supplier
+Receipt
+Current stock
+Location
+Movement history
+
+Actions may include:
+
+View movements
+Transfer
+Quarantine
+Recall
+Supplier return
+Disposal
+
+Actions require permission and appropriate workflow.
+
+============================================================
+20. STOCK MOVEMENT UI
+============================================================
+
+Stock movement history must be traceable.
+
+Columns:
+
+Date/Time
+Product
+Batch
+Movement Type
+Quantity
+Source
+Destination
+User
+Reference
+Reason
+
+Movement types include:
+
+Purchase Receipt
+Sale
+Dispensing
+Transfer
+Return
+Adjustment
+Damage
+Expiry
+Recall
+Disposal
+
+A movement should be linked to its source transaction.
+
+Example:
+
++500
+
+Reference:
+GRN-00023
+
+User:
+Samuel
+
+============================================================
+21. STOCK TRANSFER UI
+============================================================
+
+Transfer form:
+
+Source Branch
+Source Warehouse
+Destination Branch
+Destination Warehouse
+Product
+Batch
+Quantity
+Reason
+
+Workflow:
+
+Draft
+Submitted
+Approved if required
+Dispatched
+Received
+Completed
+
+The UI must distinguish:
+
+TRANSFER OUT
+
+from
+
+TRANSFER IN
+
+The system must record:
+
+source
+destination
+product
+batch
+quantity
+user
+date/time
+reason
+
+Receiving discrepancies must be supported.
+
+============================================================
+22. STOCK COUNT UI
+============================================================
+
+Stock count page:
+
+Select:
+
+Branch
+Warehouse
+Location
+Product/category
+
+Display:
+
+System Quantity
+Physical Quantity
+Variance
+
+Example:
+
+Amoxicillin
+
+System:
+500
+
+Physical:
+492
+
+Variance:
+-8
+
+The user must provide a reason when required.
+
+If adjustment approval is required:
+
+[ Submit Adjustment ]
+
+rather than immediately changing inventory.
+
+============================================================
+23. STOCK ADJUSTMENT UI
+============================================================
+
+Adjustment request:
+
+Product
+Batch
+Location
+Current Quantity
+Requested Quantity
+Difference
+Reason
+Evidence/Notes where applicable
+
+Statuses:
+
+Draft
+Submitted
+Pending Approval
+Approved
+Rejected
+Applied
+Cancelled
+
+Important:
+
+Approval should occur before the actual inventory effect when
+the business rule requires approval.
+
+============================================================
+24. QUARANTINE UI
+============================================================
+
+Quarantine dashboard:
+
+Product
+Batch
+Quantity
+Location
+Reason
+Date
+Status
+
+Possible states:
+
+Quarantined
+Under Review
+Released
+Supplier Return
+Disposed
+
+Quarantined stock must not be treated as normal available stock.
+
+============================================================
+25. EXPIRY MANAGEMENT UI
+============================================================
+
+Display:
+
+Near Expiry
+Expired
+Expiry by Branch
+Expiry by Warehouse
+Expiry by Batch
+
+Filters:
+
+Expiry range
+Branch
+Warehouse
+Product
+Category
+
+Actions:
+
+Review
+Quarantine
+Supplier Return
+Dispose
+
+Expired stock must not be sold or dispensed.
+
+============================================================
+26. PRODUCT RECALL UI
+============================================================
+
+Recall creation:
+
+Product
+Batch
+Reason
+Recall date
+Authority/source
+Notes
+
+Recall dashboard:
+
+Affected batch
+Current quantity
+Branch
+Warehouse
+Quarantined quantity
+Returned quantity
+Disposed quantity
+Affected customers/patients where traceability exists
+
+The system should provide traceability.
+
+============================================================
+27. PROCUREMENT UI
+============================================================
+
+Supplier list:
+
+- supplier name
+- contact
+- status
+- payment terms
+- currency where applicable
+- outstanding balance
+
+Purchase Order list:
+
+- PO number
+- supplier
+- branch
+- warehouse
+- date
+- total
+- status
+
+PO detail:
+
+Supplier
+Items
+Quantities
+Unit prices
+Currency
+Expected delivery
+Terms
+Approval
+Receiving status
+
+Actions:
+
+Create
+Edit
+Submit
+Approve
+Reject
+Cancel
+Receive
+
+Only authorized users should see relevant actions.
+
+============================================================
+28. GOODS RECEIVING UI
+============================================================
+
+Receiving screen must compare:
+
+ORDERED
+
+vs
+
+RECEIVED
+
+Example:
+
+Product:
+Amoxicillin 500mg
+
+Ordered:
+500
+
+Received:
+470
+
+Variance:
+-30
+
+The receiver must be able to record:
+
+Batch
+Expiry
+Quantity
+Warehouse
+Storage location
+Discrepancy
+Notes
+
+Partial receiving must be supported.
+
+Receiving should not silently modify the purchase order.
+
+It should create a receiving record and appropriate inventory
+movement.
+
+============================================================
+29. SUPPLIER RETURN UI
+============================================================
+
+Supplier return:
+
+Supplier
+Original receipt
+Product
+Batch
+Quantity
+Reason
+Return status
+
+Possible workflow:
+
+Draft
+Submitted
+Approved
+Sent
+Acknowledged
+Completed
+
+Inventory and financial effects must be recorded correctly.
+
+============================================================
+30. CUSTOMER RETURN UI
+============================================================
+
+Customer return should preferably reference the original sale.
+
+Display:
+
+Original Sale
+Customer
+Product
+Batch
+Quantity Sold
+Quantity Returned
+Reason
+
+Inspection result:
+
+Saleable
+Quarantine
+Rejected
+
+The system must not automatically put every returned medicine back
+into sellable stock.
+
+============================================================
+31. PAYMENT UI
+============================================================
+
+Payment screen:
+
+Amount
+Payment Method
+Reference
+Date
+Customer
+Invoice(s)
+Notes
+
+Methods may include:
+
+Cash
+Configured electronic/mobile payment
+Credit
+Other configured methods
+
+Support:
+
+Partial payment
+Multiple invoice allocation
+Outstanding balance
+Payment history
+Receipt
+Refund
+
+============================================================
+32. CUSTOMER RECEIVABLES UI
+============================================================
+
+Customer account:
+
+Credit Limit
+Outstanding Balance
+Available Credit
+
+Invoices:
+
+Invoice
+Date
+Total
+Paid
+Remaining
+Status
+
+Payments:
+
+Date
+Amount
+Method
+Reference
+Allocated invoices
+
+If credit limit is exceeded:
+
+Display warning/block.
+
+If an override is permitted:
+
+[ Request Credit Override ]
+
+============================================================
+33. SUPPLIER PAYABLES UI
+============================================================
+
+Supplier account:
+
+Purchase total
+Payments
+Outstanding balance
+
+Transactions:
+
+PO
+Receipt
+Invoice
+Payment
+Return
+Adjustment
+
+Display current balance clearly.
+
+============================================================
+34. FINANCIAL / PROFITABILITY UI
+============================================================
+
+Financial dashboard should show:
+
+Sales
+Purchase Value
+Returns
+Discounts
+Cost
+Gross Profit
+Margin
+
+Profitability views:
+
+Product
+Order
+Customer
+Branch
+
+The UI must make it clear that this is operational/management
+financial visibility and not necessarily a complete accounting GL.
+
+============================================================
+35. CURRENCY UI
+============================================================
+
+Where foreign currency purchasing is supported:
+
+Purchase Currency
+Exchange Rate
+Local Equivalent
+
+The transaction must preserve:
+
+Original currency
+Original amount
+Exchange rate
+Converted amount
+
+Reports may use local reporting currency according to configuration.
+
+============================================================
+36. INSURANCE UI
+============================================================
+
+Where insurance/third-party payer functionality is required:
+
+Patient Insurance:
+
+Provider
+Membership/reference number
+Coverage
+
+Prescription/Dispensing:
+
+Covered amount
+Non-covered amount
+Patient co-payment
+Insurer amount
+
+Claims:
+
+Claim
+Status
+Amount
+Submission
+Reconciliation
+
+============================================================
+37. APPROVAL CENTER
+============================================================
+
+This is one of the most important screens.
+
+Approval Center should display:
+
+Pending
+Approved
+Rejected
+Cancelled
+Expired where applicable
+
+Columns:
+
+Request Type
+Reference
+Requested By
+Date
+Amount/Change
+Reason
+Status
+Action
+
+Examples:
+
+Stock Adjustment
+Discount Override
+Price Change
+Credit Override
+FEFO Override
+Prescription Exception
+Clinical Warning Override
+Controlled Medicine Exception
+Return
+Purchase Order
+Stock Disposal
+
+Approval detail:
+
+Original value/action
+Requested value/action
+Reason
+Requester
+Date/time
+Supporting information
+
+Actions:
+
+[ Approve ]
+
+[ Reject ]
+
+If rejected:
+
+Reason is required.
+
+============================================================
+38. AUDIT TRAIL UI
+============================================================
+
+Audit list:
+
+Date/Time
+User
+Action
+Module
+Record
+Before
+After
+Reason
+IP/session information if configured
+
+Examples:
+
+PRICE CHANGED
+
+Before:
+100 ETB
+
+After:
+120 ETB
+
+Changed by:
+User X
+
+Reason:
+Supplier price update
+
+Approval:
+Approved by User Y
+
+Audit information should not be casually editable.
+
+============================================================
+39. NOTIFICATION CENTER
+============================================================
+
+Notification types may include:
+
+Low Stock
+Out of Stock
+Near Expiry
+Expired
+Recalled Product
+Pending Prescription
+Purchase Order Approval
+Stock Discrepancy
+Credit Breach
+Supplier Payment
+Stock Adjustment
+System Event
+
+Notification should contain:
+
+Title
+Message
+Severity
+Date/time
+Read/unread
+Related record
+
+Clicking notification should navigate to the relevant record when
+authorized.
+
+============================================================
+40. REPORTING UI
+============================================================
+
+Reports should have:
+
+Report title
+Filters
+Date range
+Branch
+Warehouse
+Product
+Batch
+Customer
+Supplier
+User
+Category
+
+Actions:
+
+[ Generate ]
+
+[ Export Excel ]
+
+[ Export PDF ]
+
+[ Export CSV ]
+
+Reports should be based on real operational data.
+
+Required sales reports include:
+
+Daily
+Weekly
+Monthly
+Quarterly
+Yearly
+By product
+By category
+By branch
+By warehouse
+By customer
+By pharmacist/user
+By payment method
+
+Inventory reports include:
+
+Current stock
+Stock valuation
+Stock movement
+Batch stock
+Near expiry
+Expired
+Damaged
+Quarantined
+Recalled
+Slow-moving
+Fast-moving
+Stock adjustment
+Stock variance
+Warehouse stock
+
+============================================================
+41. IMPORT / EXPORT UI
+============================================================
+
+Import center should support:
+
+Products
+Patients
+Customers
+Suppliers
+Opening Inventory
+Opening Balances where applicable
+
+Workflow:
+
+1. Select import type
+2. Download template
+3. Upload CSV/Excel
+4. Parse file
+5. Validate fields
+6. Detect duplicates
+7. Display preview
+8. Display errors
+9. User confirms
+10. Commit valid records
+11. Show import result
+
+Example:
+
+Total rows: 500
+
+Valid: 482
+Errors: 12
+Duplicates: 6
+
+The user must be able to understand failed rows.
+
+============================================================
+42. USER MANAGEMENT UI
+============================================================
+
+Users list:
+
+Name
+Username
+Role
+Branch Scope
+Warehouse Scope
+Status
+Last Login
+
+User detail:
+
+Profile
+Roles
+Permissions
+Branch Scope
+Warehouse Scope
+Status
+Activity
+
+The UI must support future roles without redesign.
+
+============================================================
+43. ROLE & PERMISSION UI
+============================================================
+
+Role management should represent:
+
+MODULE
+→ RESOURCE
+→ ACTION
+
+Example:
+
+Inventory
+    Stock Adjustment
+        View
+        Create
+        Submit
+        Approve
+        Reject
+        Cancel
+
+Permissions must not be reduced to only:
+
+Can access Inventory = yes/no
+
+The system requires finer-grained permissions.
+
+============================================================
+44. ORGANIZATION / BRANCH UI
+============================================================
+
+Organization:
+
+ABC Pharmacy
+
+Branches:
+
+Piassa
+Megenagna
+
+Branch detail:
+
+Name
+Address
+Contact
+Status
+Warehouses
+Users
+Operational settings
+
+The organization can centrally manage branches while restricting
+user access according to scope.
+
+============================================================
+45. WAREHOUSE & STORAGE LOCATION UI
+============================================================
+
+Warehouse:
+
+Name
+Branch
+Type
+Status
+
+Storage location:
+
+Warehouse
+Code
+Name
+Storage Condition
+Status
+
+The system should warn/prevent incompatible storage assignment
+according to configured rules.
+
+Example:
+
+Product:
+Insulin
+
+Requirement:
+2–8°C
+
+Location:
+Room Temperature
+
+Display:
+
+STORAGE CONDITION WARNING
+
+============================================================
+46. SETTINGS UI
+============================================================
+
+Settings should include configurable business values such as:
+
+- units
+- categories
+- payment methods
+- storage conditions
+- pricing
+- discount rules
+- approval rules
+- expiry thresholds
+- system configuration
+- currency
+- notification configuration
+
+Avoid hardcoding values that the requirements expect to be
+configurable.
+
+============================================================
+47. SEARCH & FILTER UX
+============================================================
+
+All major lists should support:
+
+Search
+Filter
+Sort
+Pagination
+
+Search should be relevant to the entity.
+
+Examples:
+
+Products:
+name, barcode, code, generic name
+
+Patients:
+ID, name, telephone, reference
+
+Customers:
+name, code, telephone
+
+Batches:
+batch number, product
+
+Purchase Orders:
+PO number, supplier
+
+Prescriptions:
+prescription number, patient
+
+Search must respect user permissions and data scope.
+
+============================================================
+48. FORM DESIGN RULES
+============================================================
+
+Forms should:
+
+- group related fields
+- clearly identify required fields
+- validate input
+- show useful errors
+- preserve entered values where possible
+- prevent accidental duplicate submission
+- show confirmation for destructive actions
+- show business warnings before important actions
+
+Do not create giant forms where all fields are mixed together.
+
+Use logical sections.
+
+============================================================
+49. LOADING STATES
+============================================================
+
+Every asynchronous page/action should have a meaningful loading
+state.
+
+Examples:
+
+Loading products...
+Loading prescription...
+Loading stock...
+Submitting purchase order...
+Processing payment...
+Generating report...
+
+Do not leave the screen visually frozen.
+
+============================================================
+50. EMPTY STATES
+============================================================
+
+Empty state should explain why the list is empty.
+
+Bad:
+
+"No data"
+
+Better:
+
+"No purchase orders found for the selected branch and date range."
+
+Where appropriate:
+
+[ Create Purchase Order ]
+
+============================================================
+51. ERROR STATES
+============================================================
+
+Errors must be understandable.
+
+Bad:
+
+500 Internal Server Error
+
+Better:
+
+"Unable to complete the stock transfer because the requested
+quantity is greater than available stock."
+
+The UI should distinguish:
+
+Validation error
+Permission error
+Business rule violation
+Not found
+Conflict
+Server/system error
+
+============================================================
+52. CONFIRMATION DIALOGS
+============================================================
+
+Important destructive or irreversible operations require
+confirmation.
+
+Examples:
+
+Cancel Purchase Order
+Cancel Prescription
+Void Sale
+Delete/Archive Product
+Dispose Stock
+Reject Approval
+Merge Patients
+Complete Recall
+
+Confirmation should explain the consequence.
+
+Example:
+
+"Are you sure you want to dispose 20 units of Batch ABC?
+
+This action will create an inventory movement and audit record."
+
+============================================================
+53. BUSINESS WARNING COMPONENTS
+============================================================
+
+Warnings should be visually distinguishable from normal
+information.
+
+Examples:
+
+LOW STOCK
+
+NEAR EXPIRY
+
+EXPIRED
+
+QUARANTINED
+
+RECALLED
+
+APPROVAL REQUIRED
+
+CREDIT LIMIT EXCEEDED
+
+FEFO OVERRIDE REQUIRED
+
+CLINICAL WARNING
+
+CONTROLLED MEDICINE
+
+The warning should explain the reason and next available action.
+
+============================================================
+54. STATUS BADGES
+============================================================
+
+Statuses should be consistently represented throughout the system.
+
+Examples:
+
+Draft
+Pending
+Approved
+Rejected
+Cancelled
+Completed
+Partially Received
+Partially Dispensed
+Expired
+Quarantined
+Recalled
+Active
+Inactive
+
+Do not use different terminology for the same business state on
+different pages.
+
+============================================================
+55. ROLE-AWARE UI
+============================================================
+
+The UI must dynamically reflect permissions.
+
+Example:
+
+Storekeeper sees:
+
+Inventory
+Receiving
+Transfers
+Stock Counts
+Adjustments
+
+But should not automatically receive:
+
+User Administration
+Financial Administration
+Clinical Verification
+
+Pharmacist sees:
+
+Patients
+Prescriptions
+Dispensing
+Medication History
+Controlled Medicines
+
+But should not automatically receive:
+
+System Administration
+
+Cashier sees:
+
+POS
+Payments
+Customer Transactions
+Authorized Returns
+
+But should not automatically receive:
+
+Clinical Verification
+
+IMPORTANT:
+
+Hiding a button is NOT authorization.
+
+The backend must enforce the permission.
+
+============================================================
+56. BRANCH-AWARE UI
+============================================================
+
+Branch scope must appear clearly.
+
+Example:
+
+Current scope:
+
+ABC Pharmacy
+Piassa Branch
+
+When a record belongs to another branch, the system must not expose
+it unless the user has permission.
+
+For organization-level users:
+
+ABC Pharmacy
+All Branches
+
+Reports should clearly show whether data is:
+
+Current Branch
+Selected Branch
+All Branches
+
+============================================================
+57. INVENTORY VISIBILITY UX
+============================================================
+
+Do not display only:
+
+Stock = 500
+
+The UI should distinguish relevant inventory states.
+
+Example:
+
+Physical Stock: 500
+
+Available: 420
+Reserved: 30
+Quarantined: 20
+Recalled: 20
+Expired: 10
+
+The exact categories displayed must reflect the implemented
+inventory model.
+
+The principle is:
+
+Physical stock is not automatically sellable stock.
+
+============================================================
+58. TRACEABILITY UX
+============================================================
+
+Important records should allow users to follow the business chain.
+
+Example:
+
+Purchase Order
+    ↓
+Goods Receipt
+    ↓
+Batch
+    ↓
+Inventory
+    ↓
+Stock Movement
+    ↓
+Sale / Dispensing
+    ↓
+Payment
+    ↓
+Return if applicable
+
+The UI should provide links between related records.
+
+Example:
+
+Batch AMX-2026-05
+
+[ View Receipt ]
+
+[ View Stock ]
+
+[ View Movements ]
+
+[ View Sales ]
+
+[ View Returns ]
+
+============================================================
+59. AUDIT VISIBILITY
+============================================================
+
+For sensitive records, provide:
+
+[ View History ]
+
+The user can see:
+
+Created
+Modified
+Approved
+Rejected
+Received
+Dispensed
+Returned
+Adjusted
+
+according to permission.
+
+This allows operational users and authorized management users to
+understand what happened without modifying audit history.
+
+============================================================
+60. RESPONSIVE DESIGN
+============================================================
+
+The primary target is desktop/tablet ERP usage.
+
+However, important views should remain usable on smaller screens.
+
+Responsive behavior must not destroy:
+
+- tables
+- forms
+- POS
+- dashboards
+- approval screens
+
+On smaller screens:
+
+Tables may become horizontally scrollable or use responsive
+alternative layouts.
+
+Critical actions must remain accessible.
+
+============================================================
+61. ACCESSIBILITY AND USABILITY
+============================================================
+
+The interface should provide:
+
+- readable text
+- clear labels
+- keyboard-friendly navigation where practical
+- visible focus states
+- understandable errors
+- sufficient contrast
+- confirmation for destructive operations
+- consistent button placement
+- predictable navigation
+
+============================================================
+62. UI SECURITY PRINCIPLES
+============================================================
+
+Never trust frontend state for authorization.
+
+The frontend may hide unauthorized controls.
+
+But the backend must independently enforce:
+
+- permissions
+- branch scope
+- warehouse scope
+- approval requirements
+- business rules
+
+A malicious user must not gain access simply by manually calling
+an API.
+
+============================================================
+63. IMPORTANT UI/BUSINESS DISTINCTIONS
+============================================================
+
+The UI must preserve these distinctions:
+
+Customer ≠ Patient
+
+Purchase Order ≠ Goods Receipt
+
+Goods Receipt ≠ Inventory Movement
+
+Inventory ≠ Payment
+
+Transaction ≠ Audit
+
+Physical Stock ≠ Available Stock
+
+Role ≠ Data Scope
+
+Warning ≠ Approval
+
+Error ≠ Exception
+
+Prescription ≠ Dispensing
+
+Sale ≠ Payment
+
+Return ≠ Automatic Restocking
+
+Recall ≠ Expiry
+
+Quarantine ≠ Disposal
+
+These distinctions must be visible in the UI and reflected in
+workflow design.
+
+============================================================
+64. MAIN USER JOURNEY
+============================================================
+
+A typical pharmacy operation may flow through:
+
+LOGIN
+  ↓
+ROLE/SCOPE DETERMINATION
+  ↓
+DASHBOARD
+  ↓
+BUSINESS MODULE
+  ↓
+SEARCH/SELECT RECORD
+  ↓
+VIEW DETAILS
+  ↓
+PERFORM ACTION
+  ↓
+VALIDATE BUSINESS RULES
+  ↓
+APPROVAL IF REQUIRED
+  ↓
+EXECUTE TRANSACTION
+  ↓
+UPDATE INVENTORY/FINANCIAL STATE
+  ↓
+CREATE AUDIT RECORD
+  ↓
+TRIGGER NOTIFICATIONS IF REQUIRED
+  ↓
+DISPLAY UPDATED RESULT
+
+This pattern should guide the UI throughout the application.
+
+============================================================
+65. CRITICAL VERTICAL UI FLOWS
+============================================================
+
+The development agent must understand these complete journeys.
+
+------------------------------------------------------------
+FLOW A — PROCUREMENT
+------------------------------------------------------------
+
+Replenishment
+→ Supplier
+→ Purchase Order
+→ Submit
+→ Approval if required
+→ Approved
+→ Delivery
+→ Goods Receiving
+→ Batch/Expiry
+→ Warehouse/Location
+→ Inventory Increase
+→ Stock Movement
+→ Audit
+
+------------------------------------------------------------
+FLOW B — PRESCRIPTION DISPENSING
+------------------------------------------------------------
+
+Patient
+→ Prescription
+→ Validation
+→ Medicine Selection
+→ FEFO Allocation
+→ Preparation
+→ Pharmacist Verification
+→ Payment
+→ Dispensing Completion
+→ Inventory Decrease
+→ Receipt/Label
+→ Audit
+
+------------------------------------------------------------
+FLOW C — POS SALE
+------------------------------------------------------------
+
+Customer
+→ Search/Scan Product
+→ Quantity
+→ Pricing
+→ Discount
+→ Approval if required
+→ Payment
+→ Sale Completion
+→ Inventory Decrease
+→ Receipt
+→ Audit
+
+------------------------------------------------------------
+FLOW D — STOCK TRANSFER
+------------------------------------------------------------
+
+Source
+→ Transfer Request
+→ Approval if required
+→ Dispatch
+→ In Transit
+→ Destination Receiving
+→ Inventory Update
+→ Stock Movement
+→ Audit
+
+------------------------------------------------------------
+FLOW E — STOCK ADJUSTMENT
+------------------------------------------------------------
+
+Stock Count
+→ Variance
+→ Adjustment Request
+→ Reason
+→ Approval if required
+→ Inventory Update
+→ Stock Movement
+→ Audit
+
+------------------------------------------------------------
+FLOW F — CUSTOMER RETURN
+------------------------------------------------------------
+
+Original Sale
+→ Return Request
+→ Product/Batch Identification
+→ Inspection
+→ Saleable or Quarantine
+→ Inventory Effect
+→ Refund/Credit Effect
+→ Audit
+
+------------------------------------------------------------
+FLOW G — PRODUCT RECALL
+------------------------------------------------------------
+
+Recall
+→ Identify Batch
+→ Locate Stock
+→ Quarantine
+→ Identify affected transactions where traceability exists
+→ Return/Dispose
+→ Reconcile
+→ Complete Recall
+→ Audit
+
+============================================================
+66. PAGE INVENTORY
+============================================================
+
+The initial UI specification should cover at least these pages.
+
+DASHBOARD
+- role dashboards
+
+OPERATIONS
+- POS
+- Sales
+- Prescriptions
+- Dispensing
+- Returns
+- Stock Requests
+
+PHARMACY
+- Products
+- Patients
+- Prescribers
+- Medication History
+- Controlled Medicines
+
+INVENTORY
+- Stock Overview
+- Batches
+- Stock Movements
+- Warehouses
+- Storage Locations
+- Stock Transfers
+- Stock Counts
+- Stock Adjustments
+- Quarantine
+- Expiry Management
+- Product Recall
+
+PROCUREMENT
+- Suppliers
+- Purchase Orders
+- Goods Receiving
+- Supplier Returns
+- Replenishment
+
+CUSTOMERS
+- Customers
+- Customer Groups
+- Credit Accounts
+- Customer Transactions
+
+FINANCE
+- Payments
+- Receivables
+- Supplier Payables
+- Refunds
+- Profitability
+
+REPORTS
+- Sales Reports
+- Inventory Reports
+- Procurement Reports
+- Prescription Reports
+- Financial Reports
+- Customer Reports
+- Audit Reports
+
+ADMINISTRATION
+- Users
+- Roles
+- Permissions
+- Approval Center
+- Audit Trail
+- Organization
+- Branches
+
+SETTINGS
+- Warehouses
+- Units
+- Categories
+- Pricing
+- Payment Methods
+- Storage Conditions
+- Currency
+- System Configuration
+
+NOTIFICATIONS
+- Notification Center
+
+============================================================
+67. IMPLEMENTATION ORDER FOR UI
+============================================================
+
+Do NOT implement all pages simultaneously.
+
+Recommended order:
+
+PHASE 1
+
+Application shell
+→ Login
+→ Sidebar
+→ Top bar
+→ User menu
+→ Permission-aware navigation
+→ Branch selector
+
+PHASE 2
+
+Core master data:
+
+Products
+Patients
+Customers
+Suppliers
+Branches
+Warehouses
+Storage Locations
+
+PHASE 3
+
+Inventory:
+
+Stock
+Batches
+Movements
+Transfers
+Counts
+Adjustments
+
+PHASE 4
+
+Procurement:
+
+Purchase Orders
+Approval
+Goods Receiving
+Supplier Returns
+
+PHASE 5
+
+Sales:
+
+POS
+Payments
+Customer Credit
+Returns
+
+PHASE 6
+
+Pharmacy:
+
+Prescriptions
+Validation
+Dispensing
+Pharmacist Verification
+Refills
+Controlled Medicines
+
+PHASE 7
+
+Advanced operational controls:
+
+Quarantine
+Expiry
+Recall
+Approvals
+Notifications
+
+PHASE 8
+
+Management:
+
+Reports
+Dashboards
+Profitability
+Audit
+Import/Export
+
+============================================================
+68. UI IMPLEMENTATION RULES FOR THE AI AGENT
+============================================================
+
+The agent MUST:
+
+1. Reuse consistent components.
+
+2. Avoid creating separate visual patterns for every page.
+
+3. Use reusable:
+   - tables
+   - forms
+   - modals
+   - status badges
+   - alerts
+   - filters
+   - pagination
+   - detail panels
+   - approval cards
+
+4. Keep business logic out of purely presentational components where
+   possible.
+
+5. Use permission-aware actions.
+
+6. Use real API data.
+
+7. Handle loading states.
+
+8. Handle empty states.
+
+9. Handle errors.
+
+10. Handle permission-denied states.
+
+11. Handle validation errors.
+
+12. Handle business-rule conflicts.
+
+13. Confirm destructive actions.
+
+14. Prevent duplicate submissions.
+
+15. Preserve traceability.
+
+============================================================
+69. WHAT THE AGENT MUST NOT DO
+============================================================
+
+DO NOT:
+
+- invent new business workflows
+- invent new roles
+- invent permissions without checking previous stages
+- create fake dashboard statistics
+- create fake inventory calculations
+- hardcode branch access
+- hardcode approval authority
+- automatically approve sensitive actions
+- allow frontend-only authorization
+- automatically restock every return
+- treat quarantined stock as available
+- allow expired products to be normally sold/dispensed
+- bypass FEFO without appropriate rule/approval
+- treat patients as customers
+- treat prescriptions as normal POS transactions
+- treat purchase orders as inventory
+- treat payments as sales
+- silently modify inventory
+- silently modify financial balances
+- remove audit history
+- hide business-rule failures behind generic errors
+
+============================================================
+70. ACCEPTANCE CRITERIA FOR STAGE 06
+============================================================
+
+Stage 06 is considered correctly understood when the development
+agent can explain:
+
+1. What the global application layout looks like.
+
+2. What each major sidebar module represents.
+
+3. How dashboards differ by role.
+
+4. How permissions affect visible actions.
+
+5. How branch scope affects visible data.
+
+6. How warehouse scope affects visible data.
+
+7. How products and batches are displayed.
+
+8. How inventory is displayed.
+
+9. How procurement is represented.
+
+10. How receiving is represented.
+
+11. How prescriptions are represented.
+
+12. How dispensing is represented.
+
+13. How pharmacist verification is represented.
+
+14. How POS is represented.
+
+15. How payments are represented.
+
+16. How returns are represented.
+
+17. How transfers are represented.
+
+18. How stock adjustments are represented.
+
+19. How quarantine is represented.
+
+20. How expiry is represented.
+
+21. How recall is represented.
+
+22. How approvals are represented.
+
+23. How audit is represented.
+
+24. How notifications are represented.
+
+25. How reports are represented.
+
+26. How import/export is represented.
+
+27. How loading, empty and error states work.
+
+28. How the UI follows the actual business workflows.
+
+29. How the UI avoids inventing unsupported functionality.
+
+30. How frontend authorization differs from backend authorization.
+
+============================================================
+71. FINAL RULE
+============================================================
+
+The interface is NOT the system.
+
+The UI is a representation of the business system.
+
+Therefore:
+
+Business Rules
+      ↓
+Domain Model
+      ↓
+Backend Services
+      ↓
+API
+      ↓
+UI
+      ↓
+User Action
+
+NOT:
+
+UI
+      ↓
+Guess what backend should do
+
+The AI development agent must always work from the business
+requirements defined in Stages 01–06.
+
+============================================================
+END OF STAGE 06
+============================================================

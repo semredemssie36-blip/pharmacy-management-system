@@ -1,0 +1,2852 @@
+============================================================
+STAGE 09 — API & BACKEND CONTRACT
+============================================================
+
+Project:
+Pharmacy Management System
+
+Purpose:
+This document defines the API and backend contract between the React
+frontend and the Node.js/Express backend.
+
+This stage translates the business requirements into a controlled
+backend architecture.
+
+IMPORTANT:
+
+The backend is the authoritative source for:
+
+- Authentication
+- Authorization
+- Branch/warehouse scope
+- Validation
+- Business rules
+- Approval rules
+- Inventory changes
+- Financial effects
+- Prescription rules
+- FEFO
+- Returns
+- Stock transfers
+- Audit
+- Notifications
+- Transaction integrity
+
+The frontend must never be trusted to enforce these rules by itself.
+
+
+============================================================
+1. TECHNOLOGY ARCHITECTURE
+============================================================
+
+Frontend:
+
+- React
+- Vite
+- Tailwind CSS
+- React Router
+
+Backend:
+
+- Node.js
+- Express.js
+
+Database:
+
+- MySQL
+
+Architecture:
+
+React Frontend
+      ↓
+REST API
+      ↓
+Express Routes
+      ↓
+Authentication Middleware
+      ↓
+Authorization Middleware
+      ↓
+Validation
+      ↓
+Controller
+      ↓
+Service / Business Logic
+      ↓
+Repository / Data Access
+      ↓
+MySQL
+
+
+============================================================
+2. BACKEND RESPONSIBILITIES
+============================================================
+
+The backend must be responsible for:
+
+1. Authentication
+2. User identity
+3. Role resolution
+4. Permission checking
+5. Branch scope checking
+6. Warehouse scope checking
+7. Input validation
+8. Business rule validation
+9. Status transition validation
+10. Approval handling
+11. Inventory calculations
+12. FEFO allocation
+13. Payment processing records
+14. Customer balance calculations
+15. Supplier balance calculations
+16. Prescription validation
+17. Dispensing rules
+18. Stock movement creation
+19. Audit logging
+20. Notification creation
+21. Reporting queries
+22. Search
+23. Import validation
+24. Export authorization
+25. Database transactions
+26. Error handling
+
+
+============================================================
+3. API BASE STRUCTURE
+============================================================
+
+Use a versioned API.
+
+Recommended:
+
+/api/v1
+
+
+Examples:
+
+GET    /api/v1/products
+
+GET    /api/v1/products/:id
+
+POST   /api/v1/products
+
+PUT    /api/v1/products/:id
+
+DELETE /api/v1/products/:id
+
+
+The exact HTTP method may vary when business actions require a dedicated
+operation.
+
+For example:
+
+POST /api/v1/purchase-orders/:id/submit
+
+POST /api/v1/purchase-orders/:id/approve
+
+
+Do NOT implement sensitive business actions as generic unrestricted
+database updates.
+
+
+============================================================
+4. API RESPONSE FORMAT
+============================================================
+
+Use a consistent JSON response structure.
+
+
+Successful single record:
+
+{
+  "success": true,
+  "data": {
+    "...": "..."
+  }
+}
+
+
+Successful list:
+
+{
+  "success": true,
+  "data": [],
+  "meta": {
+    "page": 1,
+    "perPage": 20,
+    "total": 100,
+    "totalPages": 5
+  }
+}
+
+
+Successful business action:
+
+{
+  "success": true,
+  "message": "Transaction completed successfully.",
+  "data": {
+    "...": "..."
+  }
+}
+
+
+Error:
+
+{
+  "success": false,
+  "error": {
+    "code": "BUSINESS_RULE_VIOLATION",
+    "message": "The selected medicine has expired.",
+    "details": {}
+  }
+}
+
+
+The exact response shape may be refined during implementation, but the
+API must remain consistent.
+
+
+============================================================
+5. HTTP STATUS CODES
+============================================================
+
+Use appropriate HTTP status codes.
+
+200:
+Successful request.
+
+201:
+Resource created.
+
+204:
+Successful operation with no response body where appropriate.
+
+400:
+Invalid request.
+
+401:
+Unauthenticated.
+
+403:
+Authenticated but not authorized.
+
+404:
+Resource not found.
+
+409:
+Business conflict or state conflict.
+
+422:
+Validation/business validation failure where appropriate.
+
+500:
+Unexpected server error.
+
+
+The backend must not expose sensitive internal error information.
+
+
+============================================================
+6. AUTHENTICATION API
+============================================================
+
+Recommended endpoints:
+
+POST /api/v1/auth/login
+
+POST /api/v1/auth/logout
+
+GET  /api/v1/auth/me
+
+POST /api/v1/auth/refresh
+
+
+Login must verify:
+
+- User exists
+- User is active
+- Credentials are valid
+- Organization access is valid
+
+
+The backend must establish the authenticated user context.
+
+
+Authenticated request context should contain information such as:
+
+- User ID
+- Organization ID
+- Role information
+- Permission information
+- Branch scope
+- Warehouse scope
+
+
+Do not trust organization, branch, or user IDs sent by the frontend when
+those values can be determined from authenticated server-side context.
+
+
+============================================================
+7. AUTHORIZATION MODEL
+============================================================
+
+Use:
+
+MODULE → RESOURCE → ACTION
+
+
+Example:
+
+Inventory
+→ Stock Adjustment
+→ Create
+
+Inventory
+→ Stock Adjustment
+→ Approve
+
+Inventory
+→ Stock Adjustment
+→ View
+
+
+Another example:
+
+Sales
+→ Sale
+→ Create
+
+Sales
+→ Sale
+→ Void
+
+Sales
+→ Discount
+→ Approve
+
+
+Authorization must happen on the backend.
+
+
+============================================================
+8. DATA SCOPE
+============================================================
+
+Authorization has two dimensions:
+
+1. What can the user do?
+2. Which data can the user access?
+
+
+Example:
+
+User has:
+
+Stock → View
+
+But user may only have:
+
+Piassa Branch
+
+Therefore the user can view:
+
+Piassa stock
+
+but not automatically:
+
+Megenagna stock.
+
+
+The backend must apply scope restrictions to queries and mutations.
+
+
+============================================================
+9. ORGANIZATION API
+============================================================
+
+Recommended:
+
+GET    /api/v1/organization
+
+PUT    /api/v1/organization
+
+GET    /api/v1/branches
+
+POST   /api/v1/branches
+
+GET    /api/v1/branches/:id
+
+PUT    /api/v1/branches/:id
+
+PATCH  /api/v1/branches/:id/status
+
+
+Organization/branch information must respect permissions.
+
+
+============================================================
+10. WAREHOUSE API
+============================================================
+
+Recommended:
+
+GET    /api/v1/warehouses
+
+POST   /api/v1/warehouses
+
+GET    /api/v1/warehouses/:id
+
+PUT    /api/v1/warehouses/:id
+
+PATCH  /api/v1/warehouses/:id/status
+
+
+Storage locations:
+
+GET    /api/v1/warehouses/:id/locations
+
+POST   /api/v1/warehouses/:id/locations
+
+GET    /api/v1/locations/:id
+
+PUT    /api/v1/locations/:id
+
+
+The backend must verify that a location belongs to the selected
+warehouse.
+
+
+============================================================
+11. PRODUCT API
+============================================================
+
+Recommended:
+
+GET    /api/v1/products
+
+POST   /api/v1/products
+
+GET    /api/v1/products/:id
+
+PUT    /api/v1/products/:id
+
+PATCH  /api/v1/products/:id/status
+
+
+Search:
+
+GET /api/v1/products/search
+
+
+Search may support:
+
+- Product code/SKU
+- Barcode
+- Brand
+- Generic
+- Active ingredient
+- Category
+- Therapeutic/pharmacological category
+
+
+Product information may include:
+
+- Product code/SKU
+- Barcode
+- Brand
+- Generic
+- Active ingredient
+- Strength
+- Dosage form
+- Route
+- Category
+- Manufacturer
+- Country of origin
+- Registration number
+- Description
+- Prescription classification
+- Controlled/restricted classification
+- Antibiotic classification
+- Storage requirement
+- Minimum stock
+- Maximum stock
+- Reorder level
+
+
+The product master requirements explicitly include these product
+attributes and classifications.
+
+
+============================================================
+12. PRODUCT UNIT API
+============================================================
+
+Recommended:
+
+GET  /api/v1/products/:id/units
+
+POST /api/v1/products/:id/units
+
+PUT  /api/v1/products/:id/units/:unitId
+
+DELETE /api/v1/products/:id/units/:unitId
+
+
+Support configurable relationships such as:
+
+Carton
+Box/Pack
+Strip
+Bottle
+Piece/Tablet/Capsule
+
+
+The backend must validate unit conversions before using them in
+transactions.
+
+
+============================================================
+13. PATIENT API
+============================================================
+
+Recommended:
+
+GET    /api/v1/patients
+
+POST   /api/v1/patients
+
+GET    /api/v1/patients/:id
+
+PUT    /api/v1/patients/:id
+
+PATCH  /api/v1/patients/:id/status
+
+
+Search:
+
+GET /api/v1/patients/search
+
+
+Search may support:
+
+- Patient ID
+- Name
+- Telephone
+- Identification/reference number
+- Other configured identifiers
+
+
+Patient detail should provide access to applicable history:
+
+- Prescription history
+- Dispensing history
+- Medication history
+- Refill history
+- Returned medicines
+- Pharmacist notes
+- Payment/transaction history where applicable
+
+
+============================================================
+14. PATIENT DUPLICATE / MERGE API
+============================================================
+
+Recommended:
+
+GET  /api/v1/patients/duplicates
+
+POST /api/v1/patients/:id/merge
+
+
+Merge must be restricted to authorized users.
+
+
+IMPORTANT:
+
+Patient merging must preserve relevant historical transactions.
+
+
+The backend must not simply delete one patient and lose history.
+
+
+============================================================
+15. PRESCRIBER API
+============================================================
+
+Recommended:
+
+GET    /api/v1/prescribers
+
+POST   /api/v1/prescribers
+
+GET    /api/v1/prescribers/:id
+
+PUT    /api/v1/prescribers/:id
+
+PATCH  /api/v1/prescribers/:id/status
+
+
+Prescribers may be linked to prescriptions.
+
+
+============================================================
+16. PRESCRIPTION API
+============================================================
+
+Recommended:
+
+GET    /api/v1/prescriptions
+
+POST   /api/v1/prescriptions
+
+GET    /api/v1/prescriptions/:id
+
+PUT    /api/v1/prescriptions/:id
+
+POST   /api/v1/prescriptions/:id/validate
+
+POST   /api/v1/prescriptions/:id/cancel
+
+GET    /api/v1/prescriptions/:id/refills
+
+
+Prescription status must follow the business lifecycle defined in
+Stage 08.
+
+
+The backend must validate:
+
+- Patient
+- Prescriber
+- Validity
+- Medicine
+- Strength
+- Quantity
+- Dosage
+- Refill authorization
+- Restrictions
+
+
+============================================================
+17. DISPENSING API
+============================================================
+
+Recommended:
+
+POST /api/v1/dispensing
+
+GET  /api/v1/dispensing
+
+GET  /api/v1/dispensing/:id
+
+POST /api/v1/dispensing/:id/allocate
+
+POST /api/v1/dispensing/:id/verify
+
+POST /api/v1/dispensing/:id/reject
+
+POST /api/v1/dispensing/:id/complete
+
+POST /api/v1/dispensing/:id/cancel
+
+
+The backend must enforce:
+
+- Prescription validity
+- Patient
+- Medicine
+- Quantity
+- Available stock
+- FEFO
+- Expiry rules
+- Near-expiry rules
+- Controlled medicine rules
+- Pharmacist verification
+- Payment/completion rules where applicable
+
+
+============================================================
+18. FEFO API / SERVICE
+============================================================
+
+FEFO should primarily be a backend business service rather than a
+frontend calculation.
+
+
+Conceptual service:
+
+allocateStock(productId, quantity, warehouseId)
+
+
+The service must:
+
+1. Find eligible stock
+2. Exclude expired stock
+3. Exclude unavailable stock
+4. Apply configured near-expiry policy
+5. Sort eligible batches by expiry
+6. Allocate required quantity
+7. Reserve selected stock
+8. Record allocation
+9. Return allocation result
+
+
+The frontend must not calculate the authoritative FEFO allocation.
+
+
+============================================================
+19. INVENTORY API
+============================================================
+
+Recommended:
+
+GET /api/v1/inventory
+
+GET /api/v1/inventory/:productId
+
+GET /api/v1/inventory/by-batch
+
+GET /api/v1/inventory/by-warehouse
+
+GET /api/v1/inventory/by-location
+
+
+Inventory filters:
+
+- Product
+- Batch
+- Expiry
+- Warehouse
+- Location
+- Status
+- Branch
+
+
+The backend must apply data scope.
+
+
+============================================================
+20. STOCK MOVEMENT API
+============================================================
+
+Recommended:
+
+GET /api/v1/stock-movements
+
+GET /api/v1/stock-movements/:id
+
+GET /api/v1/products/:id/stock-movements
+
+GET /api/v1/batches/:id/stock-movements
+
+
+Stock movement records must preserve:
+
+- Product
+- Batch
+- Quantity
+- Movement type
+- Source
+- Destination where applicable
+- User
+- Date/time
+- Reason
+- Related transaction
+
+
+Movement types may include:
+
+- Purchase
+- Receipt
+- Sale
+- Dispensing
+- Transfer
+- Return
+- Adjustment
+- Damage
+- Expiry
+- Recall
+- Disposal
+- Other configured movement
+
+
+Stock movement should normally be created by business services, not by
+a normal user manually editing the ledger.
+
+
+============================================================
+21. BATCH API
+============================================================
+
+Recommended:
+
+GET /api/v1/batches
+
+GET /api/v1/batches/:id
+
+GET /api/v1/products/:id/batches
+
+GET /api/v1/batches/:id/movements
+
+
+Batch must preserve:
+
+- Batch number
+- Product
+- Manufacturing date where available
+- Expiry date
+- Supplier
+- Purchase transaction
+- Warehouse/location
+- Quantity received
+- Quantity sold/dispensed
+- Quantity returned
+- Quantity remaining
+
+
+============================================================
+22. STOCK COUNT API
+============================================================
+
+Recommended:
+
+GET  /api/v1/stock-counts
+
+POST /api/v1/stock-counts
+
+GET  /api/v1/stock-counts/:id
+
+POST /api/v1/stock-counts/:id/start
+
+POST /api/v1/stock-counts/:id/complete
+
+POST /api/v1/stock-counts/:id/submit
+
+POST /api/v1/stock-counts/:id/approve
+
+POST /api/v1/stock-counts/:id/reject
+
+POST /api/v1/stock-counts/:id/apply
+
+
+The backend must calculate variance.
+
+
+The frontend must not be the authoritative source for final inventory
+variance.
+
+
+============================================================
+23. STOCK ADJUSTMENT API
+============================================================
+
+Recommended:
+
+GET  /api/v1/stock-adjustments
+
+POST /api/v1/stock-adjustments
+
+GET  /api/v1/stock-adjustments/:id
+
+POST /api/v1/stock-adjustments/:id/submit
+
+POST /api/v1/stock-adjustments/:id/approve
+
+POST /api/v1/stock-adjustments/:id/reject
+
+POST /api/v1/stock-adjustments/:id/apply
+
+
+The backend must enforce:
+
+- Permission
+- Branch/warehouse scope
+- Reason
+- Before quantity
+- Adjustment quantity
+- Approval requirement
+- Inventory availability
+- Audit
+- Stock movement
+
+
+============================================================
+24. STOCK TRANSFER API
+============================================================
+
+Recommended:
+
+GET  /api/v1/stock-transfers
+
+POST /api/v1/stock-transfers
+
+GET  /api/v1/stock-transfers/:id
+
+POST /api/v1/stock-transfers/:id/submit
+
+POST /api/v1/stock-transfers/:id/approve
+
+POST /api/v1/stock-transfers/:id/dispatch
+
+POST /api/v1/stock-transfers/:id/receive
+
+POST /api/v1/stock-transfers/:id/cancel
+
+
+Backend must verify:
+
+- Source scope
+- Destination validity
+- Product
+- Batch
+- Quantity
+- Available stock
+- Transfer status
+- Permission
+- Approval requirement
+
+
+Both source and destination effects must be traceable.
+
+
+============================================================
+25. PROCUREMENT API
+============================================================
+
+Supplier:
+
+GET    /api/v1/suppliers
+
+POST   /api/v1/suppliers
+
+GET    /api/v1/suppliers/:id
+
+PUT    /api/v1/suppliers/:id
+
+PATCH  /api/v1/suppliers/:id/status
+
+
+Purchase Orders:
+
+GET    /api/v1/purchase-orders
+
+POST   /api/v1/purchase-orders
+
+GET    /api/v1/purchase-orders/:id
+
+PUT    /api/v1/purchase-orders/:id
+
+POST   /api/v1/purchase-orders/:id/submit
+
+POST   /api/v1/purchase-orders/:id/approve
+
+POST   /api/v1/purchase-orders/:id/reject
+
+POST   /api/v1/purchase-orders/:id/cancel
+
+
+The backend must enforce the Purchase Order state machine.
+
+
+============================================================
+26. GOODS RECEIVING API
+============================================================
+
+Recommended:
+
+GET  /api/v1/goods-receipts
+
+POST /api/v1/goods-receipts
+
+GET  /api/v1/goods-receipts/:id
+
+POST /api/v1/goods-receipts/:id/complete
+
+POST /api/v1/goods-receipts/:id/cancel
+
+
+Receiving must support:
+
+- Partial receipts
+- Multiple shipments
+- Batch
+- Expiry
+- Delivered quantity
+- Outstanding quantity
+- Discrepancy
+
+
+When a receipt is successfully completed, the backend must create the
+appropriate inventory and stock movement effects.
+
+
+============================================================
+27. SUPPLIER RETURN API
+============================================================
+
+Recommended:
+
+GET  /api/v1/supplier-returns
+
+POST /api/v1/supplier-returns
+
+GET  /api/v1/supplier-returns/:id
+
+POST /api/v1/supplier-returns/:id/submit
+
+POST /api/v1/supplier-returns/:id/approve
+
+POST /api/v1/supplier-returns/:id/send
+
+POST /api/v1/supplier-returns/:id/complete
+
+
+Must preserve:
+
+- Supplier
+- Product
+- Batch
+- Quantity
+- Reason
+- Supplier acknowledgment
+- Inventory effect
+- Financial effect
+
+
+============================================================
+28. SALES / POS API
+============================================================
+
+Recommended:
+
+GET  /api/v1/sales
+
+POST /api/v1/sales
+
+GET  /api/v1/sales/:id
+
+POST /api/v1/sales/:id/confirm
+
+POST /api/v1/sales/:id/complete
+
+POST /api/v1/sales/:id/void
+
+POST /api/v1/sales/:id/cancel
+
+
+Product search for POS:
+
+GET /api/v1/pos/products/search
+
+Barcode:
+
+GET /api/v1/pos/products/barcode/:barcode
+
+
+The backend must calculate:
+
+- Applicable price
+- Quantity
+- Unit conversion
+- Discounts
+- Promotions
+- Taxes where configured
+- Total
+- Available stock
+
+
+The frontend may display calculations but the backend must remain
+authoritative.
+
+
+============================================================
+29. PRICING API
+============================================================
+
+Recommended:
+
+GET  /api/v1/pricing
+
+POST /api/v1/pricing
+
+GET  /api/v1/pricing/:id
+
+PUT  /api/v1/pricing/:id
+
+POST /api/v1/pricing/:id/activate
+
+POST /api/v1/pricing/:id/deactivate
+
+
+Pricing may support:
+
+- Purchase price
+- Selling price
+- Wholesale price
+- Retail price
+- Customer-specific price
+- Price tier
+- Effective date
+- Price history
+
+
+Price changes may require approval according to configured rules.
+
+
+============================================================
+30. DISCOUNT / PROMOTION API
+============================================================
+
+Recommended:
+
+GET  /api/v1/promotions
+
+POST /api/v1/promotions
+
+GET  /api/v1/promotions/:id
+
+PUT  /api/v1/promotions/:id
+
+POST /api/v1/promotions/:id/activate
+
+POST /api/v1/promotions/:id/deactivate
+
+
+Support:
+
+- Discount rules
+- Time-based promotions
+- Quantity-based promotions
+- Bundle offers
+- Free-item promotions
+
+
+The backend must determine whether a promotion is currently valid.
+
+
+============================================================
+31. CUSTOMER API
+============================================================
+
+Recommended:
+
+GET    /api/v1/customers
+
+POST   /api/v1/customers
+
+GET    /api/v1/customers/:id
+
+PUT    /api/v1/customers/:id
+
+PATCH  /api/v1/customers/:id/status
+
+
+Customer information may include:
+
+- Customer ID
+- Name
+- Contact information
+- Address
+- Region/territory
+- Customer type
+- Pricing tier
+- Credit limit
+- Payment terms
+- Account status
+
+
+============================================================
+32. CUSTOMER CREDIT API
+============================================================
+
+Recommended:
+
+GET /api/v1/customers/:id/credit
+
+GET /api/v1/customers/:id/receivables
+
+GET /api/v1/customers/:id/transactions
+
+POST /api/v1/customers/:id/credit-override
+
+
+Credit logic must be handled by backend business services.
+
+
+The frontend must not decide:
+
+"Customer is under credit limit."
+
+
+The backend must calculate the authoritative balance and available
+credit.
+
+
+============================================================
+33. PAYMENT API
+============================================================
+
+Recommended:
+
+GET  /api/v1/payments
+
+POST /api/v1/payments
+
+GET  /api/v1/payments/:id
+
+POST /api/v1/payments/:id/refund
+
+POST /api/v1/payments/:id/allocate
+
+
+Support:
+
+- Cash
+- Configured electronic/mobile payment methods
+- Customer payments
+- Supplier payments
+- Partial payments
+- Payment allocation
+- Outstanding balances
+- Receipts
+- Refunds
+
+
+A payment must preserve its allocation history.
+
+
+============================================================
+34. CUSTOMER RETURN API
+============================================================
+
+Recommended:
+
+GET  /api/v1/customer-returns
+
+POST /api/v1/customer-returns
+
+GET  /api/v1/customer-returns/:id
+
+POST /api/v1/customer-returns/:id/inspect
+
+POST /api/v1/customer-returns/:id/approve
+
+POST /api/v1/customer-returns/:id/reject
+
+POST /api/v1/customer-returns/:id/process
+
+
+The backend must determine whether returned stock is:
+
+- Saleable
+- Quarantined
+- Otherwise restricted
+
+
+Do not automatically restock every return.
+
+
+============================================================
+35. QUARANTINE API
+============================================================
+
+Recommended:
+
+GET  /api/v1/quarantine
+
+POST /api/v1/quarantine
+
+GET  /api/v1/quarantine/:id
+
+POST /api/v1/quarantine/:id/review
+
+POST /api/v1/quarantine/:id/release
+
+POST /api/v1/quarantine/:id/supplier-return
+
+POST /api/v1/quarantine/:id/dispose
+
+
+Backend must enforce stock status transitions and permissions.
+
+
+============================================================
+36. EXPIRY API
+============================================================
+
+Recommended:
+
+GET /api/v1/expiry/near
+
+GET /api/v1/expiry/expired
+
+GET /api/v1/expiry/reports
+
+
+Expiry thresholds must be configurable.
+
+
+Expired stock must not be available for sale or dispensing.
+
+
+============================================================
+37. RECALL API
+============================================================
+
+Recommended:
+
+GET  /api/v1/recalls
+
+POST /api/v1/recalls
+
+GET  /api/v1/recalls/:id
+
+POST /api/v1/recalls/:id/notify
+
+POST /api/v1/recalls/:id/record-return
+
+POST /api/v1/recalls/:id/reconcile
+
+POST /api/v1/recalls/:id/complete
+
+
+Recall must be capable of identifying:
+
+- Affected batches
+- Remaining stock
+- Locations
+- Customers/patients where traceability exists
+- Returned quantities
+- Sold/dispensed quantities
+
+
+============================================================
+38. CONTROLLED MEDICINE API
+============================================================
+
+Recommended:
+
+GET /api/v1/controlled-medicines
+
+GET /api/v1/controlled-medicines/register
+
+GET /api/v1/controlled-medicines/movements
+
+GET /api/v1/controlled-medicines/reconciliation
+
+GET /api/v1/controlled-medicines/reports
+
+
+Sensitive controlled-medicine operations require stricter authorization.
+
+
+============================================================
+39. APPROVAL API
+============================================================
+
+The approval engine should be reusable across modules.
+
+
+Recommended:
+
+GET  /api/v1/approvals
+
+GET  /api/v1/approvals/:id
+
+POST /api/v1/approvals/:id/approve
+
+POST /api/v1/approvals/:id/reject
+
+
+Approval records must contain:
+
+- Requesting user
+- Transaction type
+- Transaction ID
+- Original value/action
+- Requested value/action
+- Reason
+- Approver
+- Decision
+- Date/time
+
+
+The approval engine must support configurable approval rules.
+
+
+============================================================
+40. AUDIT API
+============================================================
+
+Recommended:
+
+GET /api/v1/audit-logs
+
+GET /api/v1/audit-logs/:id
+
+
+Audit search/filter:
+
+- User
+- Action
+- Resource
+- Date range
+- Branch
+- Warehouse
+- Transaction
+- Entity
+
+
+Audit data must not be editable through ordinary application APIs.
+
+
+============================================================
+41. NOTIFICATION API
+============================================================
+
+Recommended:
+
+GET  /api/v1/notifications
+
+GET  /api/v1/notifications/unread
+
+POST /api/v1/notifications/:id/read
+
+POST /api/v1/notifications/read-all
+
+
+Notifications may be generated for:
+
+- Low stock
+- Out of stock
+- Overstock
+- Near expiry
+- Expired products
+- Recalled products
+- Pending prescriptions
+- Expired prescriptions
+- Refill availability
+- Pending purchase orders
+- Delayed shipments
+- Credit-limit breaches
+- Overdue customer balances
+- Outstanding supplier payments
+- Stock discrepancies
+- Controlled medicine discrepancies
+
+
+Notifications must be generated from real business events.
+
+
+============================================================
+42. SEARCH API
+============================================================
+
+Global search:
+
+GET /api/v1/search?q=...
+
+
+Advanced search endpoints may exist for:
+
+- Products
+- Patients
+- Prescriptions
+- Customers
+- Suppliers
+- Batches
+- Barcodes
+- Stock movements
+
+
+Search should support where applicable:
+
+- Date
+- Status
+- Branch
+- Warehouse
+- Product
+- Customer
+- Supplier
+- User
+- Category
+
+
+Large result sets must support:
+
+- Pagination
+- Sorting
+- Filtering
+
+
+============================================================
+43. REPORT API
+============================================================
+
+Recommended:
+
+GET /api/v1/reports/sales
+
+GET /api/v1/reports/inventory
+
+GET /api/v1/reports/procurement
+
+GET /api/v1/reports/prescriptions
+
+GET /api/v1/reports/financial
+
+GET /api/v1/reports/customers
+
+GET /api/v1/reports/audit
+
+
+Reports must support applicable filters:
+
+- Date
+- Branch
+- Warehouse
+- Product
+- Batch
+- Customer
+- Supplier
+- User
+- Category
+
+
+Authorized users may export supported reports.
+
+
+Supported formats:
+
+- Excel
+- PDF
+- CSV where applicable
+
+
+============================================================
+44. INSURANCE API
+============================================================
+
+Where required:
+
+GET  /api/v1/insurance/companies
+
+POST /api/v1/insurance/companies
+
+GET  /api/v1/patients/:id/insurance
+
+POST /api/v1/patients/:id/insurance
+
+GET  /api/v1/claims
+
+POST /api/v1/claims
+
+GET  /api/v1/claims/:id
+
+POST /api/v1/claims/:id/reconcile
+
+
+Support:
+
+- Insurance company
+- Patient insurance
+- Membership/reference number
+- Covered medicine
+- Non-covered medicine
+- Co-payment
+- Insurance-covered amount
+- Claim preparation
+- Claim status
+- Claim reconciliation
+
+
+============================================================
+45. CURRENCY API
+============================================================
+
+Where applicable:
+
+GET  /api/v1/currencies
+
+POST /api/v1/exchange-rates
+
+GET  /api/v1/exchange-rates
+
+
+Imported products may use:
+
+- Foreign-currency purchase
+- Local-currency sales
+- Transaction-level exchange rate
+- Management reporting conversion
+
+
+The exchange rate used by a transaction must be preserved with the
+transaction.
+
+
+============================================================
+46. IMPORT API
+============================================================
+
+Recommended:
+
+POST /api/v1/imports/products
+
+POST /api/v1/imports/patients
+
+POST /api/v1/imports/customers
+
+POST /api/v1/imports/suppliers
+
+POST /api/v1/imports/opening-inventory
+
+POST /api/v1/imports/opening-balances
+
+
+Recommended lifecycle:
+
+Upload
+  ↓
+Parse
+  ↓
+Validate
+  ↓
+Duplicate Detection
+  ↓
+Preview
+  ↓
+Confirm
+  ↓
+Commit
+  ↓
+Result
+
+
+The backend must perform the actual validation.
+
+
+============================================================
+47. API VALIDATION PIPELINE
+============================================================
+
+Every protected API request should conceptually pass through:
+
+HTTP Request
+     ↓
+Authentication
+     ↓
+Authorization
+     ↓
+Scope Validation
+     ↓
+Request Validation
+     ↓
+Business Validation
+     ↓
+Controller
+     ↓
+Service
+     ↓
+Repository
+     ↓
+Database
+     ↓
+Audit / Event
+     ↓
+Response
+
+
+Sensitive transactions must not skip these layers.
+
+
+============================================================
+48. CONTROLLER RESPONSIBILITY
+============================================================
+
+Controllers should remain relatively thin.
+
+Controller responsibilities:
+
+- Receive request
+- Read authenticated user
+- Validate request structure
+- Call appropriate service
+- Return response
+
+
+Controllers should NOT contain large amounts of complex business logic.
+
+
+Bad:
+
+Controller contains:
+
+- FEFO calculation
+- Inventory calculation
+- Payment calculation
+- Approval logic
+- Audit logic
+- SQL
+- Notification logic
+
+
+Better:
+
+Controller
+  ↓
+Business Service
+  ↓
+Supporting services
+  ↓
+Repository
+
+
+============================================================
+49. SERVICE LAYER RESPONSIBILITY
+============================================================
+
+Services contain business rules.
+
+
+Examples:
+
+ProductService
+InventoryService
+StockMovementService
+PurchaseOrderService
+GoodsReceiptService
+SalesService
+DispensingService
+PaymentService
+ReturnService
+TransferService
+ApprovalService
+AuditService
+NotificationService
+ReportService
+
+
+Example:
+
+SalesService.completeSale()
+
+
+may coordinate:
+
+- Price calculation
+- Discount validation
+- Stock validation
+- FEFO allocation
+- Inventory update
+- Payment
+- Customer balance
+- Stock movement
+- Audit
+- Notification
+
+
+============================================================
+50. INVENTORY SERVICE
+============================================================
+
+Inventory must have a dedicated business service.
+
+
+Possible operations:
+
+getAvailableStock()
+
+reserveStock()
+
+releaseReservedStock()
+
+increaseStock()
+
+decreaseStock()
+
+transferStock()
+
+adjustStock()
+
+quarantineStock()
+
+releaseQuarantine()
+
+disposeStock()
+
+recallStock()
+
+
+Direct inventory manipulation from unrelated controllers must be avoided.
+
+
+============================================================
+51. STOCK MOVEMENT SERVICE
+============================================================
+
+Every actual stock movement must be traceable.
+
+
+Possible operation:
+
+recordMovement()
+
+
+Required information:
+
+- Product
+- Batch
+- Quantity
+- Movement type
+- Source
+- Destination
+- User
+- Date/time
+- Reason
+- Related transaction
+
+
+The stock movement ledger should be treated as a critical audit/history
+component.
+
+
+============================================================
+52. APPROVAL SERVICE
+============================================================
+
+The approval service should provide reusable functionality.
+
+
+Possible operations:
+
+checkApprovalRequired()
+
+createApprovalRequest()
+
+approveRequest()
+
+rejectRequest()
+
+getPendingApprovals()
+
+
+The service must be configurable.
+
+
+Do not create a separate hardcoded approval implementation for every
+module if the same approval architecture can be reused.
+
+
+============================================================
+53. AUDIT SERVICE
+============================================================
+
+Possible operation:
+
+recordAudit()
+
+
+Audit service should support:
+
+- Actor
+- Action
+- Resource
+- Resource ID
+- Before state where applicable
+- After state where applicable
+- Reason
+- Timestamp
+- Related transaction
+
+
+Audit records should be created by backend business operations.
+
+
+============================================================
+54. NOTIFICATION SERVICE
+============================================================
+
+Possible operations:
+
+createNotification()
+
+notifyUser()
+
+notifyRole()
+
+notifyBranch()
+
+notifyOrganization()
+
+
+Notifications should be generated from actual business events.
+
+
+Example:
+
+Inventory falls below reorder level
+
+→ Inventory event
+
+→ Notification service
+
+→ Low-stock notification
+
+
+============================================================
+55. DATABASE TRANSACTIONS
+============================================================
+
+Critical business operations must use database transactions.
+
+
+Example:
+
+Complete sale:
+
+BEGIN
+
+Create sale
+Create sale items
+Validate stock
+Reserve/allocate stock
+Update inventory
+Create stock movement
+Create payment
+Update receivable
+Create audit
+
+COMMIT
+
+
+If a critical operation fails:
+
+ROLLBACK
+
+
+The API must not return success if critical business effects failed.
+
+
+============================================================
+56. IDEMPOTENCY / DUPLICATE REQUEST PROTECTION
+============================================================
+
+Sensitive transaction APIs should consider duplicate request protection.
+
+
+Example:
+
+User clicks:
+
+"Complete Sale"
+
+twice quickly.
+
+
+The system must not accidentally create:
+
+2 sales
+
+2 payments
+
+2 inventory deductions
+
+
+The implementation should use appropriate transaction/status checks and,
+where necessary, idempotency mechanisms.
+
+
+============================================================
+57. CONCURRENCY CONTROL
+============================================================
+
+The pharmacy system may have multiple users working simultaneously.
+
+
+Example:
+
+Available stock:
+
+10
+
+Cashier A attempts to sell:
+
+8
+
+Cashier B attempts to sell:
+
+7
+
+
+The backend must prevent the system from incorrectly producing:
+
+Available stock = -5
+
+
+Inventory updates must use appropriate database concurrency/transaction
+controls.
+
+
+This is especially important for:
+
+- POS
+- Dispensing
+- Stock transfers
+- Stock adjustments
+- Goods receiving
+
+
+============================================================
+58. ERROR HANDLING
+============================================================
+
+Use consistent application errors.
+
+
+Example codes:
+
+AUTHENTICATION_REQUIRED
+
+PERMISSION_DENIED
+
+SCOPE_DENIED
+
+RESOURCE_NOT_FOUND
+
+VALIDATION_FAILED
+
+INVALID_STATUS_TRANSITION
+
+INSUFFICIENT_STOCK
+
+EXPIRED_PRODUCT
+
+PRESCRIPTION_INVALID
+
+PRESCRIPTION_QUANTITY_EXCEEDED
+
+FEFO_OVERRIDE_REQUIRED
+
+APPROVAL_REQUIRED
+
+APPROVAL_REJECTED
+
+CREDIT_LIMIT_EXCEEDED
+
+DUPLICATE_RECORD
+
+CONFLICT
+
+TRANSACTION_FAILED
+
+
+The exact code list may grow during implementation.
+
+
+============================================================
+59. SECURITY RULES
+============================================================
+
+The backend must:
+
+- Authenticate protected requests
+- Authorize every sensitive operation
+- Validate input
+- Prevent unauthorized branch access
+- Prevent unauthorized warehouse access
+- Prevent SQL injection
+- Protect credentials
+- Protect authentication tokens/session information
+- Avoid exposing sensitive internal errors
+- Validate uploaded files
+- Restrict sensitive operations
+- Log important security/business events
+
+
+Passwords must never be stored as plain text.
+
+
+============================================================
+60. FILE UPLOAD RULES
+============================================================
+
+Prescription supporting documents/images may be uploaded where required.
+
+The backend must validate:
+
+- File type
+- File size
+- Upload permission
+- Associated prescription
+- Storage location
+- Access permission
+
+
+Uploaded documents must not automatically become publicly accessible.
+
+
+============================================================
+61. STATUS ACTION APIs
+============================================================
+
+Avoid generic:
+
+PUT /resource/:id
+
+for every business action.
+
+
+For normal editable fields:
+
+PUT /resource/:id
+
+
+For business actions:
+
+POST /resource/:id/submit
+
+POST /resource/:id/approve
+
+POST /resource/:id/reject
+
+POST /resource/:id/complete
+
+POST /resource/:id/cancel
+
+POST /resource/:id/void
+
+
+This makes business actions explicit and easier to authorize/audit.
+
+
+============================================================
+62. API SCOPE RULE
+============================================================
+
+Every query that returns branch/warehouse-sensitive information must
+apply the authenticated user's scope.
+
+
+Example:
+
+GET /api/v1/inventory
+
+
+The backend must determine:
+
+Which organization?
+
+Which branches?
+
+Which warehouses?
+
+Which locations?
+
+are visible to the current user.
+
+
+Do not rely on:
+
+GET /inventory?branchId=2
+
+
+as the security mechanism.
+
+
+A malicious user could change:
+
+branchId=2
+
+to:
+
+branchId=3
+
+
+Therefore scope must be enforced server-side.
+
+
+============================================================
+63. API RELATIONSHIP RULE
+============================================================
+
+APIs should expose relationships needed by the UI without forcing the
+frontend to reconstruct complex business relationships incorrectly.
+
+
+Example:
+
+Prescription detail may include:
+
+- Patient
+- Prescriber
+- Prescription items
+- Dispensing history
+- Refill information
+- Status
+- Validation history
+
+
+Product detail may include:
+
+- Product information
+- Units
+- Pricing
+- Batches
+- Current stock
+- Related products
+
+
+Sale detail may include:
+
+- Customer
+- Patient where applicable
+- Items
+- Pricing
+- Discounts
+- Payments
+- Stock effects
+- Return information
+
+
+============================================================
+64. PAGINATION
+============================================================
+
+Large operational lists must support pagination.
+
+
+Examples:
+
+- Products
+- Patients
+- Customers
+- Suppliers
+- Sales
+- Stock movements
+- Audit logs
+- Notifications
+- Prescriptions
+
+
+Recommended request:
+
+?page=1&perPage=20
+
+
+The backend must return pagination metadata.
+
+
+============================================================
+65. FILTERING AND SORTING
+============================================================
+
+List APIs should support appropriate filters.
+
+
+Example:
+
+GET /api/v1/inventory?branchId=...&warehouseId=...&status=...
+
+
+Possible filters:
+
+- Date
+- Branch
+- Warehouse
+- Product
+- Batch
+- Status
+- User
+- Customer
+- Supplier
+- Category
+
+
+Sorting must use a controlled list of allowed fields.
+
+
+Do not allow arbitrary database column names directly from user input.
+
+
+============================================================
+66. API BUSINESS CONTRACT RULE
+============================================================
+
+For every important API endpoint, define:
+
+1. Purpose
+2. HTTP method
+3. URL
+4. Authentication requirement
+5. Permission
+6. Scope
+7. Request fields
+8. Validation
+9. Business rules
+10. Status rules
+11. Approval requirement
+12. Database effect
+13. Inventory effect
+14. Financial effect
+15. Audit effect
+16. Notification effect
+17. Response
+18. Error cases
+
+
+============================================================
+67. EXAMPLE — COMPLETE SALE CONTRACT
+============================================================
+
+Endpoint:
+
+POST /api/v1/sales/:id/complete
+
+
+Authentication:
+
+Required.
+
+
+Permission:
+
+Sales → Sale → Complete
+
+
+Scope:
+
+User must have access to the sale's branch/warehouse.
+
+
+Preconditions:
+
+- Sale exists
+- Sale is in a completable status
+- Sale items exist
+- Products are valid
+- Stock is available
+- Pricing is valid
+- Discounts are valid
+- Required prescription exists where applicable
+- Controlled medicine requirements are satisfied
+- Payment requirement is satisfied or credit is authorized
+
+
+Backend actions:
+
+1. Validate user
+2. Validate permission
+3. Validate scope
+4. Validate sale status
+5. Validate products
+6. Validate stock
+7. Apply applicable pricing
+8. Apply discount rules
+9. Validate credit/payment
+10. Allocate stock
+11. Update inventory
+12. Create stock movements
+13. Create payment if applicable
+14. Update customer balance if applicable
+15. Complete sale
+16. Create audit
+17. Create notifications where applicable
+
+
+All critical effects must be transaction-safe.
+
+
+============================================================
+68. EXAMPLE — STOCK ADJUSTMENT CONTRACT
+============================================================
+
+Endpoint:
+
+POST /api/v1/stock-adjustments/:id/apply
+
+
+Authentication:
+
+Required.
+
+
+Permission:
+
+Inventory → Stock Adjustment → Apply
+
+
+Scope:
+
+User must have access to the affected warehouse/location.
+
+
+Preconditions:
+
+- Adjustment exists
+- Adjustment is approved
+- Product exists
+- Batch exists where applicable
+- Location exists
+- Reason exists
+- Current inventory is valid
+
+
+Actions:
+
+1. Verify permission
+2. Verify scope
+3. Verify approval
+4. Lock/validate relevant inventory
+5. Record before quantity
+6. Apply adjustment
+7. Record after quantity
+8. Create stock movement
+9. Create audit
+10. Generate notification if configured
+11. Mark adjustment as applied
+
+
+============================================================
+69. EXAMPLE — GOODS RECEIPT CONTRACT
+============================================================
+
+Endpoint:
+
+POST /api/v1/goods-receipts/:id/complete
+
+
+Preconditions:
+
+- Receipt exists
+- Receipt is not already completed
+- Supplier exists
+- PO exists where required
+- Products are valid
+- Quantities are valid
+- Batch information is valid
+- Expiry information is valid where required
+- Warehouse/location is valid
+- User has permission and scope
+
+
+Actions:
+
+1. Validate receipt
+2. Determine discrepancy
+3. Create/update batch records
+4. Increase inventory
+5. Create stock movement
+6. Update PO received quantities
+7. Update PO status
+8. Record financial visibility
+9. Record audit
+10. Generate notifications where applicable
+
+
+============================================================
+70. EXAMPLE — DISPENSING CONTRACT
+============================================================
+
+Endpoint:
+
+POST /api/v1/dispensing/:id/complete
+
+
+Preconditions:
+
+- Prescription exists
+- Prescription is valid
+- Patient is valid
+- Medicine is valid
+- Quantity does not exceed authorized quantity
+- Stock is available
+- FEFO allocation is valid
+- Expired stock is excluded
+- Near-expiry policy is satisfied
+- Controlled medicine rules are satisfied
+- Pharmacist verification is completed where required
+- Payment/commercial requirements are satisfied
+
+
+Actions:
+
+1. Authenticate
+2. Authorize
+3. Validate scope
+4. Validate prescription
+5. Validate quantity
+6. Validate stock
+7. Apply FEFO
+8. Update batch quantities
+9. Create stock movement
+10. Update dispensing record
+11. Update prescription quantities/status
+12. Record payment where applicable
+13. Record audit
+14. Generate notification where applicable
+
+
+============================================================
+71. API AND FRONTEND RESPONSIBILITY
+============================================================
+
+Frontend responsibilities:
+
+- Display data
+- Collect input
+- Show validation messages
+- Show available actions
+- Hide clearly unavailable UI actions
+- Send API requests
+- Display backend responses
+- Display errors
+- Provide loading states
+- Provide confirmation dialogs
+
+
+Backend responsibilities:
+
+- Authentication
+- Authorization
+- Scope
+- Validation
+- Business rules
+- Status transitions
+- Approval
+- Inventory
+- Financial effects
+- Audit
+- Notifications
+- Transactions
+- Security
+
+
+Frontend must never be the final authority.
+
+
+============================================================
+72. API DEVELOPMENT RULE
+============================================================
+
+Do not build every endpoint before testing business behavior.
+
+Use vertical slices.
+
+
+Example:
+
+Product module:
+
+Database
+  ↓
+Repository
+  ↓
+Service
+  ↓
+Controller
+  ↓
+Route
+  ↓
+Validation
+  ↓
+Permission
+  ↓
+Frontend
+
+
+Test it.
+
+Then move to the next slice.
+
+
+============================================================
+73. API TESTING REQUIREMENTS
+============================================================
+
+Every major business API should have tests for:
+
+Happy path
+
+Validation failure
+
+Permission failure
+
+Scope failure
+
+Invalid status
+
+Insufficient stock
+
+Approval required
+
+Approval rejected
+
+Duplicate request
+
+Concurrent transaction where relevant
+
+Database rollback
+
+Audit creation
+
+
+Example:
+
+Sale completion test:
+
+Valid sale
+→ success
+
+
+Sale with insufficient stock
+→ failure
+
+
+Sale from inaccessible branch
+→ forbidden
+
+
+Expired product
+→ rejected
+
+
+Unauthorized discount
+→ rejected
+
+
+Failed inventory update
+→ transaction rollback
+
+
+============================================================
+74. API DOCUMENTATION
+============================================================
+
+The project should maintain API documentation during implementation.
+
+For each endpoint document:
+
+- Method
+- Path
+- Description
+- Authentication
+- Permission
+- Scope
+- Request body
+- Query parameters
+- Response
+- Errors
+- Business rules
+
+
+An OpenAPI/Swagger specification may be added during implementation if
+useful, but the API contract must exist even before full API tooling is
+introduced.
+
+
+============================================================
+75. NO FAKE API RULE
+============================================================
+
+Do not create endpoints that return fake hardcoded business data just to
+make the frontend look complete.
+
+
+Bad:
+
+GET /dashboard
+
+returns:
+
+{
+  "sales": 120000,
+  "stock": 5000
+}
+
+
+when those numbers are not calculated from actual system data.
+
+
+Dashboard/report values must come from real database/business data.
+
+
+============================================================
+76. NO BUSINESS LOGIC IN RANDOM FRONTEND COMPONENTS
+============================================================
+
+Do not put critical business calculations inside:
+
+- React page components
+- React buttons
+- React forms
+- UI event handlers
+
+
+Example:
+
+Do not make the frontend authoritative for:
+
+- FEFO
+- Available stock
+- Credit limit
+- Discount authorization
+- Prescription quantity
+- Approval status
+- Inventory quantity
+- Financial balance
+
+
+The frontend may calculate/display temporary information, but the backend
+must validate the final transaction.
+
+
+============================================================
+77. API CONTRACT COMPLETENESS CHECKLIST
+============================================================
+
+Before considering the backend contract complete, verify:
+
+[ ] Authentication
+[ ] Authorization
+[ ] Branch scope
+[ ] Warehouse scope
+[ ] Organization scope
+[ ] Product API
+[ ] Unit API
+[ ] Patient API
+[ ] Prescriber API
+[ ] Prescription API
+[ ] Dispensing API
+[ ] Inventory API
+[ ] Batch API
+[ ] Stock Movement API
+[ ] Stock Count API
+[ ] Stock Adjustment API
+[ ] Transfer API
+[ ] Supplier API
+[ ] Purchase Order API
+[ ] Goods Receipt API
+[ ] Supplier Return API
+[ ] Sales/POS API
+[ ] Pricing API
+[ ] Discount/Promotion API
+[ ] Customer API
+[ ] Credit API
+[ ] Payment API
+[ ] Customer Return API
+[ ] Quarantine API
+[ ] Expiry API
+[ ] Recall API
+[ ] Controlled Medicine API
+[ ] Approval API
+[ ] Audit API
+[ ] Notification API
+[ ] Search API
+[ ] Reports API
+[ ] Insurance API
+[ ] Currency API
+[ ] Import API
+[ ] Error handling
+[ ] Transaction handling
+[ ] Concurrency protection
+[ ] Duplicate request protection
+[ ] Security
+[ ] Testing
+
+
+============================================================
+78. IMPLEMENTATION AGENT RULE
+============================================================
+
+Before implementing backend endpoints, the coding agent must read:
+
+- stage-01-system-overview.txt
+- stage-02-actors-permissions.txt
+- stage-03-business-rules-and-workflows.txt
+- stage-04-domain-and-database-architecture.txt
+- stage-05-technical-architecture.txt
+- stage-06-ux-ui-architecture.txt
+- stage-07-detailed-module-specifications.txt
+- stage-08-business-rules-statuses-validations-exceptions.txt
+- stage-09-api-backend-contract.txt
+
+
+The agent must understand the previous stages before writing backend code.
+
+
+The agent must NOT:
+
+- Invent API behavior
+- Skip authorization
+- Skip scope validation
+- Put critical business rules only in React
+- Directly modify inventory without business logic
+- Skip stock movement records
+- Skip audit
+- Skip approval checks
+- Allow invalid status transitions
+- Allow expired medicine to be sold/dispensed
+- Allow dispensing beyond prescription quantity
+- Allow unauthorized refills
+- Allow unauthorized controlled medicine transactions
+- Automatically restock every return
+- Treat quarantined stock as available
+- Treat recalled stock as available
+- Increase stock when a PO is merely approved
+- Ignore partial receiving
+- Ignore partial dispensing
+- Ignore branch/warehouse scope
+- Return fake dashboard/report numbers
+- Return success after a failed critical transaction
+- Expose sensitive internal errors
+
+
+============================================================
+79. FINAL STAGE 09 PRINCIPLE
+============================================================
+
+The API is not just a way to move data between React and Node.js.
+
+It is the controlled gateway through which the pharmacy business operates.
+
+Therefore:
+
+Frontend
+    ↓
+API
+    ↓
+Authentication
+    ↓
+Authorization
+    ↓
+Scope
+    ↓
+Validation
+    ↓
+Business Rules
+    ↓
+Approval
+    ↓
+Transaction
+    ↓
+Inventory / Financial Effects
+    ↓
+Stock Movement
+    ↓
+Audit
+    ↓
+Notification
+    ↓
+Response
+
+
+Every important transaction must follow the appropriate parts of this
+chain.
+
+
+============================================================
+END OF STAGE 09
+============================================================

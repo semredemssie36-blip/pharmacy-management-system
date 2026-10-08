@@ -1,0 +1,1427 @@
+============================================================
+PHARMACY ERP SYSTEM
+STAGE 02 — ACTORS, ROLES, PERMISSIONS & DATA SCOPE
+============================================================
+
+PROJECT:
+Multi-Branch Pharmacy Management / ERP System
+
+IMPORTANT:
+This stage defines the actors, roles, permissions, branch scope,
+warehouse scope, and access-control principles of the system.
+
+DO NOT implement the application yet.
+
+This document is a business and architectural specification.
+Implementation will happen in later stages.
+
+============================================================
+1. PURPOSE
+============================================================
+
+The Pharmacy ERP is a multi-user, multi-branch business system.
+
+Different users must have different responsibilities.
+
+The system must NOT use a simple rule such as:
+
+"User is a Manager, therefore user can access everything."
+
+Instead, access must be determined by:
+
+USER
+ +
+ROLE
+ +
+PERMISSIONS
+ +
+DATA SCOPE
+
+The permission system must be configurable and extensible.
+
+============================================================
+2. CORE ACCESS-CONTROL MODEL
+============================================================
+
+The system should conceptually evaluate access as:
+
+USER
+ ↓
+ROLE(S)
+ ↓
+PERMISSIONS
+ ↓
+DATA SCOPE
+ ↓
+REQUESTED RESOURCE
+ ↓
+ACTION
+ ↓
+ALLOW / DENY / APPROVAL REQUIRED
+
+Example:
+
+Hana
+Role:
+Branch Manager
+
+Scope:
+Piassa Branch
+
+Permission:
+Inventory → Stock Adjustment → Create
+
+Result:
+
+Hana can create a stock adjustment for Piassa within her
+authorized scope.
+
+She should not automatically create an adjustment for
+Megenagna.
+
+============================================================
+3. ROLE != DATA SCOPE
+============================================================
+
+This is one of the most important rules in the system.
+
+ROLE answers:
+
+"What type of work can this user perform?"
+
+DATA SCOPE answers:
+
+"Which organization's data can this user perform that work on?"
+
+Example:
+
+Hana:
+Role = Branch Manager
+Scope = Piassa Branch
+
+Bethlehem:
+Role = Branch Manager
+Scope = Megenagna Branch
+
+Both have the same role.
+
+But they do not necessarily have access to the same branch data.
+
+============================================================
+4. ORGANIZATION STRUCTURE
+============================================================
+
+Organization:
+
+ABC Pharmacy
+
+Branches:
+
+Piassa
+Megenagna
+
+Example:
+
+ABC Pharmacy
+│
+├── Piassa Branch
+│   └── Main Warehouse
+│
+└── Megenagna Branch
+    └── Main Warehouse
+
+A user may have:
+
+- Organization-wide scope
+- Multiple branch scope
+- One branch scope
+- Warehouse scope
+
+The exact scope assigned to a user must be configurable.
+
+============================================================
+5. SAMPLE USERS
+============================================================
+
+Use these users as examples when designing and testing RBAC.
+
+------------------------------------------------------------
+PIASSA BRANCH
+------------------------------------------------------------
+
+Hana
+Role:
+Branch Manager
+
+Scope:
+Piassa Branch
+
+
+Meron
+Role:
+Pharmacist
+
+Scope:
+Piassa Branch
+
+
+Abel
+Role:
+Pharmacy Technician / Dispensing User
+
+Scope:
+Piassa Branch
+
+
+Dawit
+Role:
+Sales / Cashier
+
+Scope:
+Piassa Branch
+
+
+Samuel
+Role:
+Warehouse / Storekeeper
+
+Scope:
+Piassa Branch / Main Warehouse
+
+
+------------------------------------------------------------
+MEGENAGNA BRANCH
+------------------------------------------------------------
+
+Bethlehem
+Role:
+Branch Manager
+
+Scope:
+Megenagna Branch
+
+
+Rahel
+Role:
+Pharmacist
+
+Scope:
+Megenagna Branch
+
+
+Yonas
+Role:
+Pharmacy Technician / Dispensing User
+
+Scope:
+Megenagna Branch
+
+
+Eden
+Role:
+Sales / Cashier
+
+Scope:
+Megenagna Branch
+
+
+Fitsum
+Role:
+Warehouse / Storekeeper
+
+Scope:
+Megenagna Branch / Main Warehouse
+
+
+------------------------------------------------------------
+ORGANIZATION LEVEL
+------------------------------------------------------------
+
+Daniel
+Role:
+System Administrator
+
+Scope:
+Organization
+
+
+Liya
+Role:
+Procurement Officer
+
+Scope:
+Organization or configured branches
+
+
+Selam
+Role:
+Finance User
+
+Scope:
+Organization or configured branches
+
+
+Michael
+Role:
+Management / Reporting User
+
+Scope:
+Organization or configured branches
+
+
+IMPORTANT:
+These assignments are examples for system design.
+The final application must allow administrators to configure
+roles and scopes.
+
+============================================================
+6. REQUIRED SYSTEM ROLES
+============================================================
+
+The system must support at least:
+
+1. System Administrator
+2. Branch Manager
+3. Pharmacist
+4. Pharmacy Technician / Dispensing User
+5. Sales / Cashier
+6. Warehouse / Storekeeper
+7. Procurement Officer
+8. Finance User
+9. Management / Reporting User
+
+Roles must be extensible.
+
+Future roles must be addable without redesigning the
+permission architecture.
+
+============================================================
+7. SYSTEM ADMINISTRATOR
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+System governance and configuration.
+
+Typical responsibilities:
+
+- User management
+- Role management
+- Permission management
+- Branch management
+- Warehouse configuration
+- Organization configuration
+- System settings
+- Approval configuration
+- Audit access
+- Security-related configuration
+
+Potential permissions:
+
+Administration
+- Users → View
+- Users → Create
+- Users → Update
+- Users → Activate/Deactivate
+- Roles → View
+- Roles → Create
+- Roles → Update
+- Roles → Assign
+- Permissions → View
+- Permissions → Configure
+
+Organization
+- Organization → View
+- Branches → View
+- Branches → Create
+- Branches → Update
+- Warehouses → View
+- Warehouses → Create
+- Warehouses → Update
+
+Approvals
+- Approval rules → View
+- Approval rules → Configure
+
+Audit
+- Audit → View
+- Audit → Search
+- Audit → Export
+
+IMPORTANT:
+
+System Administrator access does not automatically mean the
+administrator should perform every operational business action.
+
+Operational responsibilities should remain separately
+controlled where appropriate.
+
+============================================================
+8. BRANCH MANAGER
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Supervise branch operations.
+
+Typical responsibilities:
+
+- Branch dashboard
+- Sales visibility
+- Inventory visibility
+- Procurement visibility
+- Customer visibility
+- Operational approvals
+- Branch reports
+- Stock supervision
+- Business performance
+
+Typical permissions may include:
+
+Dashboard
+- View branch dashboard
+
+Sales
+- View sales
+- View transactions
+- Approve authorized discounts
+- Approve voids where configured
+- View returns
+
+Inventory
+- View stock
+- View stock movements
+- Review stock counts
+- Approve adjustments where configured
+- Approve transfers where configured
+- Review expiry
+- Review quarantine
+- Review recall
+
+Procurement
+- View purchase orders
+- Approve purchase orders where configured
+- View receiving
+
+Reports
+- View branch reports
+- Export authorized reports
+
+IMPORTANT:
+
+The exact approval authority must be configurable.
+
+Do not hard-code "Branch Manager always approves everything."
+
+============================================================
+9. PHARMACIST
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Clinical/pharmacy dispensing governance.
+
+Typical responsibilities:
+
+- Patient information
+- Prescription review
+- Prescription validation
+- Dispensing verification
+- Medication history
+- Controlled medicine handling
+- Clinical exception handling where authorized
+
+Typical permissions:
+
+Patients
+- View patients
+- Create/update patient records where allowed
+
+Prescriptions
+- View prescriptions
+- Create prescriptions where applicable
+- Validate prescriptions
+- Reject/hold prescriptions with reason
+- Review prescription history
+
+Dispensing
+- View dispensing
+- Verify dispensing
+- Complete applicable dispensing workflow
+- Handle authorized clinical exceptions
+
+Controlled Medicines
+- View controlled medicine records
+- Perform authorized controlled medicine actions
+- Review registers
+
+IMPORTANT:
+
+Pharmacist permissions must be distinguishable from
+Pharmacy Technician permissions.
+
+============================================================
+10. PHARMACY TECHNICIAN / DISPENSING USER
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Prepare and process day-to-day dispensing activities under
+appropriate pharmacy controls.
+
+Typical responsibilities:
+
+- Find patient
+- Open prescription
+- Review dispensing items
+- Select medicine
+- Allocate stock
+- Prepare dispensing
+- Send dispensing for pharmacist verification
+
+Permissions may include:
+
+Patients
+- View patients
+- Search patients
+- Create/update where authorized
+
+Prescriptions
+- View prescriptions
+- Prepare dispensing
+
+Inventory
+- View relevant stock
+- View batches
+- View expiry
+- Perform stock allocation
+
+Dispensing
+- Create dispensing preparation
+- Submit for pharmacist verification
+
+IMPORTANT:
+
+The technician should not independently complete an applicable
+dispensing workflow that requires pharmacist verification.
+
+============================================================
+11. SALES / CASHIER
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Process normal sales/POS transactions and payments.
+
+Typical responsibilities:
+
+- Search products
+- Scan barcodes
+- Create sales
+- Apply allowed discounts
+- Receive payment
+- Print/generate receipts
+- Process authorized returns
+- Perform authorized voids
+
+Permissions:
+
+Sales
+- View POS
+- Create sale
+- View sale
+- Complete sale
+- Print receipt
+
+Pricing
+- View selling price
+
+Discounts
+- Apply discount within authorized limit
+
+Payments
+- Record payment
+
+Returns
+- Initiate authorized customer return
+
+Voids
+- Initiate void
+- Approval may be required
+
+IMPORTANT:
+
+A cashier should not automatically have unrestricted ability to
+change prices, inventory, or approve their own sensitive actions.
+
+============================================================
+12. WAREHOUSE / STOREKEEPER
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Physical inventory operations.
+
+Typical responsibilities:
+
+- Receive goods
+- Record batches
+- Record expiry
+- Manage warehouse stock
+- Manage storage locations
+- Dispatch transfers
+- Receive transfers
+- Perform stock counts
+- Initiate adjustments
+- Handle quarantine
+- Handle expiry
+- Handle recall operations
+
+Permissions:
+
+Inventory
+- View stock
+- View batches
+- View locations
+- View stock movements
+
+Receiving
+- Create receiving record
+- Record received quantities
+- Record batch
+- Record expiry
+- Record storage location
+
+Transfers
+- Prepare dispatch
+- Dispatch stock
+- Receive transfer
+
+Stock Counts
+- Create count
+- Record physical quantity
+- Submit count
+
+Adjustments
+- Create adjustment request
+- Submit adjustment
+- Cannot necessarily approve own adjustment
+
+Quarantine
+- Move stock to quarantine where authorized
+- View quarantined stock
+- Process authorized quarantine actions
+
+IMPORTANT:
+
+Physical inventory operations must be auditable.
+
+============================================================
+13. PROCUREMENT OFFICER
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Purchasing and supplier management.
+
+Typical responsibilities:
+
+- Suppliers
+- Purchase orders
+- Replenishment
+- Purchase planning
+- Supplier returns
+- Procurement monitoring
+
+Permissions:
+
+Suppliers
+- View
+- Create
+- Update
+
+Purchase Orders
+- Create
+- Edit draft
+- Submit
+- View
+- Track status
+
+Receiving
+- View receiving
+- Review discrepancies
+
+Supplier Returns
+- Initiate supplier return
+- View supplier returns
+
+IMPORTANT:
+
+Creating a purchase order does not automatically mean the user
+can approve it.
+
+Approval authority should be separated/configurable.
+
+============================================================
+14. FINANCE USER
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Financial transactions and financial visibility related to the
+pharmacy system.
+
+Typical responsibilities:
+
+- Payments
+- Receivables
+- Supplier payables
+- Refunds
+- Payment allocation
+- Financial reports
+- Profitability
+
+Permissions:
+
+Payments
+- View
+- Create
+- Update where allowed
+
+Receivables
+- View
+- Record customer payment
+- Allocate payment
+- Review outstanding balance
+
+Supplier Payables
+- View
+- Record supplier payment
+- Allocate payment
+
+Refunds
+- Initiate
+- Process where authorized
+
+Reports
+- Financial reports
+- Profitability reports
+
+IMPORTANT:
+
+Finance access does not automatically mean access to all
+clinical information.
+
+Sensitive clinical/patient access must remain separately
+controlled.
+
+============================================================
+15. MANAGEMENT / REPORTING USER
+============================================================
+
+PRIMARY RESPONSIBILITY:
+
+Business monitoring and reporting.
+
+Typical permissions:
+
+Dashboard
+- View organization/branch dashboards
+
+Reports
+- View reports
+- Filter reports
+- Export authorized reports
+
+Analytics
+- View sales performance
+- View inventory performance
+- View procurement performance
+- View profitability
+- Compare branches where scope allows
+
+Management users are primarily read/analysis oriented.
+
+They should not automatically receive operational write
+permissions.
+
+============================================================
+16. PERMISSION MODEL
+============================================================
+
+Do not implement permissions as only:
+
+"inventory = true"
+
+Use a structured model.
+
+Conceptually:
+
+MODULE
+    ↓
+RESOURCE
+    ↓
+ACTION
+
+Examples:
+
+Inventory
+  Stock
+    View
+    Create
+    Update
+
+Inventory
+  Stock Adjustment
+    View
+    Create
+    Submit
+    Approve
+    Reject
+    Cancel
+
+Procurement
+  Purchase Order
+    View
+    Create
+    Update
+    Submit
+    Approve
+    Reject
+    Cancel
+
+Sales
+  Sale
+    View
+    Create
+    Update
+    Complete
+    Void
+
+This structure must allow fine-grained authorization.
+
+============================================================
+17. EXAMPLE PERMISSION MATRIX
+============================================================
+
+The following is a conceptual matrix.
+
+It is NOT necessarily the final implementation matrix.
+
+------------------------------------------------------------
+RESOURCE: PRODUCTS
+------------------------------------------------------------
+
+System Administrator:
+View / Create / Update / Configure
+
+Branch Manager:
+View
+
+Pharmacist:
+View
+
+Technician:
+View
+
+Cashier:
+View
+
+Storekeeper:
+View
+
+Procurement:
+View / Create / Update
+
+Finance:
+View
+
+Management:
+View
+
+
+------------------------------------------------------------
+RESOURCE: INVENTORY
+------------------------------------------------------------
+
+System Administrator:
+Full authorized administration
+
+Branch Manager:
+View / Review / Configured approvals
+
+Pharmacist:
+View relevant stock
+
+Technician:
+View relevant stock
+
+Cashier:
+View required selling availability
+
+Storekeeper:
+Operational inventory permissions
+
+Procurement:
+View relevant inventory
+
+Finance:
+Financial inventory visibility where required
+
+Management:
+Read/reporting access
+
+
+------------------------------------------------------------
+RESOURCE: STOCK ADJUSTMENT
+------------------------------------------------------------
+
+Storekeeper:
+Create / Submit
+
+Branch Manager:
+Review / Approve where configured
+
+System Administrator:
+Administrative control
+
+Other users:
+Denied unless explicitly authorized
+
+
+------------------------------------------------------------
+RESOURCE: PURCHASE ORDER
+------------------------------------------------------------
+
+Procurement:
+Create / Update / Submit
+
+Approver:
+Approve / Reject
+
+Storekeeper:
+View / Receiving-related access
+
+Finance:
+View / financial processing where applicable
+
+Management:
+View/reporting
+
+============================================================
+18. ACTION TYPES
+============================================================
+
+The permission system should support common actions such as:
+
+- View
+- Search
+- Create
+- Update
+- Delete where safe
+- Submit
+- Approve
+- Reject
+- Cancel
+- Complete
+- Verify
+- Dispense
+- Receive
+- Dispatch
+- Return
+- Refund
+- Export
+- Print
+- Configure
+
+Not every resource needs every action.
+
+Sensitive actions must have explicit permissions.
+
+============================================================
+19. DELETE PRINCIPLE
+============================================================
+
+Business transactions should generally not be physically deleted
+after they become operational records.
+
+Examples:
+
+A completed sale should not simply be deleted.
+
+A completed purchase receipt should not simply be deleted.
+
+A completed stock movement should not simply be deleted.
+
+Instead, appropriate correction/reversal/return/void workflows
+should be used.
+
+Deletion rules will be defined in later business-rule stages.
+
+============================================================
+20. DATA SCOPE
+============================================================
+
+Data scope must be supported independently from role.
+
+Possible scope levels:
+
+1. Organization
+2. Branch
+3. Warehouse
+4. Storage location where required
+
+Example:
+
+Hana
+Role = Branch Manager
+Scope = Piassa
+
+Hana can access Piassa records according to her permissions.
+
+Hana should not automatically access Megenagna records.
+
+============================================================
+21. CROSS-BRANCH ACCESS
+============================================================
+
+Cross-branch access must be explicit.
+
+Example:
+
+Piassa Branch Manager wants to transfer stock from Megenagna.
+
+The user may see only the information necessary for the
+authorized transfer workflow.
+
+The system should NOT automatically give full Megenagna access
+just because a transfer exists.
+
+Possible approach:
+
+Hana may:
+
+- Create transfer request
+- Select authorized destination/source
+- View required product/quantity information
+- Track transfer status
+
+But may not:
+
+- Browse all Megenagna patient records
+- Browse all Megenagna sales
+- Browse unrelated Megenagna financial information
+
+unless explicitly authorized.
+
+============================================================
+22. APPROVAL AND PERMISSION ARE DIFFERENT
+============================================================
+
+Permission means:
+
+"Can this user perform or initiate this action?"
+
+Approval means:
+
+"Does this action require another authorized person to approve
+it before it becomes effective?"
+
+Example:
+
+Storekeeper:
+Permission = Create Stock Adjustment
+
+But:
+
+Stock Adjustment:
+Approval Required = YES
+
+Therefore:
+
+Storekeeper
+ ↓
+Creates adjustment
+ ↓
+Submits
+ ↓
+Branch Manager / authorized approver
+ ↓
+Approves
+ ↓
+Inventory changes
+
+Having "Create" permission does NOT mean having "Approve"
+permission.
+
+============================================================
+23. SEPARATION OF DUTIES
+============================================================
+
+The system should support separation of duties for sensitive
+operations.
+
+Examples:
+
+Purchase Order:
+Procurement creates
+        ↓
+Authorized approver approves
+        ↓
+Storekeeper receives
+
+Stock Adjustment:
+Storekeeper creates
+        ↓
+Authorized approver approves
+        ↓
+Inventory updated
+
+Dispensing:
+Technician prepares
+        ↓
+Pharmacist verifies
+        ↓
+Dispensing completed
+
+This prevents one user from silently performing an entire
+sensitive process alone where approval is required.
+
+============================================================
+24. PERMISSION CHECKING
+============================================================
+
+Permission checks must exist at the backend/API level.
+
+The frontend must NOT be the only security mechanism.
+
+Example:
+
+Hiding a button:
+
+"Approve Adjustment"
+
+is useful for UX.
+
+But the backend must also verify:
+
+Does this authenticated user have permission to approve this
+adjustment?
+
+The system must enforce authorization on the server.
+
+============================================================
+25. DATA-SCOPE CHECKING
+============================================================
+
+Permission alone is not sufficient.
+
+The backend must also check the user's authorized data scope.
+
+Example:
+
+User:
+Hana
+
+Permission:
+Inventory → Stock → View
+
+Scope:
+Piassa
+
+Request:
+View Megenagna stock
+
+Result:
+DENIED
+
+Even though Hana has inventory-view permission, her data scope
+does not include Megenagna.
+
+============================================================
+26. AUDIT REQUIREMENT
+============================================================
+
+Important permission-sensitive actions must eventually produce
+audit records.
+
+Examples:
+
+- User created
+- Role changed
+- Permission changed
+- Branch scope changed
+- Warehouse scope changed
+- Approval performed
+- Permission denied
+- Sensitive action overridden
+
+Detailed audit implementation will be handled in a later stage.
+
+============================================================
+27. SECURITY PRINCIPLE
+============================================================
+
+Use least privilege.
+
+A user should receive only the permissions and data scope
+necessary for their job.
+
+Do NOT use:
+
+"Give everyone administrator access so development is easier."
+
+Temporary development shortcuts must not become the final
+business architecture.
+
+============================================================
+28. FUTURE ROLE EXTENSIBILITY
+============================================================
+
+The system must allow new roles.
+
+Examples of possible future roles:
+
+- Auditor
+- Regional Manager
+- Inventory Controller
+- Pharmacist Supervisor
+- Procurement Manager
+- Finance Manager
+- HR/Administration
+- External Auditor
+
+Adding a new role should primarily involve configuration,
+permission assignment, and scope—not redesigning the application.
+
+============================================================
+29. IMPORTANT BUSINESS EXAMPLES
+============================================================
+
+------------------------------------------------------------
+EXAMPLE 1: CASHIER DISCOUNT
+------------------------------------------------------------
+
+Dawit wants to give a discount.
+
+If discount is within his allowed limit:
+
+Sale can continue.
+
+If discount exceeds his limit:
+
+Approval may be required.
+
+Dawit must not simply bypass the restriction.
+
+------------------------------------------------------------
+EXAMPLE 2: STOCK ADJUSTMENT
+------------------------------------------------------------
+
+Samuel counts:
+
+System = 100
+Physical = 95
+
+Samuel creates adjustment:
+
+Variance = -5
+Reason = Physical count discrepancy
+
+If approval is required:
+
+Adjustment remains pending.
+
+Authorized approver approves.
+
+Then:
+
+Inventory = 95
+
+Stock movement recorded.
+
+Audit recorded.
+
+------------------------------------------------------------
+EXAMPLE 3: PRESCRIPTION DISPENSING
+------------------------------------------------------------
+
+Abel prepares dispensing.
+
+Meron verifies.
+
+If Meron rejects:
+
+Dispensing does not become completed.
+
+Reason must be recorded where required.
+
+------------------------------------------------------------
+EXAMPLE 4: CROSS-BRANCH ACCESS
+------------------------------------------------------------
+
+Hana:
+Branch Manager
+Piassa scope
+
+Hana logs in.
+
+She sees:
+Piassa inventory.
+
+She does not automatically see:
+Megenagna inventory.
+
+If authorized to initiate a transfer involving Megenagna,
+the system exposes the required transfer information according
+to permissions.
+
+------------------------------------------------------------
+EXAMPLE 5: PROCUREMENT
+------------------------------------------------------------
+
+Liya creates Purchase Order.
+
+Status:
+Pending Approval
+
+Liya cannot approve her own order unless the configured
+approval policy explicitly permits it.
+
+Authorized approver reviews.
+
+Approve:
+PO becomes approved.
+
+Reject:
+PO becomes rejected.
+
+============================================================
+30. FRONTEND AUTHORIZATION
+============================================================
+
+The frontend should use permissions to control the user
+experience.
+
+Examples:
+
+If user does not have:
+
+Inventory → Stock Adjustment → Create
+
+Then:
+
+"New Adjustment" button should not normally be displayed.
+
+If user does not have:
+
+Reports → Financial → View
+
+Then the financial report should not be displayed.
+
+However:
+
+Frontend hiding is NOT security.
+
+Backend authorization remains mandatory.
+
+============================================================
+31. BACKEND AUTHORIZATION
+============================================================
+
+Every protected API operation must verify:
+
+1. Authentication
+2. Permission
+3. Data scope
+4. Resource ownership/access where applicable
+5. Approval state where applicable
+
+Example:
+
+POST /stock-adjustments
+
+Backend checks:
+
+User authenticated?
+        ↓
+Has inventory adjustment create permission?
+        ↓
+Is branch within user's scope?
+        ↓
+Is warehouse within user's scope?
+        ↓
+Are required fields valid?
+        ↓
+Is approval required?
+        ↓
+Create pending adjustment
+
+============================================================
+32. NO BUSINESS BYPASS
+============================================================
+
+The system must prevent users from bypassing normal business
+workflows through APIs.
+
+For example:
+
+A user should not be able to directly send:
+
+"stock = 500"
+
+to an API and bypass stock movement logic.
+
+Inventory should be changed through authorized business
+operations.
+
+Likewise:
+
+- Completed sale cannot be silently edited
+- Approved purchase order cannot be silently modified
+- Approved adjustment cannot be silently changed
+- Verified dispensing cannot be silently changed
+
+Correction workflows must be designed later.
+
+============================================================
+33. STAGE 02 IMPLEMENTATION RULE
+============================================================
+
+DO NOT build the full RBAC system in this stage.
+
+This document establishes the requirements.
+
+Later stages will implement:
+
+- User model
+- Role model
+- Permission model
+- Role-permission relationships
+- User-role relationships
+- Branch scope
+- Warehouse scope
+- Authorization middleware
+- Frontend permission guards
+- Approval integration
+- Audit integration
+
+============================================================
+34. CONSISTENCY REQUIREMENT
+============================================================
+
+Every future module must define:
+
+- Which roles can access it
+- Which permissions are required
+- Which data scope applies
+- Which actions are allowed
+- Which actions require approval
+- Which actions require audit
+- Which actions are restricted
+
+No future module should ignore the RBAC model.
+
+============================================================
+END OF STAGE 02
+============================================================

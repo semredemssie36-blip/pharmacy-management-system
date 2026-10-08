@@ -1,0 +1,17 @@
+process.env.NODE_ENV='test';
+process.env.DATABASE_HOST='127.0.0.1';
+process.env.DATABASE_NAME='pharmacy_erp_test';
+process.env.DATABASE_USER='root';
+process.env.DATABASE_PASSWORD='';
+process.env.JWT_SECRET='test-secret-not-for-production';
+const request = (await import('supertest')).default;
+const { getPool, closePool } = await import('./src/database/pool.js');
+const app = (await import('./src/app.js')).default;
+const pool = getPool();
+const agent = request.agent(app);
+const login = await agent.post('/api/v1/auth/login').send({ email: 'pnoperms@partner-test.local', password: 'Passw0rd!x' });
+console.log('login status', login.status);
+const res = await agent.get('/api/v1/suppliers');
+console.log('suppliers status', res.status, JSON.stringify(res.body).slice(0, 200));
+await closePool();
+process.exit(0);

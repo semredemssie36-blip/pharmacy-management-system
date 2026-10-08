@@ -1,0 +1,1866 @@
+============================================================
+PHARMACY ERP SYSTEM
+STAGE 05 — TECHNICAL ARCHITECTURE & PROJECT FOUNDATION
+============================================================
+
+PROJECT:
+Multi-Branch Pharmacy Management / ERP System
+
+============================================================
+1. PURPOSE
+============================================================
+
+This stage translates the previously defined business and domain
+architecture into a technical architecture.
+
+The system must be built using:
+
+FRONTEND
+- React
+- Vite
+- Tailwind CSS
+- React Router
+- Reusable UI/component library where useful
+
+BACKEND
+- Node.js
+- Express.js
+
+DATABASE
+- MySQL
+
+The architecture must support a real production-oriented
+multi-branch Pharmacy ERP.
+
+This is NOT a simple CRUD application.
+
+============================================================
+2. PREVIOUS STAGES ARE AUTHORITATIVE
+============================================================
+
+Before implementing anything, the development agent MUST read:
+
+Stage 01 — System Overview
+Stage 02 — Actors, Permissions & Data Scope
+Stage 03 — Business Rules & Workflows
+Stage 04 — Domain Model & Database Architecture
+
+These documents define the business requirements.
+
+This stage defines the technical structure.
+
+If a technical decision conflicts with a business requirement,
+the business requirement must be preserved.
+
+============================================================
+3. HIGH-LEVEL ARCHITECTURE
+============================================================
+
+The system uses a separated frontend/backend architecture.
+
+                    USER
+                      │
+                      ▼
+              React Frontend
+                      │
+                      │ HTTP / JSON API
+                      ▼
+              Express Backend
+                      │
+             ┌────────┴────────┐
+             │                 │
+             ▼                 ▼
+        Business Logic      Authentication
+             │                 │
+             └────────┬────────┘
+                      │
+                      ▼
+                Data Access
+                      │
+                      ▼
+                  MySQL
+
+The frontend must not directly access MySQL.
+
+The browser communicates with the Express API.
+
+The Express backend is responsible for:
+
+- Authentication
+- Authorization
+- Validation
+- Business rules
+- Transactions
+- Database access
+- Error handling
+- Audit
+- Notifications
+- API responses
+
+============================================================
+4. FRONTEND RESPONSIBILITY
+============================================================
+
+React is responsible for:
+
+- User interface
+- Navigation
+- Forms
+- Tables
+- Dashboards
+- Search
+- Filters
+- Status displays
+- Approval screens
+- Transaction screens
+- Validation feedback
+- Notifications
+- Loading states
+- Error states
+- Responsive layout
+
+React must NOT be responsible for enforcing critical business
+rules by itself.
+
+Example:
+
+The frontend may hide an unauthorized button.
+
+But the backend MUST still reject an unauthorized API request.
+
+============================================================
+5. BACKEND RESPONSIBILITY
+============================================================
+
+Node.js + Express is responsible for the authoritative business
+logic.
+
+Backend responsibilities include:
+
+- Authentication
+- Authorization
+- Role checking
+- Permission checking
+- Branch scope checking
+- Warehouse scope checking
+- Input validation
+- Business rules
+- Approval rules
+- Inventory calculations
+- FEFO allocation
+- Financial effects
+- Transaction processing
+- Audit logging
+- Notifications
+- Database transactions
+
+Critical business rules must exist on the backend.
+
+============================================================
+6. DATABASE RESPONSIBILITY
+============================================================
+
+MySQL is responsible for persistent data.
+
+It must preserve:
+
+- Business entities
+- Relationships
+- Transactions
+- Inventory state
+- Stock movements
+- Financial records
+- Audit information
+- Approval history
+- Notifications
+- Historical transaction information
+
+The database must enforce important integrity constraints.
+
+============================================================
+7. PROPOSED PROJECT STRUCTURE
+============================================================
+
+The project should use a monorepo-style structure:
+
+pharmacy-erp/
+│
+├── client/
+│
+├── server/
+│
+├── docs/
+│
+├── scripts/
+│
+├── .gitignore
+├── README.md
+└── package.json
+
+The frontend and backend remain separate applications but are
+managed within the same project.
+
+============================================================
+8. FRONTEND STRUCTURE
+============================================================
+
+Suggested structure:
+
+client/
+│
+├── src/
+│   │
+│   ├── app/
+│   │   ├── App.jsx
+│   │   ├── router.jsx
+│   │   └── providers/
+│   │
+│   ├── assets/
+│   │
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── forms/
+│   │   ├── tables/
+│   │   ├── modals/
+│   │   ├── feedback/
+│   │   └── layout/
+│   │
+│   ├── features/
+│   │   ├── auth/
+│   │   ├── dashboard/
+│   │   ├── products/
+│   │   ├── inventory/
+│   │   ├── procurement/
+│   │   ├── sales/
+│   │   ├── prescriptions/
+│   │   ├── dispensing/
+│   │   ├── customers/
+│   │   ├── patients/
+│   │   ├── suppliers/
+│   │   ├── payments/
+│   │   ├── returns/
+│   │   ├── transfers/
+│   │   ├── quarantine/
+│   │   ├── recalls/
+│   │   ├── approvals/
+│   │   ├── notifications/
+│   │   ├── reports/
+│   │   └── administration/
+│   │
+│   ├── hooks/
+│   │
+│   ├── layouts/
+│   │
+│   ├── lib/
+│   │
+│   ├── services/
+│   │
+│   ├── store/
+│   │
+│   ├── utils/
+│   │
+│   ├── constants/
+│   │
+│   └── main.jsx
+│
+└── package.json
+
+The exact structure may evolve when implementation begins.
+
+============================================================
+9. FRONTEND FEATURE PRINCIPLE
+============================================================
+
+The frontend should be organized around business features rather
+than one enormous collection of unrelated pages.
+
+Example:
+
+features/inventory/
+
+may eventually contain:
+
+- pages
+- components
+- hooks
+- API functions
+- validation
+- types
+- utilities
+
+This keeps each business domain understandable.
+
+============================================================
+10. BACKEND STRUCTURE
+============================================================
+
+Suggested structure:
+
+server/
+│
+├── src/
+│   │
+│   ├── config/
+│   │
+│   ├── routes/
+│   │
+│   ├── controllers/
+│   │
+│   ├── services/
+│   │
+│   ├── repositories/
+│   │
+│   ├── models/
+│   │
+│   ├── middleware/
+│   │
+│   ├── validators/
+│   │
+│   ├── policies/
+│   │
+│   ├── utils/
+│   │
+│   ├── errors/
+│   │
+│   ├── events/
+│   │
+│   ├── jobs/
+│   │
+│   ├── modules/
+│   │
+│   ├── database/
+│   │
+│   └── app.js
+│
+├── tests/
+│
+├── .env.example
+├── package.json
+└── server.js
+
+The exact architecture may be refined before implementation.
+
+============================================================
+11. ROUTE → CONTROLLER → SERVICE → REPOSITORY
+============================================================
+
+The backend should generally follow:
+
+HTTP Request
+     ↓
+Route
+     ↓
+Middleware
+     ↓
+Controller
+     ↓
+Service
+     ↓
+Repository / Data Access
+     ↓
+MySQL
+     ↓
+Response
+
+Example:
+
+POST /api/sales
+
+        ↓
+
+Authentication Middleware
+
+        ↓
+
+Permission Middleware
+
+        ↓
+
+Sale Controller
+
+        ↓
+
+Sale Service
+
+        ↓
+
+Inventory / Payment / Sale repositories
+
+        ↓
+
+MySQL transaction
+
+        ↓
+
+Response
+
+============================================================
+12. CONTROLLER RESPONSIBILITY
+============================================================
+
+Controllers should be thin.
+
+Controller responsibilities:
+
+- Receive request
+- Obtain authenticated user
+- Call validation
+- Call service
+- Return response
+
+Controllers should NOT contain large amounts of business logic.
+
+Avoid:
+
+Huge controller methods containing:
+
+- stock calculations
+- approval rules
+- payment calculations
+- FEFO logic
+- database queries
+- audit logic
+
+Those belong in appropriate services/domain logic.
+
+============================================================
+13. SERVICE RESPONSIBILITY
+============================================================
+
+Services contain business operations.
+
+Examples:
+
+InventoryService
+SalesService
+ProcurementService
+ReceivingService
+DispensingService
+PrescriptionService
+PaymentService
+TransferService
+ReturnService
+ApprovalService
+AuditService
+NotificationService
+
+Services coordinate business rules and transactions.
+
+============================================================
+14. REPOSITORY RESPONSIBILITY
+============================================================
+
+Repositories/data-access classes are responsible for database
+interaction.
+
+Example:
+
+ProductRepository
+InventoryRepository
+SaleRepository
+PaymentRepository
+PurchaseOrderRepository
+
+Repositories should not decide major business rules.
+
+Business decisions belong in services/domain logic.
+
+============================================================
+15. MIDDLEWARE
+============================================================
+
+Middleware may handle cross-cutting concerns such as:
+
+- Authentication
+- Authorization
+- Request validation
+- Error handling
+- Logging
+- Rate limiting
+- Request context
+
+Example:
+
+Request
+  ↓
+Authentication
+  ↓
+Permission
+  ↓
+Controller
+  ↓
+Service
+
+============================================================
+16. AUTHENTICATION
+============================================================
+
+Users must authenticate before accessing protected system
+features.
+
+Authentication must establish the current user identity.
+
+The system should be designed to support secure session/token
+handling.
+
+The exact authentication mechanism must be selected during
+implementation based on security requirements.
+
+The agent must NOT invent an insecure authentication shortcut.
+
+============================================================
+17. AUTHORIZATION
+============================================================
+
+Authentication answers:
+
+"Who are you?"
+
+Authorization answers:
+
+"What are you allowed to do?"
+
+The system must implement:
+
+USER
+→ ROLE
+→ PERMISSIONS
+→ DATA SCOPE
+
+Example:
+
+Hana
+Role:
+Branch Manager
+
+Scope:
+Piassa
+
+Hana should not automatically access Megenagna data.
+
+============================================================
+18. DATA SCOPE
+============================================================
+
+Authorization must consider both:
+
+ACTION PERMISSION
+
+and
+
+DATA SCOPE
+
+Example:
+
+Permission:
+inventory.stock.view
+
+Scope:
+Piassa
+
+This means:
+
+User can view inventory
+BUT only within Piassa scope.
+
+A user may have organization-wide scope if explicitly
+configured.
+
+============================================================
+19. BACKEND AUTHORIZATION RULE
+============================================================
+
+Never trust the frontend for authorization.
+
+Bad:
+
+Frontend hides:
+"Delete"
+
+but backend accepts:
+DELETE /api/products/123
+
+Good:
+
+Backend verifies:
+
+1. User authenticated?
+2. User has required permission?
+3. User has access to this branch?
+4. User has access to this warehouse?
+5. Operation allowed for current transaction status?
+
+Only then execute.
+
+============================================================
+20. VALIDATION
+============================================================
+
+Validation should occur at multiple levels.
+
+Frontend:
+User experience validation.
+
+Backend:
+Authoritative validation.
+
+Database:
+Integrity constraints.
+
+Example:
+
+Frontend:
+Quantity must be positive.
+
+Backend:
+Quantity must be positive and stock rules must allow it.
+
+Database:
+Quantity and relationships must satisfy constraints.
+
+============================================================
+21. BUSINESS VALIDATION
+============================================================
+
+Technical validation is not enough.
+
+Example:
+
+quantity = 10
+
+Technically valid.
+
+But business validation may say:
+
+Available stock = 5
+
+Therefore:
+
+Transaction must be rejected or handled as an exception.
+
+Business validation belongs in the backend service/domain layer.
+
+============================================================
+22. DATABASE TRANSACTIONS
+============================================================
+
+Critical operations involving multiple database changes must use
+database transactions.
+
+Example:
+
+Complete Sale:
+
+BEGIN TRANSACTION
+
+1. Validate sale
+2. Validate stock
+3. Allocate batch
+4. Create sale
+5. Create sale items
+6. Create stock movements
+7. Update inventory
+8. Record payment
+9. Record audit
+
+COMMIT
+
+If a critical operation fails:
+
+ROLLBACK
+
+This prevents inconsistent state.
+
+============================================================
+23. EXAMPLE: SALE TRANSACTION
+============================================================
+
+A completed sale may involve:
+
+Sale
+Sale Items
+Batch Allocation
+Inventory
+Stock Movement
+Payment
+Receipt
+Audit
+
+These related changes should be coordinated as one business
+operation.
+
+The system must not create a payment while leaving inventory
+unchanged due to an unnoticed failure.
+
+============================================================
+24. FEFO IMPLEMENTATION PRINCIPLE
+============================================================
+
+FEFO must be implemented on the backend.
+
+The frontend may display suggested batches.
+
+But the backend must determine whether the requested allocation
+is valid.
+
+The backend should:
+
+1. Find eligible stock
+2. Exclude expired stock
+3. Exclude blocked/quarantined/recalled stock
+4. Order eligible batches by expiry
+5. Allocate according to FEFO
+6. Support authorized override
+7. Record allocation
+8. Record audit when required
+
+============================================================
+25. INVENTORY ARCHITECTURE
+============================================================
+
+Inventory must not be treated as a simple:
+
+product_id
+quantity
+
+table.
+
+Inventory depends on:
+
+- Product
+- Batch
+- Branch
+- Warehouse
+- Location
+- Stock state
+- Stock movement history
+
+Inventory operations must be centralized through controlled
+services.
+
+============================================================
+26. INVENTORY SERVICE PRINCIPLE
+============================================================
+
+Major inventory changes should pass through controlled business
+logic.
+
+Examples:
+
+receiveStock()
+sellStock()
+dispenseStock()
+transferStock()
+returnStock()
+adjustStock()
+quarantineStock()
+releaseStock()
+disposeStock()
+
+The exact service API will be finalized during implementation.
+
+The goal is to avoid random modules directly changing inventory.
+
+============================================================
+27. APPROVAL ARCHITECTURE
+============================================================
+
+Approvals should be reusable.
+
+Example:
+
+Discount Approval
+Stock Adjustment Approval
+PO Approval
+Credit Override Approval
+FEFO Override Approval
+Disposal Approval
+
+The system should not create completely unrelated approval
+implementations for every module.
+
+A generic approval architecture should support different
+business resources.
+
+============================================================
+28. AUDIT ARCHITECTURE
+============================================================
+
+Audit should be treated as a cross-cutting system service.
+
+Important events should be recorded consistently.
+
+Example:
+
+User:
+Samuel
+
+Action:
+STOCK_ADJUSTMENT_APPROVED
+
+Resource:
+Stock Adjustment #ADJ-000123
+
+Before:
+100
+
+After:
+96
+
+Reason:
+Physical count discrepancy
+
+Approver:
+Hana
+
+Timestamp:
+System generated
+
+============================================================
+29. NOTIFICATION ARCHITECTURE
+============================================================
+
+Notifications should be generated from business events.
+
+Example:
+
+Inventory reaches reorder level.
+
+Business event:
+
+LOW_STOCK
+
+Notification service determines:
+
+- Recipient
+- Severity
+- Message
+- Reference
+- Read status
+
+The system should avoid placing notification logic directly
+inside every React page.
+
+============================================================
+30. API ARCHITECTURE
+============================================================
+
+The backend should expose REST-style APIs.
+
+Example conceptual structure:
+
+/api/auth
+/api/users
+/api/roles
+/api/permissions
+/api/branches
+/api/warehouses
+/api/products
+/api/suppliers
+/api/customers
+/api/patients
+/api/prescriptions
+/api/dispensing
+/api/inventory
+/api/procurement
+/api/purchase-orders
+/api/receiving
+/api/sales
+/api/payments
+/api/returns
+/api/transfers
+/api/quarantine
+/api/recalls
+/api/approvals
+/api/notifications
+/api/reports
+
+Exact endpoint names will be finalized during implementation.
+
+============================================================
+31. API RESPONSE PRINCIPLE
+============================================================
+
+Responses should be consistent.
+
+Success responses should contain predictable structure.
+
+Error responses should provide:
+
+- Error code
+- Human-readable message
+- Validation details where applicable
+- Request/reference information where useful
+
+Do not expose sensitive internal stack traces to users.
+
+============================================================
+32. ERROR ARCHITECTURE
+============================================================
+
+The system should distinguish:
+
+VALIDATION ERROR
+AUTHENTICATION ERROR
+AUTHORIZATION ERROR
+NOT FOUND
+BUSINESS RULE ERROR
+CONFLICT
+DATABASE ERROR
+INTERNAL SERVER ERROR
+
+Example:
+
+Attempt to sell expired medicine:
+
+This is not a generic database error.
+
+It is a business rule violation.
+
+============================================================
+33. STATUS-BASED OPERATIONS
+============================================================
+
+Services must verify transaction status before allowing actions.
+
+Example:
+
+Draft Purchase Order:
+Can edit.
+
+Approved Purchase Order:
+Normal editing may be restricted.
+
+Completed Sale:
+Cannot simply edit.
+
+Completed Sale:
+Use return/void/reversal workflow where appropriate.
+
+This protects transaction history.
+
+============================================================
+34. FRONTEND ROUTING
+============================================================
+
+React Router should organize protected application areas.
+
+Conceptual structure:
+
+/login
+
+/app
+/app/dashboard
+
+/app/inventory
+/app/inventory/products
+/app/inventory/stock
+/app/inventory/transfers
+/app/inventory/counts
+/app/inventory/adjustments
+
+/app/procurement
+/app/procurement/purchase-orders
+/app/procurement/receiving
+/app/procurement/suppliers
+
+/app/sales
+/app/sales/pos
+/app/sales/history
+/app/sales/returns
+
+/app/pharmacy
+/app/pharmacy/patients
+/app/pharmacy/prescriptions
+/app/pharmacy/dispensing
+
+/app/finance
+/app/finance/payments
+/app/finance/receivables
+/app/finance/payables
+
+/app/reports
+/app/administration
+
+Exact route structure may evolve.
+
+============================================================
+35. PROTECTED ROUTES
+============================================================
+
+React should protect routes for user experience.
+
+Example:
+
+/app/inventory
+
+But route protection must NOT be the primary security mechanism.
+
+Backend authorization remains authoritative.
+
+============================================================
+36. UI PERMISSION HANDLING
+============================================================
+
+The frontend should use permissions to determine:
+
+- Which menu items appear
+- Which pages are accessible
+- Which buttons appear
+- Which actions are disabled
+- Which information is visible
+
+Example:
+
+Cashier:
+
+Sales:
+YES
+
+Stock Adjustment Approval:
+NO
+
+Administration:
+NO
+
+But the backend must independently enforce the same restrictions.
+
+============================================================
+37. GLOBAL SEARCH
+============================================================
+
+The architecture should support global search across permitted
+resources.
+
+Possible search targets:
+
+- Product
+- Barcode
+- Batch
+- Patient
+- Prescription
+- Customer
+- Supplier
+- Purchase Order
+- Sale
+- Invoice
+- Transfer
+
+Search results must respect user data scope.
+
+A Piassa-only user must not receive unauthorized Megenagna
+records through global search.
+
+============================================================
+38. REPORTING ARCHITECTURE
+============================================================
+
+Reports should be generated through backend services.
+
+The frontend requests:
+
+Report type
++
+Filters
++
+Date range
++
+Branch
++
+Warehouse
++
+Other allowed filters
+
+Backend checks permissions and scope.
+
+Backend retrieves data.
+
+Frontend displays the result.
+
+Exports may later support:
+
+- PDF
+- Excel
+- CSV
+
+============================================================
+39. FILE / EXPORT ARCHITECTURE
+============================================================
+
+If the system generates files:
+
+Backend should generate them based on authorized data.
+
+The frontend should not bypass authorization by constructing
+unauthorized exports from hidden API data.
+
+============================================================
+40. CONFIGURATION
+============================================================
+
+Environment-specific configuration must not be hard-coded.
+
+Examples:
+
+Database credentials
+API URL
+Authentication secrets
+Email credentials
+Payment configuration
+SMS configuration
+File storage configuration
+
+Use environment variables.
+
+Provide:
+
+.env.example
+
+Never commit real secrets.
+
+============================================================
+41. ENVIRONMENT STRUCTURE
+============================================================
+
+Support at least:
+
+Development
+Testing
+Production
+
+Development configuration must not accidentally become the
+production configuration.
+
+============================================================
+42. LOGGING
+============================================================
+
+Backend should have structured application logging.
+
+Logs may record:
+
+- Request information
+- Errors
+- Important system events
+- Performance information where useful
+
+Do not log sensitive information unnecessarily.
+
+Audit logs and application logs are different concepts.
+
+============================================================
+43. AUDIT LOG VS APPLICATION LOG
+============================================================
+
+APPLICATION LOG:
+
+Used for developers/operators to diagnose the application.
+
+AUDIT LOG:
+
+Used to answer:
+
+Who performed this business action?
+
+Example:
+
+Application log:
+Database connection timeout.
+
+Audit log:
+Samuel approved stock adjustment #ADJ-123.
+
+They must not be treated as the same system.
+
+============================================================
+44. SECURITY PRINCIPLES
+============================================================
+
+The application must consider:
+
+- Password hashing
+- Secure authentication
+- Authorization
+- Input validation
+- SQL injection protection
+- XSS protection
+- CSRF considerations depending on authentication mechanism
+- Secure cookies/tokens
+- Rate limiting
+- Secure headers
+- Secret management
+- Access control
+- Auditability
+
+Security decisions must be made before production deployment.
+
+============================================================
+45. API SECURITY
+============================================================
+
+Every protected API endpoint must verify appropriate access.
+
+Example:
+
+GET /api/inventory
+
+must consider:
+
+- Authentication
+- Permission
+- Branch scope
+- Warehouse scope
+
+POST /api/stock-adjustments
+
+must consider:
+
+- Authentication
+- Permission
+- Scope
+- Business rules
+- Approval requirements
+
+============================================================
+46. DATABASE ACCESS
+============================================================
+
+The backend must use a proper database access layer.
+
+Do not scatter raw SQL throughout controllers.
+
+Database queries should be organized through repositories/data
+access modules.
+
+The exact MySQL library/ORM/query builder will be selected in
+the implementation stage.
+
+Possible options may include:
+
+- Prisma
+- Sequelize
+- mysql2 with a structured repository layer
+
+Do not automatically choose one without evaluating the project.
+
+============================================================
+47. ORM / QUERY LAYER PRINCIPLE
+============================================================
+
+The selected database technology must support:
+
+- Transactions
+- Relations
+- Constraints
+- Migrations
+- Querying
+- Indexes
+- MySQL compatibility
+- Maintainability
+
+The coding agent must not introduce multiple competing database
+access technologies without a clear reason.
+
+============================================================
+48. STATE MANAGEMENT
+============================================================
+
+React application state should be divided logically.
+
+Examples:
+
+AUTHENTICATION STATE
+USER/PERMISSION STATE
+UI STATE
+SERVER DATA
+FORM STATE
+
+Do not put every piece of application data into one global
+state store.
+
+Server data should use an appropriate data-fetching/cache
+strategy.
+
+The exact state-management library can be selected during
+implementation if needed.
+
+============================================================
+49. FORM ARCHITECTURE
+============================================================
+
+Complex business forms should support:
+
+- Field validation
+- Server validation
+- Error display
+- Loading state
+- Unsaved-change handling where needed
+- Permission-aware actions
+- Confirmation for destructive/sensitive actions
+
+Examples:
+
+Purchase Order
+Stock Adjustment
+Prescription
+Dispensing
+Sale
+Return
+Transfer
+
+============================================================
+50. TABLE ARCHITECTURE
+============================================================
+
+ERP systems contain many data tables.
+
+Reusable table functionality should support:
+
+- Search
+- Filtering
+- Sorting
+- Pagination
+- Column visibility where useful
+- Loading state
+- Empty state
+- Error state
+- Export where permitted
+- Permission-aware actions
+
+Do not create completely unrelated table implementations for
+every page if reusable components can safely handle them.
+
+============================================================
+51. DASHBOARD ARCHITECTURE
+============================================================
+
+Dashboards should be role-aware.
+
+Example:
+
+Branch Manager:
+
+- Sales
+- Inventory
+- Low stock
+- Expiry
+- Pending approvals
+- Branch performance
+
+Pharmacist:
+
+- Prescriptions
+- Pending dispensing
+- Relevant clinical/pharmacy notifications
+
+Storekeeper:
+
+- Stock
+- Receiving
+- Transfers
+- Counts
+- Expiry
+
+Management:
+
+- Organization-level analytics
+
+Dashboard information must respect permissions and data scope.
+
+============================================================
+52. MULTI-BRANCH ARCHITECTURE
+============================================================
+
+The system must be designed as one organization with multiple
+branches.
+
+Example:
+
+ABC Pharmacy
+├── Piassa
+└── Megenagna
+
+Do NOT create separate databases or separate applications for
+each branch unless a future business decision explicitly
+requires it.
+
+Branch information should be represented as data scope.
+
+============================================================
+53. ORGANIZATION-LEVEL VS BRANCH-LEVEL DATA
+============================================================
+
+Organization-level examples:
+
+- Product master
+- Supplier
+- Roles
+- Permissions
+- Global configuration
+
+Branch-level examples:
+
+- Inventory
+- Sales
+- Local stock
+- Local dispensing
+- Local warehouse operations
+
+Some entities may contain both organization and branch
+relationships.
+
+The exact scope must follow Stage 02 and Stage 04.
+
+============================================================
+54. BUSINESS MODULE INDEPENDENCE
+============================================================
+
+Modules should be separated logically.
+
+For example:
+
+Inventory
+must not become a giant file containing:
+
+sales
+procurement
+dispensing
+payments
+reports
+users
+
+Instead, modules communicate through defined services and
+business operations.
+
+============================================================
+55. SHARED SERVICES
+============================================================
+
+Some functionality is cross-cutting.
+
+Examples:
+
+- Authentication
+- Authorization
+- Audit
+- Notifications
+- File generation
+- Search
+- Validation
+- Error handling
+- Configuration
+
+These should be reusable rather than reimplemented in every
+module.
+
+============================================================
+56. DEVELOPMENT PRINCIPLE
+============================================================
+
+Implementation should proceed from stable foundation to business
+modules.
+
+Recommended technical order:
+
+1. Project setup
+2. Environment configuration
+3. Database connection
+4. Authentication
+5. Authorization/RBAC
+6. Organization/branch structure
+7. Product master
+8. Inventory foundation
+9. Procurement
+10. Receiving
+11. Sales
+12. Pharmacy/Prescription
+13. Dispensing
+14. Payments
+15. Returns
+16. Transfers
+17. Adjustments/counts
+18. Quarantine/expiry/recall
+19. Approvals
+20. Audit
+21. Notifications
+22. Reports
+23. Search
+24. Final testing
+
+This order may be adjusted when implementation reveals a
+dependency.
+
+============================================================
+57. VERTICAL-SLICE PRINCIPLE
+============================================================
+
+Do not build every frontend page first and every backend page
+later.
+
+Build connected vertical functionality.
+
+Example:
+
+Product
+  ↓
+Purchase Order
+  ↓
+Receiving
+  ↓
+Inventory
+  ↓
+POS Sale
+  ↓
+Payment
+  ↓
+Stock Movement
+  ↓
+Audit
+  ↓
+Report
+
+This allows the system to become usable earlier.
+
+============================================================
+58. TESTING ARCHITECTURE
+============================================================
+
+Testing must eventually cover:
+
+Unit tests
+Integration tests
+API tests
+Business rule tests
+Authorization tests
+Inventory tests
+Workflow tests
+End-to-end tests
+
+Critical business rules must receive priority.
+
+Examples:
+
+- FEFO
+- Stock cannot become negative when prohibited
+- Unauthorized user cannot approve
+- Branch scope is enforced
+- Partial receiving works
+- Partial dispensing works
+- Returns affect inventory correctly
+- Transfers affect source and destination correctly
+- Credit limits work
+- Audit records important actions
+
+============================================================
+59. AI CODING AGENT RULE
+============================================================
+
+The coding agent must NOT:
+
+- Invent major business requirements
+- Remove business complexity for convenience
+- Replace business workflows with generic CRUD
+- Put all logic inside controllers
+- Trust frontend authorization
+- Directly edit inventory without controlled business logic
+- Delete completed transactions casually
+- Ignore batch/expiry
+- Ignore branch scope
+- Ignore approvals
+- Ignore audit requirements
+
+Before implementing a feature, the agent must identify:
+
+1. Relevant business rule
+2. Relevant domain entities
+3. Required permissions
+4. Data scope
+5. Transaction requirements
+6. Inventory effects
+7. Financial effects
+8. Audit requirements
+9. Notification requirements
+10. Error/exception cases
+
+============================================================
+60. AI AGENT DECISION RULE
+============================================================
+
+If the agent encounters an undefined requirement:
+
+DO NOT silently invent a major business rule.
+
+Instead classify it as:
+
+A. Clearly defined
+B. Reasonable technical decision
+C. Business decision required
+D. Conflict with existing stage
+
+For C or D:
+
+STOP that specific implementation decision.
+
+Report the issue.
+
+The human/system architect must decide.
+
+============================================================
+61. CODE QUALITY PRINCIPLES
+============================================================
+
+The implementation should prioritize:
+
+- Clear naming
+- Small understandable functions
+- Separation of concerns
+- Reusable components
+- Reusable services
+- Strong validation
+- Consistent API structure
+- Consistent error handling
+- Meaningful comments only where useful
+- No unnecessary duplication
+- No premature complexity
+
+The goal is maintainable professional code.
+
+============================================================
+62. DOCUMENTATION
+============================================================
+
+The project should maintain:
+
+README.md
+
+and technical documentation covering:
+
+- Setup
+- Environment variables
+- Database setup
+- Development commands
+- API conventions
+- Architecture
+- Authentication
+- Authorization
+- Testing
+- Deployment
+
+The stage documents remain the source of business understanding.
+
+============================================================
+63. GIT / VERSION CONTROL
+============================================================
+
+The project should use Git.
+
+Commits should be meaningful.
+
+Examples:
+
+feat: add product management
+feat: implement stock receiving
+feat: add FEFO allocation
+fix: prevent unauthorized stock adjustment
+
+Avoid one enormous commit containing the entire project.
+
+============================================================
+64. IMPLEMENTATION SAFETY
+============================================================
+
+The AI coding agent must not make destructive changes to the
+project without understanding existing code.
+
+Before modifying existing functionality:
+
+1. Inspect current implementation.
+2. Identify dependencies.
+3. Preserve working behavior.
+4. Make focused changes.
+5. Test.
+6. Report what changed.
+
+============================================================
+65. NO BLIND MASS GENERATION
+============================================================
+
+Do not ask the AI agent to generate the entire Pharmacy ERP in
+one prompt.
+
+Implementation must happen stage-by-stage.
+
+Each coding stage should have:
+
+- Clear objective
+- Input documents
+- Scope
+- Files allowed to change
+- Expected behavior
+- Acceptance criteria
+- Tests
+- Completion report
+
+============================================================
+66. TECHNICAL DECISION RECORDS
+============================================================
+
+Important technical decisions should be documented.
+
+Examples:
+
+- ORM selection
+- Authentication strategy
+- State management
+- File storage
+- Payment integration
+- SMS integration
+- Email integration
+- Deployment architecture
+
+The agent should not repeatedly change these decisions without
+reason.
+
+============================================================
+67. CURRENT TECHNICAL TARGET
+============================================================
+
+Frontend:
+
+React
+Vite
+Tailwind CSS
+React Router
+Reusable component library where useful
+
+Backend:
+
+Node.js
+Express.js
+
+Database:
+
+MySQL
+
+Architecture:
+
+Separated React frontend
++
+REST-style Express backend
++
+MySQL database
+
+============================================================
+68. WHAT THIS STAGE DOES NOT DEFINE YET
+============================================================
+
+The following must be decided in later technical stages:
+
+- Exact ORM
+- Exact authentication package
+- Exact state-management library
+- Exact UI library
+- Exact validation library
+- Exact API documentation tool
+- Exact testing libraries
+- Exact deployment platform
+- Exact payment provider
+- Exact SMS provider
+- Exact email provider
+
+These decisions must be made deliberately.
+
+Do not let the AI agent randomly install libraries.
+
+============================================================
+69. FOUNDATION IMPLEMENTATION REQUIREMENT
+============================================================
+
+Before building business modules, the project must establish:
+
+- Working frontend
+- Working backend
+- MySQL connection
+- Environment configuration
+- Error handling
+- Authentication foundation
+- Authorization foundation
+- API structure
+- Database migration strategy
+- Basic logging
+- Basic testing setup
+
+Only after this foundation is stable should major business
+modules be implemented.
+
+============================================================
+70. FINAL ARCHITECTURAL PRINCIPLE
+============================================================
+
+The system architecture must preserve this chain:
+
+USER
+ ↓
+AUTHENTICATION
+ ↓
+AUTHORIZATION
+ ↓
+DATA SCOPE
+ ↓
+API
+ ↓
+BUSINESS SERVICE
+ ↓
+DATABASE TRANSACTION
+ ↓
+INVENTORY / FINANCIAL EFFECT
+ ↓
+AUDIT
+ ↓
+NOTIFICATION
+ ↓
+REPORTING
+
+The frontend is the interface.
+
+The backend is the business authority.
+
+The database is the persistent source of business state/history.
+
+============================================================
+71. FINAL AI AGENT INSTRUCTION
+============================================================
+
+The AI agent must treat Stage 01–05 as a connected specification.
+
+Do not read Stage 05 in isolation.
+
+Before implementing any feature:
+
+READ:
+Stage 01
+Stage 02
+Stage 03
+Stage 04
+Stage 05
+
+Then determine:
+
+WHAT is being built?
+WHO can use it?
+WHAT can they do?
+WHERE can they access it?
+HOW does the business process work?
+WHAT data is required?
+WHAT happens to inventory?
+WHAT happens financially?
+WHAT approvals are required?
+WHAT must be audited?
+WHAT notifications are triggered?
+WHAT errors/exceptions exist?
+
+Only after answering those questions should implementation begin.
+
+============================================================
+END OF STAGE 05
+============================================================

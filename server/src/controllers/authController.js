@@ -1,0 +1,49 @@
+import env from '../config/env.js';
+import authService from '../services/authService.js';
+
+function cookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: env.auth.cookieSameSite,
+    secure: env.auth.cookieSecure,
+    path: '/',
+    maxAge: parseExpiryToMs(env.auth.jwtExpiresIn),
+  };
+}
+
+/** Supports values like '8h', '30m', '1d', '3600'. */
+function parseExpiryToMs(value) {
+  const match = /^(\d+)([smhd])?$/.exec(String(value).trim());
+  if (!match) return 8 * 60 * 60 * 1000;
+  const n = Number.parseInt(match[1], 10);
+  const unit = match[2] || 's';
+  const factor = { s: 1000, m: 60_000, h: 3_600_000, d: 86_400_000 }[unit];
+  return n * factor;
+}
+
+async function login(req, res, next) {
+  try {
+    const { user, token } = await authService.login(req.body);
+    res.cookie(env.auth.cookieName, token, cookieOptions());
+    res.status(200).json({ success: true, data: { user } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function logout(req, res) {
+  // Invalidate the client's authentication state by clearing the cookie.
+  res.clearCookie(env.auth.cookieName, {
+    httpOnly: true,
+    sameSite: env.auth.cookieSameSite,
+    secure: env.auth.cookieSecure,
+    path: '/',
+  });
+  res.status(200).json({ success: true, data: { message: 'Logged out' } });
+}
+
+function me(req, res) {
+  res.status(200).json({ success: true, data: { user: req.user } });
+}
+
+export default { login, logout, me };

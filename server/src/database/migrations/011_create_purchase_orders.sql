@@ -1,0 +1,50 @@
+-- Task 08 — Procurement: Purchase Orders + Purchase Order Lines.
+
+CREATE TABLE IF NOT EXISTS purchase_orders (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  organization_id INT UNSIGNED NOT NULL,
+  branch_id INT UNSIGNED NOT NULL,
+  supplier_id INT UNSIGNED NOT NULL,
+  po_number VARCHAR(40) NOT NULL,
+  order_date DATE NOT NULL,
+  expected_delivery_date DATE NULL,
+  status ENUM('draft', 'submitted', 'pending_approval', 'approved', 'partially_received', 'fully_received', 'rejected', 'cancelled') NOT NULL DEFAULT 'draft',
+  currency VARCHAR(3) NOT NULL DEFAULT 'ETB',
+  notes TEXT NULL,
+  total_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  rejection_reason TEXT NULL,
+  cancelled_reason TEXT NULL,
+  created_by INT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_po_org_number (organization_id, po_number),
+  KEY idx_po_org_status (organization_id, status),
+  KEY idx_po_branch (branch_id),
+  KEY idx_po_supplier (supplier_id),
+  KEY idx_po_order_date (order_date),
+  CONSTRAINT fk_po_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_po_branch FOREIGN KEY (branch_id) REFERENCES branches (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_po_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_po_creator FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS purchase_order_lines (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  purchase_order_id INT UNSIGNED NOT NULL,
+  product_id INT UNSIGNED NOT NULL,
+  unit_id INT UNSIGNED NOT NULL,
+  ordered_quantity DECIMAL(14,3) NOT NULL,
+  unit_price DECIMAL(12,4) NOT NULL DEFAULT 0.0000,
+  line_total DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+  notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_pol_po (purchase_order_id),
+  KEY idx_pol_product (product_id),
+  CONSTRAINT chk_pol_quantity_positive CHECK (ordered_quantity > 0),
+  CONSTRAINT chk_pol_price_non_negative CHECK (unit_price >= 0),
+  CONSTRAINT fk_pol_po FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_pol_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_pol_unit FOREIGN KEY (unit_id) REFERENCES units (id) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

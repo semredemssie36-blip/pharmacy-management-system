@@ -1,0 +1,1285 @@
+============================================================
+PHARMACY ERP SYSTEM
+STAGE 01 — SYSTEM OVERVIEW
+============================================================
+
+PROJECT:
+Multi-Branch Pharmacy Management / ERP System
+
+TECHNOLOGY STACK:
+Frontend:
+- React
+- Vite
+- Tailwind CSS
+- React Router
+- UI/component library when needed
+
+Backend:
+- Node.js
+- Express.js
+
+Database:
+- MySQL
+
+IMPORTANT:
+This document defines the system context and business understanding.
+DO NOT start implementing the application from this stage.
+
+The implementation will happen in later stages.
+
+============================================================
+1. PURPOSE OF THIS DOCUMENT
+============================================================
+
+This document establishes the high-level understanding of the
+Pharmacy ERP system before development begins.
+
+The system must NOT be treated as a simple CRUD application.
+
+It is a business system that connects:
+
+- Pharmacy operations
+- Inventory
+- Procurement
+- Sales/POS
+- Patients
+- Prescriptions
+- Dispensing
+- Payments
+- Customers
+- Returns
+- Stock transfers
+- Stock adjustments
+- Quarantine
+- Expiry management
+- Product recall
+- Approvals
+- Audit trail
+- Notifications
+- Reports
+- User access control
+
+Every later development stage must remain consistent with the
+business concepts and rules established in this document.
+
+============================================================
+2. SYSTEM VISION
+============================================================
+
+The goal is to build a professional multi-branch Pharmacy ERP
+system that allows a pharmacy organization to manage its
+day-to-day operations from one integrated system.
+
+The system must connect business activities instead of treating
+each feature as an isolated CRUD module.
+
+For example:
+
+PROCUREMENT
+    ↓
+PURCHASE ORDER
+    ↓
+APPROVAL
+    ↓
+RECEIVING
+    ↓
+BATCH + EXPIRY
+    ↓
+INVENTORY
+    ↓
+SALE / DISPENSING
+    ↓
+PAYMENT
+    ↓
+STOCK MOVEMENT
+    ↓
+AUDIT
+    ↓
+REPORTING
+
+The system must preserve these relationships.
+
+============================================================
+3. SAMPLE ORGANIZATION
+============================================================
+
+Use the following organization as the main example while
+designing and testing the system.
+
+Organization:
+
+ABC Pharmacy
+
+Branches:
+
+1. Piassa Branch
+2. Megenagna Branch
+
+Each branch may contain:
+
+- Pharmacy operation
+- Main warehouse
+- Storage locations
+
+Conceptually:
+
+ABC Pharmacy
+│
+├── Piassa Branch
+│   ├── Pharmacy
+│   └── Main Warehouse
+│
+└── Megenagna Branch
+    ├── Pharmacy
+    └── Main Warehouse
+
+ABC Pharmacy is ONE organization.
+
+Piassa and Megenagna are branches of the same organization.
+
+They are NOT separate systems.
+
+============================================================
+4. MULTI-BRANCH PRINCIPLE
+============================================================
+
+The system must support multiple branches.
+
+A user may have:
+
+- Organization-wide access
+- Branch-level access
+- Warehouse-level access
+
+Access must be controlled by both:
+
+1. Role/permissions
+2. Data scope
+
+IMPORTANT:
+
+ROLE != DATA SCOPE
+
+Example:
+
+A user can be:
+
+Role:
+Branch Manager
+
+Scope:
+Piassa Branch
+
+That user should normally see Piassa information only.
+
+They should not automatically see all Megenagna information.
+
+Cross-branch access must be explicitly allowed through
+appropriate permissions/data scope.
+
+Some organization-level users may have access to multiple
+branches.
+
+Examples:
+
+- System Administrator
+- Procurement Officer
+- Finance User
+- Management/Reporting User
+
+Exact access will be defined in later RBAC stages.
+
+============================================================
+5. MAIN SYSTEM ACTORS
+============================================================
+
+The system must support at least the following roles:
+
+1. System Administrator
+2. Branch Manager
+3. Pharmacist
+4. Pharmacy Technician / Dispensing User
+5. Sales / Cashier
+6. Warehouse / Storekeeper
+7. Procurement Officer
+8. Finance User
+9. Management / Reporting User
+
+The roles must be configurable.
+
+The architecture must allow future roles to be added without
+redesigning the entire system.
+
+Detailed permissions will be defined in a later stage.
+
+============================================================
+6. MAJOR SYSTEM MODULES
+============================================================
+
+The system should contain the following major business areas.
+
+------------------------------------------------------------
+6.1 Dashboard
+------------------------------------------------------------
+
+Provides operational and management visibility.
+
+Examples:
+
+- Sales summary
+- Inventory summary
+- Low stock
+- Near expiry
+- Expired stock
+- Pending approvals
+- Pending purchase orders
+- Receivables
+- Payables
+- Branch performance
+- Notifications
+- Important alerts
+
+The dashboard must be based on real system data.
+
+------------------------------------------------------------
+6.2 Authentication and Access Control
+------------------------------------------------------------
+
+Handles:
+
+- Login
+- User accounts
+- Roles
+- Permissions
+- Branch access
+- Warehouse access
+- Session/security controls
+
+Detailed RBAC will be designed later.
+
+------------------------------------------------------------
+6.3 Organization and Branch Management
+------------------------------------------------------------
+
+Handles:
+
+- Organization
+- Branches
+- Warehouses
+- Storage locations
+- Branch configuration
+
+The system must support multiple branches within one
+organization.
+
+------------------------------------------------------------
+6.4 Product / Medicine Master
+------------------------------------------------------------
+
+Products/medicines may contain information such as:
+
+- Product code
+- Barcode
+- Brand name
+- Generic name
+- Active ingredient
+- Strength
+- Dosage form
+- Route
+- Category
+- Manufacturer
+- Registration information
+- Prescription classification
+- Controlled classification
+- Storage requirement
+- Minimum stock
+- Maximum stock
+- Reorder level
+
+Product master data is different from actual inventory.
+
+A product can exist in the master data even when a branch has
+zero stock.
+
+------------------------------------------------------------
+6.5 Inventory
+------------------------------------------------------------
+
+Inventory is one of the most important modules.
+
+Inventory must be aware of:
+
+- Product
+- Branch
+- Warehouse
+- Storage location
+- Batch
+- Expiry
+- Quantity
+- Stock status
+
+The system must support stock movement tracking.
+
+Possible movement types include:
+
+- Purchase receipt
+- Sale
+- Dispensing
+- Transfer
+- Return
+- Adjustment
+- Damage
+- Expiry
+- Recall
+- Disposal
+
+IMPORTANT:
+
+Stock must not be treated as a number that users can freely
+edit.
+
+Inventory changes should come from valid business transactions
+or authorized adjustments.
+
+------------------------------------------------------------
+6.6 FEFO
+------------------------------------------------------------
+
+The pharmacy inventory must support:
+
+FEFO = First Expire, First Out
+
+When stock is allocated for sale or dispensing, the system
+should prefer the appropriate earliest-expiring available batch.
+
+The system must support warnings/controls when a user attempts
+to override normal FEFO behavior.
+
+FEFO will be implemented and defined in detail in the inventory
+stage.
+
+------------------------------------------------------------
+6.7 Procurement
+------------------------------------------------------------
+
+Procurement manages:
+
+- Suppliers
+- Purchase orders
+- Purchase order approval
+- Delivery
+- Receiving
+- Partial receiving
+- Discrepancies
+- Supplier returns
+
+Basic business flow:
+
+Supplier
+    ↓
+Purchase Order
+    ↓
+Approval
+    ↓
+Delivery
+    ↓
+Receiving
+    ↓
+Batch / Expiry
+    ↓
+Inventory
+
+IMPORTANT:
+
+A Purchase Order does NOT automatically increase inventory.
+
+Inventory increases when goods are actually received and
+accepted according to the receiving workflow.
+
+------------------------------------------------------------
+6.8 Sales / POS
+------------------------------------------------------------
+
+The system must support pharmacy sales/POS.
+
+Typical flow:
+
+Search / Scan Product
+    ↓
+Select Product
+    ↓
+Price
+    ↓
+Discount if allowed
+    ↓
+Calculate Total
+    ↓
+Payment
+    ↓
+Receipt
+    ↓
+Inventory Reduction
+
+The system must support:
+
+- Product search
+- Barcode scanning
+- Pricing
+- Discounts
+- Payment
+- Receipts
+- Authorized voids
+- Customer returns
+- Credit sales where permitted
+
+Different product classifications may exist:
+
+- Prescription medicine
+- OTC medicine
+- Controlled/restricted medicine
+- General/FMCG products
+
+============================================================
+7. PATIENT AND PRESCRIPTION CONCEPT
+============================================================
+
+A PATIENT and a CUSTOMER are not automatically the same concept.
+
+PATIENT:
+Person receiving healthcare/medicine through a prescription or
+dispensing workflow.
+
+CUSTOMER:
+Person or organization involved in a commercial sale/account.
+
+A customer may purchase products without being represented as a
+patient.
+
+A patient may be associated with prescription and dispensing
+records.
+
+The system must preserve this distinction.
+
+============================================================
+8. PRESCRIPTION AND DISPENSING
+============================================================
+
+Prescription/dispensing is different from normal POS sales.
+
+General workflow:
+
+Patient
+    ↓
+Prescription
+    ↓
+Prescription Validation
+    ↓
+Medicine Selection
+    ↓
+Stock Availability
+    ↓
+FEFO Allocation
+    ↓
+Dispensing Preparation
+    ↓
+Pharmacist Verification
+    ↓
+Payment
+    ↓
+Dispensing Completion
+    ↓
+Stock Movement
+    ↓
+Audit
+
+The system should support:
+
+- Patient records
+- Prescriptions
+- Prescription validation
+- Medicine selection
+- Stock allocation
+- FEFO
+- Partial dispensing
+- Refills where applicable
+- Pharmacist verification
+- Controlled medicine handling
+- Prescription history
+
+A pharmacy technician/dispensing user may prepare dispensing,
+while applicable prescriptions require pharmacist verification.
+
+Detailed clinical/business rules will be defined later.
+
+============================================================
+9. CONTROLLED / RESTRICTED MEDICINES
+============================================================
+
+Controlled or restricted medicines require stronger controls.
+
+The system should support:
+
+- Classification
+- Authorization
+- Receipt tracking
+- Issue/dispensing tracking
+- Appropriate registers
+- Audit trail
+- Exception handling
+
+The exact rules will be defined in the pharmacy/dispensing
+stages.
+
+============================================================
+10. RETURNS
+============================================================
+
+Returns are business transactions, not simply "delete sale".
+
+The system must distinguish between:
+
+- Customer returns
+- Supplier returns
+
+Customer returns should be associated with the original
+transaction where possible.
+
+The system should identify:
+
+- Original transaction
+- Product
+- Batch
+- Quantity
+- Reason
+- Return condition
+
+A returned item may:
+
+- Return to saleable stock
+- Go to quarantine
+- Be rejected
+- Be returned to supplier
+- Be disposed
+
+The inventory and financial effects must be handled correctly.
+
+============================================================
+11. QUARANTINE
+============================================================
+
+Quarantine means stock physically exists but must NOT be available
+for normal sale or dispensing.
+
+Examples:
+
+- Damaged product
+- Suspected defective product
+- Returned product awaiting inspection
+- Product involved in investigation
+- Other blocked stock
+
+Conceptually:
+
+AVAILABLE
+    ↓
+QUARANTINE
+    ↓
+RELEASE
+OR
+SUPPLIER RETURN
+OR
+DISPOSAL
+
+Quarantined stock must not be treated as normal available stock.
+
+============================================================
+12. EXPIRY MANAGEMENT
+============================================================
+
+Inventory is batch and expiry aware.
+
+The system should support:
+
+- Expiry date tracking
+- Near-expiry warnings
+- Expired stock identification
+- Expired stock reports
+- Appropriate stock blocking
+- Disposal workflow where applicable
+
+Expired stock must not be available for normal sale or
+dispensing.
+
+Near-expiry thresholds should be configurable.
+
+============================================================
+13. PRODUCT RECALL
+============================================================
+
+The system should support product recall.
+
+A recall may require the system to identify:
+
+- Affected product
+- Affected batch
+- Current stock locations
+- Remaining quantity
+- Branches/warehouses affected
+- Customers/patients affected where traceability exists
+
+Recall workflow must support investigation, notification,
+reconciliation and final resolution.
+
+============================================================
+14. STOCK TRANSFER
+============================================================
+
+Stock may move between branches/warehouses.
+
+Example:
+
+Piassa
+  ↓
+Transfer Request
+  ↓
+Approval if required
+  ↓
+Dispatch
+  ↓
+Megenagna
+  ↓
+Receive
+  ↓
+Inventory Updated
+
+A transfer is a business transaction.
+
+It is NOT simply:
+
+Piassa stock -100
+Megenagna stock +100
+
+without recording the transfer.
+
+The system should preserve:
+
+- Source
+- Destination
+- Product
+- Batch
+- Quantity
+- Requester
+- Approver where required
+- Dispatcher
+- Receiver
+- Dates/times
+- Status
+- Discrepancies
+- Audit
+
+============================================================
+15. STOCK COUNT AND ADJUSTMENT
+============================================================
+
+Physical stock may differ from system stock.
+
+Example:
+
+System quantity:
+100
+
+Physical quantity:
+96
+
+Difference:
+-4
+
+The system should support:
+
+Stock Count
+    ↓
+Compare System vs Physical
+    ↓
+Variance
+    ↓
+Reason
+    ↓
+Adjustment Request
+    ↓
+Approval if required
+    ↓
+Inventory Update
+    ↓
+Stock Movement
+    ↓
+Audit
+
+Users should not silently overwrite inventory quantities.
+
+============================================================
+16. CUSTOMER CREDIT / RECEIVABLES
+============================================================
+
+The system may support customer credit accounts.
+
+Important concepts:
+
+- Credit limit
+- Outstanding balance
+- Available credit
+- Payment terms
+- Partial payments
+- Payment allocation
+- Credit warnings
+- Credit override
+- Receivables
+
+Example:
+
+Customer credit limit:
+10,000 ETB
+
+Outstanding:
+7,000 ETB
+
+Available:
+3,000 ETB
+
+A new credit sale that exceeds the allowed limit may require
+authorization depending on configured business rules.
+
+============================================================
+17. FINANCE BOUNDARY
+============================================================
+
+The system must provide financial visibility related to
+pharmacy operations.
+
+Examples:
+
+- Sales
+- Purchases
+- Returns
+- Discounts
+- Cost
+- Gross profit
+- Margins
+- Customer receivables
+- Supplier payables
+- Payments
+- Refunds
+- Payment allocation
+- Profitability
+
+IMPORTANT:
+
+This system is not automatically assumed to be a complete
+general-ledger/accounting system.
+
+The financial scope must remain aligned with the client
+requirements.
+
+============================================================
+18. APPROVALS AND OVERRIDES
+============================================================
+
+Sensitive actions may require approval.
+
+Examples include:
+
+- Stock adjustments
+- Price changes
+- Large discounts
+- Credit overrides
+- FEFO overrides
+- Prescription exceptions
+- Clinical warning overrides
+- Controlled medicine exceptions
+- Purchase orders
+- Returns
+- Stock disposal
+
+Conceptual flow:
+
+USER
+  ↓
+Attempts sensitive action
+  ↓
+Permission check
+  ↓
+Approval required?
+  ↓
+YES
+  ↓
+Approval Request
+  ↓
+Approver
+  ↓
+Approve / Reject
+  ↓
+Business action executed if approved
+
+Approval rules should be configurable.
+
+The system must not hard-code every approval decision into
+individual pages.
+
+============================================================
+19. AUDIT TRAIL
+============================================================
+
+The audit trail is a critical part of the ERP.
+
+The system should record important actions including:
+
+- Who performed the action
+- When it happened
+- What was changed
+- Previous value where applicable
+- New value where applicable
+- Reason where required
+- Approver where applicable
+- Related transaction/reference
+
+IMPORTANT DISTINCTION:
+
+Transaction:
+"What happened in the business?"
+
+Audit:
+"Who did what, when, and how did the record change?"
+
+Both are required.
+
+============================================================
+20. NOTIFICATIONS
+============================================================
+
+Notifications should be generated from real business events.
+
+Examples:
+
+- Low stock
+- Out of stock
+- Overstock
+- Near expiry
+- Expired products
+- Product recall
+- Pending approval
+- Purchase order requiring action
+- Stock discrepancy
+- Credit limit breach
+- Supplier payment
+- Important prescription/dispensing events
+
+Notifications should be connected to actual system events.
+
+============================================================
+21. REPORTING
+============================================================
+
+Reports should be generated from real transactional data.
+
+Major report categories include:
+
+- Sales reports
+- Inventory reports
+- Procurement reports
+- Prescription reports
+- Customer reports
+- Financial reports
+- Audit reports
+- Expiry reports
+- Stock movement reports
+- Branch comparison reports
+
+Reports should support appropriate:
+
+- Filtering
+- Searching
+- Sorting
+- Date ranges
+- Branch selection
+- Export where required
+
+============================================================
+22. GLOBAL SEARCH
+============================================================
+
+The system should eventually support global/advanced search.
+
+Possible searchable records:
+
+- Products
+- Barcode
+- Batch
+- Patients
+- Prescriptions
+- Customers
+- Suppliers
+- Purchase orders
+- Sales
+- Transactions
+- Invoices
+- Other important business records
+
+Search must respect the user's permissions and data scope.
+
+A user must not gain access to records simply because they can
+search for them.
+
+============================================================
+23. IMPORTANT BUSINESS DISTINCTIONS
+============================================================
+
+The following concepts must remain separate throughout the
+system design.
+
+1. ROLE != DATA SCOPE
+
+2. CUSTOMER != PATIENT
+
+3. PHYSICAL STOCK != SELLABLE STOCK
+
+4. TRANSACTION != AUDIT
+
+5. PURCHASE ORDER != INVENTORY
+
+6. STOCK ADJUSTMENT != DIRECT STOCK EDITING
+
+7. POS SALE != PRESCRIPTION DISPENSING
+
+8. AVAILABLE STOCK != QUARANTINED STOCK
+
+9. AVAILABLE STOCK != RECALLED STOCK
+
+10. PRODUCT MASTER != INVENTORY
+
+11. BRANCH != WAREHOUSE
+
+12. APPROVAL REQUEST != EXECUTED BUSINESS ACTION
+
+These distinctions must be respected by all later stages.
+
+============================================================
+24. INVENTORY CONCEPT
+============================================================
+
+The system should conceptually account for inventory through
+business movements.
+
+A simplified model is:
+
+Opening Stock
++ Purchases / Receipts
++ Transfers In
++ Customer Returns that become saleable
+- Sales
+- Dispensing
+- Transfers Out
+- Damage
+- Expiry
+- Disposal
+± Authorized Adjustments
+= Current Physical Stock
+
+However, physical stock may be divided into different states.
+
+For example:
+
+Physical Stock = 500
+
+Available = 420
+Reserved = 30
+Quarantined = 20
+Recalled = 20
+Expired = 10
+
+Total physical quantity remains 500.
+
+The exact inventory implementation will be designed in later
+stages.
+
+============================================================
+25. SYSTEM BOUNDARIES
+============================================================
+
+The system should manage pharmacy operational processes.
+
+It should NOT invent business functionality that was not
+established in the requirements.
+
+If a future feature is uncertain, the implementation agent must
+ask for clarification or mark it as a configurable/design
+decision rather than silently inventing a business rule.
+
+Examples of areas requiring careful scope control:
+
+- Full accounting/general ledger
+- Insurance workflows
+- Advanced currency management
+- Advanced promotions
+- External integrations
+- SMS providers
+- Payment gateways
+- Complex clinical decision support
+
+These may be implemented where required by the project
+requirements and available time.
+
+============================================================
+26. PRODUCT DEVELOPMENT PRINCIPLE
+============================================================
+
+This project must NOT become a collection of disconnected CRUD
+screens.
+
+Every important module must have:
+
+- Actors
+- Permissions
+- Business rules
+- Preconditions
+- Workflow
+- Exceptions
+- Data effects
+- Inventory effects where applicable
+- Financial effects where applicable
+- Approval requirements where applicable
+- Audit requirements
+- Notifications where applicable
+
+============================================================
+27. AI DEVELOPMENT PRINCIPLE
+============================================================
+
+AI coding agents such as OpenCode will be used to accelerate
+development.
+
+However:
+
+THE AI AGENT MUST NOT DESIGN THE BUSINESS SYSTEM BY ITSELF.
+
+The project owner/system architect defines:
+
+- Business requirements
+- Business rules
+- Workflows
+- Permissions
+- Data relationships
+- System boundaries
+
+The AI agent is responsible for helping implement those
+decisions.
+
+The agent must inspect existing project code before modifying it.
+
+The agent must not:
+
+- Rewrite unrelated existing functionality
+- Delete working features without authorization
+- Invent business rules
+- Create duplicate models unnecessarily
+- Bypass permissions
+- Directly manipulate inventory without business rules
+- Ignore audit requirements
+- Ignore approval requirements
+- Create fake success states
+
+============================================================
+28. DEVELOPMENT APPROACH
+============================================================
+
+Development will happen in controlled stages.
+
+Each stage will have its own documentation/prompt file.
+
+Example:
+
+stage-01-system-overview.txt
+stage-02-actors-permissions.txt
+stage-03-business-rules.txt
+stage-04-domain-database-design.txt
+...
+
+A later stage must build on the decisions established in earlier
+stages.
+
+Do not skip important dependencies simply because a feature is
+easy to code.
+
+============================================================
+29. ONE-MONTH DEVELOPMENT PRINCIPLE
+============================================================
+
+The system must be developed with a one-month delivery target.
+
+Priority:
+
+P0:
+Critical functionality required for a convincing working
+pharmacy ERP demonstration.
+
+P1:
+Important business functionality that should be implemented if
+time permits.
+
+P2:
+Advanced functionality that can be completed after the core
+system is stable.
+
+The project should prioritize:
+
+CORRECT BUSINESS LOGIC
+over
+LARGE NUMBER OF SCREENS
+
+A smaller but genuinely functional system is better than a
+large collection of fake/demo-only screens.
+
+============================================================
+30. EXPECTED FINAL SYSTEM
+============================================================
+
+The final system should feel like one connected pharmacy
+business platform.
+
+Example:
+
+USER
+ ↓
+AUTHENTICATION
+ ↓
+ROLE + PERMISSION + DATA SCOPE
+ ↓
+BRANCH
+ ↓
+BUSINESS MODULE
+ ↓
+BUSINESS TRANSACTION
+ ↓
+INVENTORY / FINANCIAL EFFECT
+ ↓
+APPROVAL WHEN REQUIRED
+ ↓
+AUDIT
+ ↓
+NOTIFICATION
+ ↓
+REPORTING
+
+The final system should allow a realistic business scenario
+to be demonstrated from beginning to end.
+
+============================================================
+31. EXAMPLE END-TO-END BUSINESS SCENARIO
+============================================================
+
+Example:
+
+Piassa Branch needs Amoxicillin.
+
+Low stock detected
+        ↓
+Replenishment decision
+        ↓
+Procurement Officer creates Purchase Order
+        ↓
+Purchase Order approval
+        ↓
+Supplier delivers medicine
+        ↓
+Storekeeper receives medicine
+        ↓
+Batch recorded
+        ↓
+Expiry recorded
+        ↓
+Warehouse/location recorded
+        ↓
+Inventory increases
+        ↓
+Medicine becomes available
+        ↓
+Customer purchases medicine OR
+Patient receives prescription
+        ↓
+Sale/dispensing transaction
+        ↓
+Payment
+        ↓
+Inventory decreases
+        ↓
+Receipt generated
+        ↓
+Audit recorded
+        ↓
+Reports updated
+
+This demonstrates that the system is integrated.
+
+============================================================
+32. STAGE 01 IMPLEMENTATION RULE
+============================================================
+
+DO NOT IMPLEMENT THE APPLICATION IN THIS STAGE.
+
+Do not create:
+
+- Database tables
+- API endpoints
+- React pages
+- Controllers
+- Services
+- Models
+- Authentication code
+- Inventory code
+- POS code
+
+Those will be handled in later stages.
+
+For this stage, the purpose is to establish and preserve the
+system's business understanding.
+
+============================================================
+33. PREPARATION FOR NEXT STAGES
+============================================================
+
+The next stages will progressively define:
+
+- Detailed actors and permissions
+- Business rules
+- Domain model
+- Database structure
+- Application architecture
+- Authentication
+- RBAC
+- Master data
+- Inventory
+- Procurement
+- Receiving
+- POS
+- Patients
+- Prescriptions
+- Dispensing
+- Payments
+- Returns
+- Transfers
+- Adjustments
+- Quarantine
+- Expiry
+- Recall
+- Approvals
+- Audit
+- Notifications
+- Search
+- Reports
+- Testing
+- Final demonstration
+
+No later stage should contradict the business principles defined
+here without an explicit design decision.
+
+============================================================
+END OF STAGE 01
+============================================================

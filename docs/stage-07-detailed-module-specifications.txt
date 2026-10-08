@@ -1,0 +1,2425 @@
+============================================================
+STAGE 07 — DETAILED MODULE SPECIFICATIONS
+PHARMACY MANAGEMENT / ERP SYSTEM
+============================================================
+
+PURPOSE
+============================================================
+
+This document provides detailed functional specifications for the
+major modules of the Pharmacy Management / ERP System.
+
+Stages 01–06 established:
+
+- overall system purpose
+- actors
+- roles
+- permissions
+- data scope
+- business workflows
+- domain model
+- database architecture
+- technical architecture
+- UX/UI architecture
+
+Stage 07 now defines the actual functional behavior of each major
+business module.
+
+The purpose is to prevent the AI development agent from treating
+the application as a collection of unrelated CRUD pages.
+
+Every module must be understood as a business domain.
+
+============================================================
+CRITICAL AI AGENT RULE
+============================================================
+
+Before implementing any module, the agent MUST read:
+
+Stage 01
+Stage 02
+Stage 03
+Stage 04
+Stage 05
+Stage 06
+Stage 07
+
+The agent MUST NOT invent missing business rules.
+
+If a requirement is unclear:
+
+1. identify the ambiguity
+2. check previous stages
+3. check the original functional requirements
+4. do not silently invent a major business rule
+
+Minor technical implementation decisions may be made by the agent
+when they do not change business behavior.
+
+Major business decisions must not be invented.
+
+============================================================
+MODULE 01 — ORGANIZATION & BRANCH MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage the pharmacy organization and its branches.
+
+Example organization:
+
+ABC Pharmacy
+
+Branches:
+
+Piassa Branch
+Megenagna Branch
+
+This is one organization with multiple operational branches.
+
+------------------------------------------------------------
+MAIN RECORDS
+------------------------------------------------------------
+
+Organization
+Branch
+Warehouse
+Storage Location
+
+------------------------------------------------------------
+ACTORS
+------------------------------------------------------------
+
+System Administrator
+Authorized Management users
+
+------------------------------------------------------------
+FUNCTIONS
+------------------------------------------------------------
+
+Create organization configuration.
+
+Create branch.
+
+Edit branch.
+
+Activate/deactivate branch.
+
+View branch details.
+
+Assign warehouses to branch.
+
+Assign users according to scope.
+
+View branch operational information.
+
+------------------------------------------------------------
+BUSINESS RULES
+------------------------------------------------------------
+
+A branch belongs to an organization.
+
+A warehouse belongs to a branch.
+
+A storage location belongs to a warehouse.
+
+Users may be assigned access to one or more branches according to
+their permissions.
+
+A user with Piassa-only scope must not access Megenagna operational
+data.
+
+Organization-level users may access multiple branches if explicitly
+authorized.
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Branch access is not the same as role.
+
+Example:
+
+Hana:
+Role = Branch Manager
+Scope = Piassa Branch
+
+Another user:
+
+Michael:
+Role = Management
+Scope = All Branches
+
+Therefore:
+
+Role determines what actions the user may perform.
+
+Scope determines which records the user may access.
+
+============================================================
+MODULE 02 — WAREHOUSE & STORAGE MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage physical storage areas where inventory exists.
+
+------------------------------------------------------------
+FUNCTIONS
+------------------------------------------------------------
+
+Create warehouse.
+
+Edit warehouse.
+
+Activate/deactivate warehouse.
+
+Create storage location.
+
+Edit storage location.
+
+Configure storage conditions.
+
+View warehouse stock.
+
+View location stock.
+
+------------------------------------------------------------
+STORAGE CONDITIONS
+------------------------------------------------------------
+
+Examples from the requirements include:
+
+Room temperature
+2–8°C
+Refrigerated
+Frozen
+Dry storage
+Hazardous storage
+Other configurable conditions
+
+------------------------------------------------------------
+BUSINESS RULE
+------------------------------------------------------------
+
+The product has a storage requirement.
+
+The warehouse/location has a storage condition.
+
+The system should prevent or warn when incompatible stock is
+assigned to a location according to configured rules.
+
+Example:
+
+Product:
+
+Insulin
+
+Required:
+
+2–8°C
+
+Location:
+
+Room Temperature
+
+Result:
+
+Storage condition warning/block according to configuration.
+
+============================================================
+MODULE 03 — PRODUCT / MEDICINE MASTER
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Maintain the master definition of every medicine and commercial
+product.
+
+------------------------------------------------------------
+PRODUCT INFORMATION
+------------------------------------------------------------
+
+Product Code / SKU
+Barcode
+Brand Name
+Generic Name
+Active Ingredient
+Strength
+Dosage Form
+Route
+Category
+Therapeutic Category
+Manufacturer
+Country of Origin
+Registration Number
+Product Description
+Status
+
+------------------------------------------------------------
+CLASSIFICATION
+------------------------------------------------------------
+
+Prescription Classification
+
+Controlled / Restricted Classification
+
+Antibiotic Classification where applicable
+
+------------------------------------------------------------
+STORAGE
+------------------------------------------------------------
+
+Storage Requirement
+
+------------------------------------------------------------
+STOCK CONTROL
+------------------------------------------------------------
+
+Minimum Stock Level
+
+Maximum Stock Level
+
+Reorder Level
+
+------------------------------------------------------------
+UNIT MANAGEMENT
+------------------------------------------------------------
+
+The product may support:
+
+Carton
+Box
+Pack
+Strip
+Bottle
+Piece
+Tablet
+Capsule
+
+The system must support configured conversion relationships.
+
+Example:
+
+1 Carton
+=
+10 Boxes
+
+1 Box
+=
+10 Strips
+
+1 Strip
+=
+10 Tablets
+
+These are illustrative examples.
+
+The actual conversion must be configured per product.
+
+------------------------------------------------------------
+PRODUCT RELATIONSHIPS
+------------------------------------------------------------
+
+Support relationships such as:
+
+Brand ↔ Generic
+
+Equivalent medicines
+
+Alternative medicines
+
+Different strengths
+
+Different dosage forms
+
+Combination medicines
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+The product master defines WHAT the product is.
+
+It does NOT represent the current physical stock.
+
+Stock belongs to specific:
+
+Branch
+Warehouse
+Location
+Batch
+Expiry
+
+============================================================
+MODULE 04 — PATIENT MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage patients who receive pharmacy services and prescription
+medicines.
+
+Patients are different from customers.
+
+------------------------------------------------------------
+PATIENT DATA
+------------------------------------------------------------
+
+Patient ID
+Full Name
+Sex
+Date of Birth
+Age
+Telephone
+Address
+Emergency Contact
+Insurance
+Notes
+Status
+
+------------------------------------------------------------
+SEARCH
+------------------------------------------------------------
+
+Patient search may use:
+
+Patient ID
+Name
+Telephone
+Identification/reference number
+Other configured identifiers
+
+------------------------------------------------------------
+PATIENT HISTORY
+------------------------------------------------------------
+
+Prescription History
+Dispensing History
+Medication History
+Refill History
+Returned Medicines
+Relevant Pharmacist Notes
+Payment/Transaction History where applicable
+
+------------------------------------------------------------
+DUPLICATE CONTROL
+------------------------------------------------------------
+
+The system should identify possible duplicate patient records.
+
+Authorized users may merge duplicates.
+
+Merging must preserve relevant historical transactions.
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Do NOT automatically merge records.
+
+Duplicate detection and duplicate merging are different operations.
+
+============================================================
+MODULE 05 — PRESCRIBER / DOCTOR MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Maintain information about prescribers used by prescriptions.
+
+Possible information:
+
+Name
+Professional information
+Registration/reference information
+Contact information
+Status
+
+The exact required fields should follow the functional
+requirements and approved design.
+
+The system should allow prescriptions to reference a prescriber.
+
+============================================================
+MODULE 06 — PRESCRIPTION MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage prescriptions from registration through dispensing and
+refills.
+
+------------------------------------------------------------
+PRESCRIPTION DATA
+------------------------------------------------------------
+
+Prescription Number
+Patient
+Prescriber
+Prescription Date
+Prescription Expiry Date
+Medicine
+Generic / Brand
+Strength
+Dosage Form
+Route
+Quantity
+Dosage
+Frequency
+Duration
+Instructions
+Permitted Refills
+Prescription Status
+Supporting Document/Image
+
+------------------------------------------------------------
+STATUSES
+------------------------------------------------------------
+
+Draft
+Pending
+Validated
+Partially Dispensed
+Fully Dispensed
+Refill Available
+Expired
+Cancelled
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+Patient
+    ↓
+Prescription Registration
+    ↓
+Validation
+    ↓
+Medicine Selection
+    ↓
+Stock Allocation
+    ↓
+Dispensing
+    ↓
+Pharmacist Verification
+    ↓
+Payment
+    ↓
+Completion
+
+------------------------------------------------------------
+VALIDATION
+------------------------------------------------------------
+
+Authorized pharmacy personnel verify:
+
+Patient
+Prescriber
+Prescription validity
+Medicine
+Strength
+Quantity
+Dosage
+Refill authorization
+Relevant restrictions
+
+------------------------------------------------------------
+PARTIAL DISPENSING
+------------------------------------------------------------
+
+If prescription quantity is:
+
+20
+
+and only:
+
+12
+
+can be dispensed,
+
+the system records:
+
+Dispensed = 12
+Remaining = 8
+
+The user must not be able to dispense more than the authorized
+remaining quantity.
+
+------------------------------------------------------------
+REFILLS
+------------------------------------------------------------
+
+Track:
+
+Permitted refills
+Completed refills
+Remaining refills
+Refill history
+
+Unauthorized refills must be prevented.
+
+============================================================
+MODULE 07 — PHARMACY DISPENSING
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Execute the actual medicine dispensing process.
+
+------------------------------------------------------------
+SEARCH
+------------------------------------------------------------
+
+Medicine can be searched using:
+
+Generic name
+Brand name
+Product code
+Barcode
+Active ingredient
+Category
+
+------------------------------------------------------------
+STOCK ALLOCATION
+------------------------------------------------------------
+
+The system identifies eligible batches.
+
+FEFO is applied.
+
+Expired products are not normally eligible.
+
+Near-expiry behavior follows configured pharmacy policy.
+
+Selected stock may be reserved during the dispensing transaction.
+
+------------------------------------------------------------
+DISPENSING RECORD
+------------------------------------------------------------
+
+Patient
+Prescription
+Medicine
+Batch
+Expiry
+Quantity
+Dispensing User
+Pharmacist
+Date/Time
+Selling Price
+Discount
+Payment Information
+Instructions
+Notes
+
+------------------------------------------------------------
+PHARMACIST VERIFICATION
+------------------------------------------------------------
+
+Applicable prescriptions require pharmacist verification.
+
+The pharmacist can:
+
+Verify
+Reject
+Request modification
+
+Rejection requires a reason.
+
+The system records:
+
+Verifier
+Date/time
+Decision
+Reason
+
+------------------------------------------------------------
+DISPENSING LABEL
+------------------------------------------------------------
+
+Support labels containing configurable information such as:
+
+Patient
+Medicine
+Strength
+Dosage Form
+Directions
+Quantity
+Dispensing Date
+Expiry information where appropriate
+Pharmacy information
+
+============================================================
+MODULE 08 — CONTROLLED / RESTRICTED MEDICINES
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Provide stricter tracking for controlled/restricted medicines.
+
+------------------------------------------------------------
+REQUIREMENTS
+------------------------------------------------------------
+
+Controlled medicines must have stricter receipt and issue/dispense
+tracking.
+
+The system must record relevant transactions.
+
+Controlled medicine exceptions may require authorization.
+
+------------------------------------------------------------
+UI
+------------------------------------------------------------
+
+Controlled medicine records should be clearly identified.
+
+Example badge:
+
+CONTROLLED
+
+Actions requiring additional authorization should clearly display:
+
+AUTHORIZATION REQUIRED
+
+============================================================
+MODULE 09 — INVENTORY MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage the physical and operational stock of the organization.
+
+Inventory is one of the central modules of the system.
+
+------------------------------------------------------------
+INVENTORY DIMENSIONS
+------------------------------------------------------------
+
+Product
+Branch
+Warehouse
+Storage Location
+Batch
+Expiry
+Quantity
+Status
+
+------------------------------------------------------------
+IMPORTANT STOCK STATES
+------------------------------------------------------------
+
+Available
+Reserved
+Quarantined
+Recalled
+Expired
+Damaged
+
+The exact implementation should follow the database/domain model.
+
+------------------------------------------------------------
+STOCK PRINCIPLE
+------------------------------------------------------------
+
+Inventory should change as the result of business transactions.
+
+Examples:
+
+Purchase Receipt
+    → Stock Increase
+
+Sale
+    → Stock Decrease
+
+Dispensing
+    → Stock Decrease
+
+Transfer Out
+    → Source Decrease
+
+Transfer In
+    → Destination Increase
+
+Customer Return
+    → Stock effect depends on inspection
+
+Supplier Return
+    → Stock Decrease
+
+Damage
+    → Stock Decrease / status change
+
+Expiry
+    → Stock becomes unavailable
+
+Disposal
+    → Stock Decrease
+
+Adjustment
+    → Controlled quantity correction
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Do NOT make arbitrary stock editing the primary mechanism.
+
+Every important stock change must have a business reason and
+traceable movement.
+
+============================================================
+MODULE 10 — STOCK MOVEMENT LEDGER
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Maintain the historical movement of inventory.
+
+------------------------------------------------------------
+MOVEMENT TYPES
+------------------------------------------------------------
+
+Purchase Receipt
+Sale
+Dispensing
+Transfer
+Return
+Adjustment
+Damage
+Expiry
+Recall
+Disposal
+
+------------------------------------------------------------
+MOVEMENT DATA
+------------------------------------------------------------
+
+Product
+Batch
+Quantity
+Source
+Destination
+Branch
+Warehouse
+Location
+User
+Date/Time
+Reason
+Reference Transaction
+
+------------------------------------------------------------
+TRACEABILITY
+------------------------------------------------------------
+
+Every movement should be linked to its originating business
+transaction where applicable.
+
+Example:
+
+Goods Receipt GRN-0001
+
+→ Stock Movement +500
+
+→ Batch AMX-2026-05
+
+============================================================
+MODULE 11 — FEFO
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Use First Expire, First Out for stock allocation.
+
+------------------------------------------------------------
+EXAMPLE
+------------------------------------------------------------
+
+Batch A:
+
+Expiry = 2027-03
+Available = 10
+
+Batch B:
+
+Expiry = 2028-05
+Available = 100
+
+Required quantity:
+
+20
+
+System allocation:
+
+10 from Batch A
+10 from Batch B
+
+------------------------------------------------------------
+RULE
+------------------------------------------------------------
+
+FEFO should normally be automatic.
+
+If a user wants to bypass FEFO:
+
+The system should apply configured warning/approval rules.
+
+The user must not silently override FEFO.
+
+============================================================
+MODULE 12 — PROCUREMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage purchasing from suppliers.
+
+------------------------------------------------------------
+MAIN RECORDS
+------------------------------------------------------------
+
+Supplier
+Purchase Order
+Purchase Order Item
+Goods Receipt
+Supplier Return
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+Replenishment Need
+    ↓
+Supplier Selection
+    ↓
+Purchase Order
+    ↓
+Submission
+    ↓
+Approval if required
+    ↓
+Supplier Delivery
+    ↓
+Goods Receiving
+    ↓
+Batch / Expiry
+    ↓
+Warehouse / Location
+    ↓
+Inventory Increase
+
+------------------------------------------------------------
+PURCHASE ORDER
+------------------------------------------------------------
+
+Fields include appropriate:
+
+PO Number
+Supplier
+Branch
+Warehouse
+Items
+Quantity
+Unit Price
+Currency
+Expected Delivery
+Terms
+Status
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Creating a Purchase Order does NOT increase inventory.
+
+Inventory increases when goods are actually received according to
+the receiving workflow.
+
+============================================================
+MODULE 13 — GOODS RECEIVING
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Record what physically arrived from the supplier.
+
+------------------------------------------------------------
+COMPARE
+------------------------------------------------------------
+
+Ordered Quantity
+
+versus
+
+Received Quantity
+
+------------------------------------------------------------
+EXAMPLE
+------------------------------------------------------------
+
+Ordered:
+
+500
+
+Received:
+
+470
+
+Variance:
+
+30
+
+The system must support partial receiving and discrepancies.
+
+------------------------------------------------------------
+RECEIVING DATA
+------------------------------------------------------------
+
+Product
+Quantity
+Batch
+Expiry
+Warehouse
+Storage Location
+Discrepancy
+Notes
+
+------------------------------------------------------------
+EFFECT
+------------------------------------------------------------
+
+Successful receiving creates:
+
+Goods Receipt
++
+Stock Movement
++
+Inventory Update
++
+Audit Record
+
+============================================================
+MODULE 14 — SUPPLIER RETURN
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Return unsuitable/incorrect/damaged/other eligible stock to a
+supplier according to business rules.
+
+------------------------------------------------------------
+DATA
+------------------------------------------------------------
+
+Supplier
+Original Receipt
+Product
+Batch
+Quantity
+Reason
+Return Status
+
+------------------------------------------------------------
+EFFECT
+------------------------------------------------------------
+
+Supplier return may affect:
+
+Inventory
+Supplier balance/financial visibility
+Audit
+
+============================================================
+MODULE 15 — STOCK TRANSFER
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Move stock between warehouses or branches.
+
+Example:
+
+Piassa
+    ↓
+Megenagna
+
+------------------------------------------------------------
+DATA
+------------------------------------------------------------
+
+Source
+Destination
+Product
+Batch
+Quantity
+Reason
+Requester
+Approver if applicable
+Dispatcher
+Receiver
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+Request
+    ↓
+Approval if required
+    ↓
+Dispatch
+    ↓
+In Transit
+    ↓
+Destination Receive
+    ↓
+Complete
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Transfer is NOT:
+
+Source quantity -= X
+Destination quantity += X
+
+as one unexplained database operation.
+
+The system must preserve the transaction and movement history.
+
+============================================================
+MODULE 16 — STOCK COUNTING
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Compare system stock against physical stock.
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+Select Location
+    ↓
+Count Physical Stock
+    ↓
+Compare System Quantity
+    ↓
+Calculate Variance
+    ↓
+Investigate
+    ↓
+Adjustment Request
+    ↓
+Approval if required
+    ↓
+Apply Adjustment
+    ↓
+Audit
+
+------------------------------------------------------------
+EXAMPLE
+------------------------------------------------------------
+
+System:
+
+500
+
+Physical:
+
+492
+
+Variance:
+
+-8
+
+The system should require an appropriate reason before correction
+according to policy.
+
+============================================================
+MODULE 17 — STOCK ADJUSTMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Correct inventory when there is a legitimate discrepancy or
+business reason.
+
+------------------------------------------------------------
+DATA
+------------------------------------------------------------
+
+Product
+Batch
+Location
+Current Quantity
+Requested Quantity
+Difference
+Reason
+User
+Approval
+
+------------------------------------------------------------
+STATUS
+------------------------------------------------------------
+
+Draft
+Submitted
+Pending Approval
+Approved
+Rejected
+Applied
+Cancelled
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+The UI/API must not allow a user to bypass a required approval.
+
+============================================================
+MODULE 18 — QUARANTINE
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Temporarily prevent stock from normal sale/dispensing while the
+stock is being investigated or handled.
+
+------------------------------------------------------------
+REASONS
+------------------------------------------------------------
+
+Possible examples:
+
+Quality issue
+Damaged packaging
+Suspected counterfeit
+Return inspection
+Recall
+Other configured reason
+
+------------------------------------------------------------
+STATES
+------------------------------------------------------------
+
+Quarantined
+Under Review
+Released
+Supplier Return
+Disposed
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Quarantined stock is physically present but not normal available
+stock.
+
+============================================================
+MODULE 19 — EXPIRY MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Identify and control products approaching or exceeding expiry.
+
+------------------------------------------------------------
+REQUIREMENTS
+------------------------------------------------------------
+
+Configurable near-expiry thresholds.
+
+Examples:
+
+30 days
+60 days
+90 days
+
+The actual threshold must be configurable.
+
+------------------------------------------------------------
+REPORTING
+------------------------------------------------------------
+
+Near Expiry
+Expired
+By Branch
+By Warehouse
+By Product
+By Batch
+
+------------------------------------------------------------
+EXPIRED STOCK
+------------------------------------------------------------
+
+Expired stock must not normally be sold or dispensed.
+
+Possible operational actions:
+
+Quarantine
+Supplier Return
+Disposal
+
+according to applicable business rules.
+
+============================================================
+MODULE 20 — PRODUCT RECALL
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Identify and control affected product batches when a recall occurs.
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+Recall Created
+    ↓
+Affected Batch Identified
+    ↓
+Find Remaining Stock
+    ↓
+Locate Branch/Warehouse
+    ↓
+Quarantine
+    ↓
+Identify affected customers/patients where traceability exists
+    ↓
+Return / Disposal
+    ↓
+Reconciliation
+    ↓
+Recall Completion
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Recall is different from expiry.
+
+Expiry is based on product expiration.
+
+Recall is based on an external/internal decision that a product or
+batch should no longer be used/sold.
+
+============================================================
+MODULE 21 — SALES / POS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Process normal customer sales efficiently.
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+Customer
+    ↓
+Product Search / Barcode
+    ↓
+Quantity
+    ↓
+Price
+    ↓
+Discount if applicable
+    ↓
+Approval if required
+    ↓
+Payment
+    ↓
+Sale Completion
+    ↓
+Inventory Decrease
+    ↓
+Receipt
+    ↓
+Audit
+
+------------------------------------------------------------
+PRODUCT TYPES
+------------------------------------------------------------
+
+Prescription
+OTC
+Controlled/Restricted
+General FMCG
+
+The system must apply appropriate business rules to each.
+
+============================================================
+MODULE 22 — PRICING
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage product pricing.
+
+Possible pricing concepts include:
+
+Purchase Price
+Selling Price
+Wholesale Price
+Retail Price
+Customer-Specific Price
+Pricing Tier
+
+Prices may have:
+
+Effective Date
+End Date
+History
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Price changes can require approval according to configuration.
+
+Price history must be preserved.
+
+============================================================
+MODULE 23 — DISCOUNTS & PROMOTIONS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Support controlled discounting and promotions.
+
+Possible discount rules:
+
+Percentage
+Fixed Amount
+Customer-Specific
+Quantity-Based
+Time-Based
+
+Possible promotions:
+
+Time-based promotions
+Quantity promotions
+Bundle/free-item promotions
+
+------------------------------------------------------------
+APPROVAL
+------------------------------------------------------------
+
+If a discount exceeds the user's authority:
+
+Approval required.
+
+The user must not bypass the approval mechanism.
+
+============================================================
+MODULE 24 — CUSTOMER CREDIT / RECEIVABLES
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Manage customers who purchase on credit.
+
+------------------------------------------------------------
+DATA
+------------------------------------------------------------
+
+Customer
+Credit Limit
+Payment Terms
+Outstanding Balance
+Available Credit
+
+------------------------------------------------------------
+RULE
+------------------------------------------------------------
+
+Before allowing a credit sale:
+
+Check available credit.
+
+If the transaction exceeds the limit:
+
+Block or request authorized override according to configuration.
+
+------------------------------------------------------------
+PAYMENTS
+------------------------------------------------------------
+
+Support:
+
+Partial Payment
+Multiple Invoice Allocation
+Outstanding Balance
+Payment History
+Receipt
+
+============================================================
+MODULE 25 — PAYMENTS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Record money received or paid in relation to operational
+transactions.
+
+------------------------------------------------------------
+PAYMENT TYPES
+------------------------------------------------------------
+
+Cash
+Configured electronic/mobile payments
+Credit
+Other configured methods
+
+------------------------------------------------------------
+FUNCTIONS
+------------------------------------------------------------
+
+Create payment
+Allocate payment
+View payment
+Partial payment
+Refund
+Payment history
+Receipt
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+A sale and a payment are related but distinct records.
+
+A sale may exist before payment is fully completed depending on
+the configured business flow.
+
+============================================================
+MODULE 26 — CUSTOMER RETURNS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Handle products returned by customers.
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+Original Sale
+    ↓
+Return Request
+    ↓
+Identify Product/Batch
+    ↓
+Inspect
+    ↓
+Determine Saleable / Quarantine / Reject
+    ↓
+Inventory Effect
+    ↓
+Refund/Credit
+    ↓
+Audit
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+A customer return does NOT automatically mean:
+
+Returned Quantity → Available Stock
+
+The product must be evaluated according to business rules.
+
+============================================================
+MODULE 27 — FINANCE / FINANCIAL VISIBILITY
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Provide operational and management financial information.
+
+------------------------------------------------------------
+SUPPORT
+------------------------------------------------------------
+
+Sales Value
+Purchase Value
+Returns
+Discounts
+Cost
+Gross Profit
+Margin
+Product Profitability
+Order Profitability
+Customer Profitability
+Supplier Balances
+Customer Receivables
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+This system provides financial visibility.
+
+It is not automatically a full accounting/general ledger system.
+
+============================================================
+MODULE 28 — INSURANCE / THIRD-PARTY PAYERS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Support insurance workflows where required.
+
+------------------------------------------------------------
+DATA
+------------------------------------------------------------
+
+Insurance Company
+Patient Insurance
+Membership/Reference
+Covered Medicines
+Non-Covered Medicines
+Patient Co-payment
+Insurer Amount
+Claims
+Claim Status
+Reconciliation
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Insurance behavior should not be invented beyond configured
+requirements.
+
+============================================================
+MODULE 29 — REPORTING & ANALYTICS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Convert operational data into useful management information.
+
+------------------------------------------------------------
+SALES REPORTS
+------------------------------------------------------------
+
+Daily
+Weekly
+Monthly
+Quarterly
+Yearly
+By Product
+By Category
+By Branch
+By Warehouse
+By Customer
+By Pharmacist/User
+By Payment Method
+
+------------------------------------------------------------
+INVENTORY REPORTS
+------------------------------------------------------------
+
+Current Stock
+Stock Valuation
+Stock Movement
+Batch Stock
+Near Expiry
+Expired
+Damaged
+Quarantined
+Recalled
+Slow Moving
+Fast Moving
+Stock Adjustment
+Stock Variance
+Warehouse Stock
+
+------------------------------------------------------------
+FILTERS
+------------------------------------------------------------
+
+Date
+Branch
+Warehouse
+Product
+Batch
+Customer
+Supplier
+User
+Category
+
+------------------------------------------------------------
+EXPORT
+------------------------------------------------------------
+
+Excel
+PDF
+CSV where applicable
+
+============================================================
+MODULE 30 — NOTIFICATIONS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Notify users about meaningful business events.
+
+------------------------------------------------------------
+EVENTS
+------------------------------------------------------------
+
+Low Stock
+Out of Stock
+Near Expiry
+Expired
+Recall
+Prescription
+Purchase Order
+Credit Breach
+Supplier Payment
+Stock Discrepancy
+Approval Request
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Notifications should be triggered by actual business events.
+
+Do not generate random/fake notifications simply to populate the UI.
+
+============================================================
+MODULE 31 — APPROVAL ENGINE
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Control sensitive operations.
+
+------------------------------------------------------------
+POSSIBLE APPROVAL TYPES
+------------------------------------------------------------
+
+Stock Adjustment
+Price Change
+Discount
+Credit Override
+Expiry Override
+FEFO Override
+Prescription Exception
+Clinical Warning Override
+Controlled Medicine Exception
+Return
+Purchase Order
+Stock Disposal
+
+------------------------------------------------------------
+APPROVAL RECORD
+------------------------------------------------------------
+
+Request Type
+Reference
+Requester
+Date/Time
+Original Value
+Requested Action
+Reason
+Approver
+Decision
+Decision Date
+Decision Reason
+
+------------------------------------------------------------
+WORKFLOW
+------------------------------------------------------------
+
+User attempts sensitive action
+        ↓
+Permission check
+        ↓
+Approval required?
+        ↓
+YES
+        ↓
+Approval Request
+        ↓
+Approver Queue
+        ↓
+Approve / Reject
+        ↓
+Execute or Cancel
+
+============================================================
+MODULE 32 — AUDIT TRAIL
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Preserve accountability and historical changes.
+
+------------------------------------------------------------
+AUDIT EVENTS
+------------------------------------------------------------
+
+Login
+Logout
+Patient creation/modification
+Prescription changes
+Dispensing
+Verification
+Sales
+Purchases
+Stock movement
+Stock adjustment
+Batch changes
+Price changes
+Discounts
+Returns
+Payments
+User/role changes
+Approvals
+Overrides
+Controlled medicine transactions
+
+------------------------------------------------------------
+AUDIT DATA
+------------------------------------------------------------
+
+Who
+What
+When
+Previous Value
+New Value
+Reason
+Approver where applicable
+
+============================================================
+MODULE 33 — GLOBAL SEARCH
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Allow authorized users to find business records quickly.
+
+------------------------------------------------------------
+SEARCHABLE RECORDS
+------------------------------------------------------------
+
+Product
+Medicine
+Barcode
+Batch
+Patient
+Prescription
+Customer
+Supplier
+Purchase Order
+Invoice
+Transaction
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+Search results must respect:
+
+Permissions
+Branch Scope
+Warehouse Scope
+
+============================================================
+MODULE 34 — IMPORT / EXPORT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Support migration and operational data exchange.
+
+------------------------------------------------------------
+IMPORT TYPES
+------------------------------------------------------------
+
+Products
+Medicines
+Patients
+Customers
+Suppliers
+Opening Inventory
+Opening Balances where applicable
+
+------------------------------------------------------------
+IMPORT PROCESS
+------------------------------------------------------------
+
+Template
+    ↓
+Upload
+    ↓
+Parse
+    ↓
+Validate
+    ↓
+Duplicate Detection
+    ↓
+Preview
+    ↓
+User Confirmation
+    ↓
+Commit
+    ↓
+Import Result
+
+------------------------------------------------------------
+RESULT
+------------------------------------------------------------
+
+Total
+Successful
+Failed
+Duplicates
+
+Errors must identify affected rows and fields.
+
+============================================================
+MODULE 35 — USER / ROLE / PERMISSION MANAGEMENT
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Control who can access and operate the system.
+
+------------------------------------------------------------
+USER
+------------------------------------------------------------
+
+Profile
+Role
+Branch Scope
+Warehouse Scope
+Status
+
+------------------------------------------------------------
+ROLE
+------------------------------------------------------------
+
+A role is a collection of permissions.
+
+------------------------------------------------------------
+PERMISSION
+------------------------------------------------------------
+
+Permission should follow:
+
+MODULE
+→ RESOURCE
+→ ACTION
+
+Example:
+
+Inventory
+→ Stock Adjustment
+→ Approve
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+The architecture must support future roles without redesign.
+
+============================================================
+MODULE 36 — SYSTEM SETTINGS
+============================================================
+
+PURPOSE
+------------------------------------------------------------
+
+Configure values that should not be hardcoded.
+
+Possible configuration:
+
+Units
+Categories
+Payment Methods
+Storage Conditions
+Pricing
+Discount Rules
+Approval Rules
+Expiry Thresholds
+Currency
+Notification Settings
+System Settings
+
+============================================================
+MODULE 37 — CROSS-MODULE RELATIONSHIPS
+============================================================
+
+The system is integrated.
+
+It must NOT be implemented as isolated modules.
+
+Example:
+
+PRODUCT
+    ↓
+PURCHASE
+    ↓
+RECEIVING
+    ↓
+BATCH
+    ↓
+INVENTORY
+    ↓
+SALE
+    ↓
+PAYMENT
+    ↓
+RECEIVABLE
+    ↓
+REPORT
+    ↓
+AUDIT
+
+Another:
+
+PATIENT
+    ↓
+PRESCRIPTION
+    ↓
+DISPENSING
+    ↓
+BATCH
+    ↓
+INVENTORY
+    ↓
+PAYMENT
+    ↓
+MEDICATION HISTORY
+    ↓
+AUDIT
+
+============================================================
+38. MODULE IMPLEMENTATION RULE
+============================================================
+
+Every module implementation should answer:
+
+1. Who uses it?
+
+2. What problem does it solve?
+
+3. What records does it create?
+
+4. What records does it read?
+
+5. What records does it modify?
+
+6. What permissions are required?
+
+7. What branch/warehouse scope applies?
+
+8. What business rules apply?
+
+9. What statuses exist?
+
+10. Does it require approval?
+
+11. Does it change inventory?
+
+12. Does it affect money?
+
+13. Does it create an audit event?
+
+14. Does it trigger notifications?
+
+15. What exceptions can occur?
+
+16. What happens when the operation fails?
+
+17. What other modules depend on it?
+
+============================================================
+39. MODULE DEPENDENCY PRINCIPLE
+============================================================
+
+Core master data must exist before dependent transactions.
+
+Recommended dependency:
+
+Organization
+    ↓
+Branches
+    ↓
+Warehouses
+    ↓
+Products
+    ↓
+Suppliers / Customers / Patients
+    ↓
+Batches
+    ↓
+Inventory
+    ↓
+Procurement / Sales / Dispensing
+    ↓
+Payments
+    ↓
+Returns / Transfers / Adjustments
+    ↓
+Reports / Analytics
+
+============================================================
+40. BUSINESS EFFECT MATRIX
+============================================================
+
+Every transactional module must explicitly identify its effect.
+
+------------------------------------------------------------
+PURCHASE ORDER
+------------------------------------------------------------
+
+Inventory:
+NO immediate increase
+
+Money:
+Purchase commitment / operational financial record
+
+Audit:
+YES
+
+Approval:
+May be required
+
+------------------------------------------------------------
+GOODS RECEIPT
+------------------------------------------------------------
+
+Inventory:
+INCREASE
+
+Money:
+Purchase value/financial visibility affected
+
+Audit:
+YES
+
+------------------------------------------------------------
+SALE
+------------------------------------------------------------
+
+Inventory:
+DECREASE
+
+Money:
+Sales value affected
+
+Audit:
+YES
+
+------------------------------------------------------------
+DISPENSING
+------------------------------------------------------------
+
+Inventory:
+DECREASE
+
+Money:
+Selling price/payment affected
+
+Clinical:
+Prescription history affected
+
+Audit:
+YES
+
+------------------------------------------------------------
+TRANSFER
+------------------------------------------------------------
+
+Inventory:
+SOURCE decreases
+DESTINATION increases after appropriate completion
+
+Audit:
+YES
+
+------------------------------------------------------------
+ADJUSTMENT
+------------------------------------------------------------
+
+Inventory:
+Increase/decrease
+
+Approval:
+May be required
+
+Audit:
+YES
+
+------------------------------------------------------------
+CUSTOMER RETURN
+------------------------------------------------------------
+
+Inventory:
+Depends on inspection/result
+
+Money:
+Refund/credit may occur
+
+Audit:
+YES
+
+------------------------------------------------------------
+SUPPLIER RETURN
+------------------------------------------------------------
+
+Inventory:
+DECREASE
+
+Money:
+Supplier balance/value may change
+
+Audit:
+YES
+
+------------------------------------------------------------
+QUARANTINE
+------------------------------------------------------------
+
+Available stock:
+DECREASE or becomes unavailable
+
+Physical stock:
+Still exists
+
+Audit:
+YES
+
+------------------------------------------------------------
+RECALL
+------------------------------------------------------------
+
+Available stock:
+Affected stock becomes unavailable/quarantined according to
+workflow
+
+Audit:
+YES
+
+============================================================
+41. EXCEPTION PRINCIPLE
+============================================================
+
+Every important module must define normal and abnormal scenarios.
+
+Examples:
+
+Normal:
+
+Stock available
+Payment successful
+Prescription valid
+
+Exception:
+
+Stock insufficient
+Prescription expired
+Customer exceeds credit
+Batch recalled
+Product near expiry
+FEFO conflict
+Storage incompatibility
+Duplicate patient
+Receiving discrepancy
+Unauthorized discount
+
+The system must provide controlled handling rather than simply
+crashing or silently continuing.
+
+============================================================
+42. TRANSACTION INTEGRITY
+============================================================
+
+Critical operations must be atomic where required.
+
+Example:
+
+Completing a sale may involve:
+
+Create sale
+→ create sale items
+→ record payment
+→ update inventory
+→ create stock movement
+→ update customer balance
+→ create audit record
+
+If a critical operation fails, the system must not leave the
+database in an inconsistent state.
+
+The backend transaction strategy defined in Stage 05 must be used.
+
+============================================================
+43. TRACEABILITY REQUIREMENT
+============================================================
+
+For important transactions, the user should be able to answer:
+
+What happened?
+
+Who did it?
+
+When?
+
+Why?
+
+Which product?
+
+Which batch?
+
+Which branch?
+
+Which warehouse?
+
+Which transaction caused it?
+
+Was approval required?
+
+Who approved it?
+
+What changed?
+
+This is especially important for:
+
+Inventory
+Controlled medicines
+Returns
+Recalls
+Adjustments
+Payments
+Discounts
+Price changes
+
+============================================================
+44. MODULE COMPLETENESS CHECK
+============================================================
+
+Before marking a module complete, the development agent must verify:
+
+[ ] List page
+[ ] Detail page
+[ ] Create workflow where applicable
+[ ] Edit workflow where applicable
+[ ] Status handling
+[ ] Validation
+[ ] Permissions
+[ ] Scope
+[ ] Business rules
+[ ] Error handling
+[ ] Approval handling where applicable
+[ ] Audit
+[ ] Notifications where applicable
+[ ] Related records
+[ ] Inventory effect where applicable
+[ ] Financial effect where applicable
+[ ] Testing
+
+============================================================
+45. FINAL IMPLEMENTATION PRINCIPLE
+============================================================
+
+The Pharmacy ERP must be developed as an integrated business
+system.
+
+Do not think:
+
+Products page
+Patients page
+Sales page
+Inventory page
+Reports page
+
+as unrelated CRUD pages.
+
+Instead think:
+
+PRODUCT
+   ↓
+PROCUREMENT
+   ↓
+RECEIVING
+   ↓
+BATCH
+   ↓
+INVENTORY
+   ↓
+SALE / DISPENSING
+   ↓
+PAYMENT
+   ↓
+RETURN / ADJUSTMENT / TRANSFER
+   ↓
+REPORTING
+   ↓
+AUDIT
+
+and:
+
+USER
+   ↓
+ROLE
+   ↓
+PERMISSION
+   ↓
+SCOPE
+   ↓
+ACTION
+   ↓
+APPROVAL IF REQUIRED
+   ↓
+BUSINESS TRANSACTION
+   ↓
+AUDIT / NOTIFICATION
+
+============================================================
+END OF STAGE 07
+============================================================

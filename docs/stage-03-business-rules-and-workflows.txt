@@ -1,0 +1,1947 @@
+============================================================
+PHARMACY ERP SYSTEM
+STAGE 03 — BUSINESS RULES AND CORE WORKFLOWS
+============================================================
+
+PROJECT:
+Multi-Branch Pharmacy Management / ERP System
+
+IMPORTANT:
+This stage defines how the pharmacy business operates inside
+the system.
+
+This is NOT a coding stage.
+
+DO NOT implement database tables, API endpoints, React pages,
+controllers, services, or other application code from this
+document alone.
+
+The purpose is to define the business behavior that later
+implementation stages must follow.
+
+============================================================
+1. PURPOSE
+============================================================
+
+The Pharmacy ERP must behave like a real pharmacy business
+system rather than a collection of CRUD screens.
+
+Every major business operation must define:
+
+- Actor
+- Permission
+- Data scope
+- Preconditions
+- Main workflow
+- Business rules
+- Exceptions
+- Approval requirements
+- Inventory effect
+- Financial effect
+- Audit requirements
+- Notification requirements
+- Final status
+
+The same business rules must apply regardless of whether the
+operation is initiated from the web interface or through an API.
+
+============================================================
+2. CORE BUSINESS PRINCIPLE
+============================================================
+
+The system must represent REAL BUSINESS EVENTS.
+
+Example:
+
+A purchase order is not inventory.
+
+A receiving transaction creates the inventory effect.
+
+A sale is not merely a form submission.
+
+A completed sale creates a stock movement and financial effect.
+
+A stock adjustment is not direct editing of a quantity.
+
+It is a controlled business event.
+
+A prescription is not the same as a sale.
+
+Dispensing has additional pharmacy and clinical controls.
+
+============================================================
+3. GENERAL TRANSACTION LIFECYCLE
+============================================================
+
+Major business transactions should generally follow a lifecycle
+similar to:
+
+DRAFT
+  ↓
+SUBMITTED
+  ↓
+PENDING APPROVAL where required
+  ↓
+APPROVED
+  ↓
+EXECUTED / PROCESSED
+  ↓
+COMPLETED
+
+Possible alternative outcomes:
+
+REJECTED
+CANCELLED
+VOIDED
+PARTIALLY COMPLETED
+ON HOLD
+
+Not every transaction requires every status.
+
+The exact statuses must be defined per module.
+
+============================================================
+4. MASTER DATA VS TRANSACTION DATA
+============================================================
+
+MASTER DATA represents reusable business information.
+
+Examples:
+
+- Product
+- Medicine
+- Supplier
+- Customer
+- Patient
+- Branch
+- Warehouse
+- Storage Location
+- Category
+- Manufacturer
+- Pricing configuration
+
+TRANSACTION DATA represents something that happened.
+
+Examples:
+
+- Purchase Order
+- Goods Receipt
+- Sale
+- Prescription
+- Dispensing
+- Payment
+- Return
+- Stock Transfer
+- Stock Count
+- Stock Adjustment
+- Disposal
+
+The system must not confuse master data with transactions.
+
+============================================================
+5. PRODUCT / MEDICINE BUSINESS RULES
+============================================================
+
+A product/medicine may contain:
+
+- Product code
+- Barcode
+- Brand name
+- Generic name
+- Active ingredient
+- Strength
+- Dosage form
+- Route
+- Category
+- Manufacturer
+- Registration information
+- Prescription classification
+- Controlled classification
+- Storage requirement
+- Minimum stock
+- Maximum stock
+- Reorder level
+
+Product master data does not represent physical stock.
+
+Example:
+
+Product:
+Amoxicillin 500mg
+
+Piassa:
+100 boxes
+
+Megenagna:
+25 boxes
+
+The product is one master record.
+
+The inventory is branch/warehouse/batch-specific.
+
+============================================================
+6. PRODUCT CLASSIFICATION
+============================================================
+
+Products may have different operational behavior.
+
+Examples:
+
+- Prescription medicine
+- OTC medicine
+- Controlled/restricted medicine
+- General/FMCG
+
+The classification may affect:
+
+- Sale
+- Dispensing
+- Authorization
+- Prescription requirement
+- Audit
+- Stock tracking
+- Reporting
+
+The system must not treat all products as identical.
+
+============================================================
+7. PROCUREMENT WORKFLOW
+============================================================
+
+CORE FLOW:
+
+Supplier
+  ↓
+Purchase Order
+  ↓
+Approval if required
+  ↓
+Supplier Delivery
+  ↓
+Goods Receiving
+  ↓
+Batch + Expiry
+  ↓
+Warehouse / Location
+  ↓
+Inventory Increase
+  ↓
+Financial / Purchase Records
+  ↓
+Audit
+
+============================================================
+8. PURCHASE ORDER RULES
+============================================================
+
+A Procurement Officer may create a Purchase Order.
+
+A Purchase Order may contain:
+
+- Supplier
+- Branch
+- Warehouse
+- Products
+- Quantities
+- Purchase prices
+- Currency where applicable
+- Expected delivery
+- Notes
+- Status
+
+A Purchase Order begins as a draft.
+
+Before submission, the creator may edit the draft.
+
+After submission:
+
+- Editing may be restricted.
+- Approval may be required.
+- Cancellation may follow controlled rules.
+
+IMPORTANT:
+
+Creating a Purchase Order does NOT increase inventory.
+
+Only accepted receiving should create the inventory increase.
+
+============================================================
+9. PURCHASE APPROVAL
+============================================================
+
+If the configured business rule requires approval:
+
+Purchase Order
+  ↓
+Submitted
+  ↓
+Pending Approval
+  ↓
+Authorized Approver
+  ↓
+Approve OR Reject
+
+If rejected:
+
+Purchase Order
+  ↓
+Rejected
+
+Reason should be recorded where required.
+
+If approved:
+
+Purchase Order
+  ↓
+Approved
+
+The approved PO can proceed toward receiving.
+
+Approval authority must come from the configured permission
+and approval system.
+
+============================================================
+10. GOODS RECEIVING
+============================================================
+
+Goods receiving verifies what was physically delivered.
+
+The receiving user should compare:
+
+ORDERED
+vs
+DELIVERED
+vs
+ACCEPTED
+
+Receiving may record:
+
+- Product
+- Quantity
+- Batch
+- Expiry date
+- Warehouse
+- Storage location
+- Condition
+- Discrepancy
+- Notes
+
+============================================================
+11. PARTIAL RECEIVING
+============================================================
+
+The supplier may deliver less than ordered.
+
+Example:
+
+Ordered:
+500 boxes
+
+Delivered:
+470 boxes
+
+The system must support partial receiving.
+
+Possible result:
+
+Ordered = 500
+Received = 470
+Remaining = 30
+
+The Purchase Order must reflect its receiving status.
+
+Possible business outcome:
+
+PARTIALLY RECEIVED
+
+The system must not pretend that 500 were received.
+
+============================================================
+12. RECEIVING DISCREPANCIES
+============================================================
+
+Examples:
+
+Ordered:
+500
+
+Delivered:
+470
+
+OR:
+
+Ordered batch:
+Batch A
+
+Delivered batch:
+Batch B
+
+OR:
+
+Expected expiry:
+2028
+
+Delivered expiry:
+2027
+
+These discrepancies should be visible and handled according
+to configured business rules.
+
+The system must preserve what was ordered and what was actually
+received.
+
+============================================================
+13. INVENTORY INCREASE FROM RECEIVING
+============================================================
+
+When goods are successfully received and accepted:
+
+Inventory increases.
+
+Example:
+
+Existing stock:
+25
+
+Accepted receipt:
+500
+
+New stock:
+525
+
+The system must create an inventory/stock movement representing
+the receipt.
+
+The movement should contain information such as:
+
+- Product
+- Batch
+- Quantity
+- Branch
+- Warehouse
+- Location
+- Date/time
+- User
+- Reference transaction
+- Movement type
+
+============================================================
+14. INVENTORY PRINCIPLE
+============================================================
+
+Inventory must be derived from business movements.
+
+Conceptually:
+
+Opening Stock
++ Purchase Receipts
++ Transfers In
++ Sale Returns that become saleable
+- Sales
+- Dispensing
+- Transfers Out
+- Damage
+- Expiry
+- Disposal
+± Authorized Adjustments
+= Physical Stock
+
+The exact calculation and status model will be designed in the
+inventory stage.
+
+============================================================
+15. STOCK STATES
+============================================================
+
+Physical stock does not automatically mean sellable stock.
+
+Possible stock states include:
+
+- Available
+- Reserved
+- Quarantined
+- Recalled
+- Expired
+- Damaged
+- Other configured blocked states
+
+Example:
+
+Physical stock = 500
+
+Available = 420
+Reserved = 30
+Quarantined = 20
+Recalled = 20
+Expired = 10
+
+Total physical quantity = 500
+
+The system must avoid double-counting quantities.
+
+============================================================
+16. FEFO RULE
+============================================================
+
+FEFO:
+
+First Expire, First Out.
+
+When allocating stock for sale or dispensing, the system should
+prefer the earliest-expiring eligible batch.
+
+Example:
+
+Amoxicillin:
+
+Batch A
+Expiry: 2027-03-01
+Quantity: 10
+
+Batch B
+Expiry: 2028-05-31
+Quantity: 100
+
+Required:
+20
+
+FEFO allocation:
+
+10 from Batch A
+10 from Batch B
+
+The system must not randomly choose a later-expiring batch
+when an eligible earlier-expiring batch exists, unless an
+authorized override is allowed.
+
+============================================================
+17. FEFO OVERRIDE
+============================================================
+
+An authorized user may need to override FEFO in exceptional
+situations.
+
+Example:
+
+Earlier batch is physically inaccessible.
+
+Normal FEFO:
+Batch A
+
+Override:
+Batch B
+
+The system should:
+
+- Detect the deviation
+- Require authorization if configured
+- Require reason
+- Record the selected batch
+- Record the user
+- Record the approver if applicable
+- Create audit information
+
+The override must never silently bypass FEFO.
+
+============================================================
+18. LOW STOCK
+============================================================
+
+The system should monitor:
+
+- Minimum stock
+- Maximum stock
+- Reorder level
+
+Example:
+
+Current stock:
+25
+
+Reorder level:
+50
+
+The system can identify:
+
+LOW STOCK
+
+But:
+
+LOW STOCK does NOT automatically mean:
+
+"Create purchase order."
+
+The organization may instead:
+
+- Purchase from supplier
+- Transfer from another branch
+- Use an existing purchase order
+- Take another authorized action
+
+The system should support decision-making rather than forcing
+one response.
+
+============================================================
+19. STOCK TRANSFER
+============================================================
+
+Stock may move between:
+
+- Warehouses
+- Branches
+- Authorized storage locations
+
+Example:
+
+Piassa
+  ↓
+Transfer Request
+  ↓
+Approval if required
+  ↓
+Dispatch
+  ↓
+Transport / In Transit
+  ↓
+Megenagna
+  ↓
+Receive
+  ↓
+Inventory Updated
+
+============================================================
+20. TRANSFER RULES
+============================================================
+
+A transfer must record:
+
+- Source
+- Destination
+- Product
+- Batch
+- Quantity
+- Requester
+- Approver if required
+- Dispatcher
+- Receiver
+- Dates/times
+- Status
+- Notes
+- Discrepancies
+
+The transfer must not simply modify two inventory numbers.
+
+It is a transaction.
+
+============================================================
+21. TRANSFER DISCREPANCY
+============================================================
+
+Example:
+
+Piassa dispatches:
+100
+
+Megenagna receives:
+95
+
+The system must not pretend that 100 were received.
+
+It should record:
+
+Dispatched = 100
+Received = 95
+Variance = 5
+
+The discrepancy must be handled according to configured
+business rules.
+
+============================================================
+22. STOCK COUNT
+============================================================
+
+A stock count compares:
+
+SYSTEM QUANTITY
+vs
+PHYSICAL QUANTITY
+
+Example:
+
+System:
+100
+
+Physical:
+96
+
+Variance:
+-4
+
+The user must provide appropriate information such as:
+
+- Count
+- Quantity
+- Reason
+- Location
+- Date
+- User
+
+A count does not automatically mean the user can directly edit
+the inventory.
+
+============================================================
+23. STOCK ADJUSTMENT
+============================================================
+
+Stock adjustment is a controlled correction of inventory.
+
+Example:
+
+System:
+100
+
+Physical:
+96
+
+Adjustment:
+-4
+
+Possible flow:
+
+Count
+  ↓
+Variance
+  ↓
+Adjustment Request
+  ↓
+Approval if required
+  ↓
+Inventory Updated
+  ↓
+Stock Movement
+  ↓
+Audit
+
+The system must prevent silent quantity overwrites.
+
+============================================================
+24. STOCK ADJUSTMENT REASONS
+============================================================
+
+Possible reasons:
+
+- Physical count discrepancy
+- Damage
+- Data correction
+- Expiry
+- Loss
+- Other authorized reason
+
+The final reason list should be configurable where appropriate.
+
+============================================================
+25. POS SALES WORKFLOW
+============================================================
+
+Normal POS flow:
+
+Cashier
+  ↓
+Search / Scan Product
+  ↓
+Add Item
+  ↓
+Select Price
+  ↓
+Apply Discount if allowed
+  ↓
+Calculate Total
+  ↓
+Payment
+  ↓
+Complete Sale
+  ↓
+Receipt
+  ↓
+Stock Movement
+  ↓
+Inventory Reduction
+  ↓
+Audit
+
+============================================================
+26. POS PRICE RULE
+============================================================
+
+The selling price should come from configured pricing rules.
+
+Possible pricing concepts:
+
+- Retail
+- Wholesale
+- Customer-specific
+- Tier-based
+- Promotional
+
+The cashier should not be able to freely change prices unless
+explicitly authorized.
+
+============================================================
+27. DISCOUNT RULE
+============================================================
+
+Discount permissions must be controlled.
+
+Example:
+
+Cashier discount limit:
+5%
+
+Customer requests:
+15%
+
+Possible workflow:
+
+Cashier applies 5%
+OR
+requests approval for additional discount.
+
+The system must not allow unauthorized discount bypass.
+
+Discounts must affect the financial transaction correctly.
+
+============================================================
+28. POS PAYMENT
+============================================================
+
+Supported payment methods may include:
+
+- Cash
+- Configured electronic/mobile payment
+- Credit
+
+Payment must record:
+
+- Amount
+- Method
+- Date/time
+- User
+- Related transaction
+
+Partial payment may be supported where applicable.
+
+============================================================
+29. CREDIT SALES
+============================================================
+
+If credit sales are allowed:
+
+Customer
+  ↓
+Credit Sale
+  ↓
+Check Credit Limit
+  ↓
+Allowed?
+  ↓
+Complete sale
+  ↓
+Receivable created
+
+If limit is exceeded:
+
+- Block
+OR
+- Require authorized override
+
+The system must not silently exceed credit limits.
+
+============================================================
+30. CUSTOMER VS PATIENT
+============================================================
+
+The system must preserve:
+
+CUSTOMER
+and
+PATIENT
+
+as distinct business concepts.
+
+A customer is primarily a commercial relationship.
+
+A patient is primarily a healthcare/dispensing relationship.
+
+A person may potentially exist in both contexts, but the system
+must not assume that every customer is a patient.
+
+============================================================
+31. PATIENT WORKFLOW
+============================================================
+
+Patient workflow may include:
+
+Patient Search
+  ↓
+Existing Patient?
+  ↓
+YES → Open Patient
+NO → Register Patient
+  ↓
+Patient Information
+  ↓
+Prescription / Pharmacy Service
+
+Patient records may include appropriate identifying and clinical
+information according to the requirements.
+
+Access to patient information must be permission-controlled.
+
+============================================================
+32. PRESCRIPTION WORKFLOW
+============================================================
+
+General workflow:
+
+Patient
+  ↓
+Prescription
+  ↓
+Prescription Validation
+  ↓
+Medicine Selection
+  ↓
+Stock Check
+  ↓
+FEFO Allocation
+  ↓
+Dispensing Preparation
+  ↓
+Pharmacist Verification
+  ↓
+Payment
+  ↓
+Dispensing
+  ↓
+Stock Movement
+  ↓
+Completion
+
+============================================================
+33. PRESCRIPTION VALIDATION
+============================================================
+
+The pharmacist should verify appropriate prescription details.
+
+Examples:
+
+- Patient
+- Prescriber
+- Medicine
+- Strength
+- Quantity
+- Dosage/directions
+- Prescription validity
+- Restrictions
+- Relevant warnings
+
+If invalid:
+
+Prescription may be:
+
+- Rejected
+- Held
+- Returned for correction
+
+A reason should be recorded where appropriate.
+
+============================================================
+34. DISPENSING WORKFLOW
+============================================================
+
+A Pharmacy Technician may prepare dispensing.
+
+Example:
+
+Prescription:
+Amoxicillin 500mg × 20
+
+Technician:
+
+- Opens prescription
+- Checks available stock
+- Allocates eligible batches
+- Prepares dispensing
+
+Pharmacist:
+
+- Reviews
+- Verifies
+- Approves/Completes applicable dispensing
+
+The system must preserve the distinction between preparation
+and verification.
+
+============================================================
+35. PARTIAL DISPENSING
+============================================================
+
+Example:
+
+Prescription:
+20 units
+
+Available:
+12 units
+
+The system may support:
+
+Dispensed:
+12
+
+Remaining:
+8
+
+Prescription status:
+
+PARTIALLY DISPENSED
+
+The remaining quantity may later be dispensed according to
+the applicable refill/continuation rules.
+
+The system must not mark the prescription fully completed when
+only part of the quantity was dispensed.
+
+============================================================
+36. CONTROLLED MEDICINE WORKFLOW
+============================================================
+
+Controlled/restricted medicines require additional controls.
+
+The system should enforce applicable:
+
+- Authorization
+- Prescription requirements
+- Issue tracking
+- Dispensing tracking
+- Register information
+- Audit
+- Exception handling
+
+A controlled medicine transaction should not silently behave
+like an ordinary FMCG sale.
+
+============================================================
+37. DISPENSING INVENTORY EFFECT
+============================================================
+
+When dispensing is completed according to the configured
+workflow:
+
+Inventory is reduced.
+
+The system should record:
+
+- Product
+- Batch
+- Quantity
+- Branch
+- Warehouse
+- Location where applicable
+- User
+- Prescription
+- Dispensing reference
+- Date/time
+
+The inventory reduction must be connected to the dispensing
+transaction.
+
+============================================================
+38. PAYMENT AND DISPENSING
+============================================================
+
+Payment must be connected to the appropriate commercial
+transaction.
+
+Example:
+
+Prescription
+  ↓
+Dispensing
+  ↓
+Amount calculated
+  ↓
+Payment
+  ↓
+Receipt
+  ↓
+Completion
+
+The exact order may vary depending on configured business rules,
+but the system must not create financial records disconnected
+from the underlying transaction.
+
+============================================================
+39. CUSTOMER RETURNS
+============================================================
+
+Customer returns should identify:
+
+- Original sale
+- Product
+- Batch where traceable
+- Quantity
+- Reason
+- Condition
+- User
+
+Possible outcomes:
+
+SALEABLE
+  ↓
+Return to available stock
+
+NOT SALEABLE
+  ↓
+Quarantine
+
+OR
+
+Supplier Return
+OR
+Disposal
+
+A return must also have the appropriate financial effect.
+
+============================================================
+40. SUPPLIER RETURNS
+============================================================
+
+Supplier return workflow:
+
+Identify Supplier
+  ↓
+Select Product
+  ↓
+Identify Batch
+  ↓
+Quantity
+  ↓
+Reason
+  ↓
+Approval if required
+  ↓
+Dispatch to Supplier
+  ↓
+Supplier Acknowledgment where applicable
+  ↓
+Inventory / Financial Effect
+  ↓
+Audit
+
+Possible reasons:
+
+- Damaged
+- Wrong product
+- Wrong quantity
+- Near expiry
+- Expired
+- Recall
+- Quality issue
+
+============================================================
+41. QUARANTINE WORKFLOW
+============================================================
+
+Quarantine means:
+
+Stock exists physically,
+but cannot be sold or dispensed.
+
+Example:
+
+Returned product
+  ↓
+Inspection
+  ↓
+Quarantine
+
+Possible outcomes:
+
+Quarantine
+  ├── Release
+  ├── Supplier Return
+  └── Disposal
+
+The reason and responsible user must be recorded.
+
+============================================================
+42. EXPIRY WORKFLOW
+============================================================
+
+The system must identify:
+
+- Near-expiry stock
+- Expired stock
+
+Near-expiry:
+
+Alert / notification
+  ↓
+Management decision
+
+Expired:
+
+Block from normal sale/dispensing
+  ↓
+Identify quantity
+  ↓
+Quarantine/disposal/supplier return
+  ↓
+Audit
+
+Exact business handling depends on configuration and
+requirements.
+
+============================================================
+43. PRODUCT RECALL WORKFLOW
+============================================================
+
+Recall may begin when a specific product/batch is identified.
+
+Workflow:
+
+Recall Initiated
+  ↓
+Identify affected batch
+  ↓
+Identify stock locations
+  ↓
+Block / quarantine affected stock
+  ↓
+Identify affected customers/patients where traceability exists
+  ↓
+Notification
+  ↓
+Collection / Return
+  ↓
+Reconciliation
+  ↓
+Resolution
+  ↓
+Audit
+
+The system should maintain recall history.
+
+============================================================
+44. APPROVAL WORKFLOW
+============================================================
+
+Sensitive operations may require approval.
+
+General model:
+
+USER
+  ↓
+CREATE / SUBMIT
+  ↓
+PENDING APPROVAL
+  ↓
+AUTHORIZED APPROVER
+  ↓
+APPROVE / REJECT
+  ↓
+EXECUTE IF APPROVED
+
+Examples:
+
+- Purchase Order
+- Stock Adjustment
+- Large Discount
+- Price Change
+- Credit Override
+- FEFO Override
+- Prescription Exception
+- Controlled Medicine Exception
+- Return
+- Disposal
+- Transfer
+
+============================================================
+45. APPROVAL RULES
+============================================================
+
+Approval must not be treated as a simple button.
+
+An approval may depend on:
+
+- User
+- Role
+- Branch
+- Amount
+- Transaction type
+- Action
+- Threshold
+- Permission
+- Organizational policy
+
+Example:
+
+Discount <= 5%
+    → No approval
+
+Discount > 5%
+    → Approval required
+
+Exact thresholds must be configurable.
+
+============================================================
+46. AUDIT RULE
+============================================================
+
+Important business actions must be auditable.
+
+Example:
+
+Stock adjustment:
+
+Who:
+Samuel
+
+What:
+Stock reduced by 5
+
+Previous:
+100
+
+New:
+95
+
+Reason:
+Physical count discrepancy
+
+Approved by:
+Hana
+
+Date/time:
+Recorded by system
+
+Audit should preserve the history of important changes.
+
+============================================================
+47. NOTIFICATION RULE
+============================================================
+
+Notifications must be event-driven.
+
+Examples:
+
+LOW STOCK
+    → Inventory notification
+
+PENDING APPROVAL
+    → Approver notification
+
+NEAR EXPIRY
+    → Inventory/management notification
+
+EXPIRED STOCK
+    → Inventory notification
+
+RECALL
+    → Relevant users notification
+
+CREDIT BREACH
+    → Authorized users notification
+
+STOCK DISCREPANCY
+    → Relevant users notification
+
+Notifications should reference the underlying business event.
+
+============================================================
+48. EXCEPTION VS ERROR VS APPROVAL
+============================================================
+
+These concepts must remain distinct.
+
+ERROR:
+
+The operation cannot continue.
+
+Example:
+
+Attempt to dispense expired medicine.
+
+EXCEPTION:
+
+Normal business rule does not fit the current situation.
+
+Example:
+
+FEFO override is needed.
+
+APPROVAL:
+
+An authorized person must decide whether the exception/action
+is allowed.
+
+Example:
+
+Manager approves FEFO override.
+
+Conceptually:
+
+ERROR
+→ Stop
+
+EXCEPTION
+→ Special situation
+
+APPROVAL
+→ Authorized decision
+
+============================================================
+49. IMPORTANT ERROR EXAMPLES
+============================================================
+
+The system should handle cases such as:
+
+- Insufficient stock
+- Expired medicine
+- Recalled medicine
+- Quarantined stock
+- Invalid prescription
+- Unauthorized discount
+- Credit limit exceeded
+- Unauthorized branch access
+- Unauthorized warehouse access
+- Duplicate barcode
+- Invalid batch
+- Invalid expiry date
+- Receiving quantity greater than allowed
+- Transfer discrepancy
+- Attempt to modify completed transaction
+- Unauthorized approval
+- Invalid payment
+- Duplicate transaction
+- Missing required information
+
+These must produce meaningful business errors rather than
+generic system failures.
+
+============================================================
+50. TRANSACTION REVERSAL PRINCIPLE
+============================================================
+
+Completed transactions should not normally be silently deleted.
+
+If correction is required, use an appropriate business process.
+
+Examples:
+
+Sale correction:
+Return / Void / Reversal
+
+Inventory correction:
+Adjustment
+
+Purchase correction:
+Supplier return / correction workflow
+
+Payment correction:
+Refund / reversal
+
+This preserves business history.
+
+============================================================
+51. FINANCIAL EFFECT PRINCIPLE
+============================================================
+
+Business transactions may have financial effects.
+
+Examples:
+
+Sale
+→ Revenue / receivable / payment
+
+Purchase
+→ Purchase value / payable
+
+Return
+→ Financial reversal
+
+Discount
+→ Reduces sale value
+
+Customer payment
+→ Reduces receivable
+
+Supplier payment
+→ Reduces payable
+
+The system must keep financial records connected to the
+transaction that caused them.
+
+============================================================
+52. REPORTING PRINCIPLE
+============================================================
+
+Reports must be generated from actual business records.
+
+Example:
+
+Sales report should come from completed sales.
+
+Inventory report should come from inventory data/movements.
+
+Purchase report should come from procurement records.
+
+Profitability should use actual transaction/cost information
+according to the configured costing model.
+
+Reports must respect user permissions and data scope.
+
+============================================================
+53. BUSINESS WORKFLOW DEPENDENCY MAP
+============================================================
+
+The system should conceptually connect the modules:
+
+MASTER DATA
+    ↓
+PRODUCTS / SUPPLIERS / CUSTOMERS / PATIENTS
+    ↓
+PROCUREMENT
+    ↓
+PURCHASE ORDERS
+    ↓
+RECEIVING
+    ↓
+INVENTORY
+    ↓
+ ┌───────────────┬─────────────────┐
+ ↓               ↓                 ↓
+POS SALES     PRESCRIPTIONS     TRANSFERS
+ ↓               ↓                 ↓
+PAYMENT       DISPENSING       RECEIVING
+ ↓               ↓                 ↓
+STOCK -       STOCK -          STOCK MOVE
+ └───────────────┴─────────────────┘
+                ↓
+        RETURNS / ADJUSTMENTS
+                ↓
+        FINANCIAL EFFECTS
+                ↓
+              AUDIT
+                ↓
+         REPORTS / DASHBOARD
+                ↓
+          NOTIFICATIONS
+
+============================================================
+54. END-TO-END SCENARIO A
+PROCUREMENT → INVENTORY → SALE
+============================================================
+
+Example:
+
+Piassa has:
+25 Amoxicillin boxes
+
+Reorder level:
+50
+
+System identifies:
+Low Stock
+
+Procurement Officer checks options.
+
+Decision:
+Purchase from supplier.
+
+Purchase Order:
+500 boxes
+
+PO submitted.
+
+Approval required.
+
+Authorized approver approves.
+
+Supplier delivers:
+500 boxes
+
+Storekeeper receives.
+
+Batch:
+AMX-2026-05
+
+Expiry:
+2028-05-31
+
+Warehouse:
+Piassa Main Warehouse
+
+Inventory:
+25 + 500 = 525
+
+Stock movement created.
+
+Later:
+
+Customer purchases:
+10 boxes
+
+POS sale completed.
+
+Inventory:
+525 - 10 = 515
+
+Payment recorded.
+
+Receipt generated.
+
+Audit recorded.
+
+Reports updated.
+
+============================================================
+55. END-TO-END SCENARIO B
+PRESCRIPTION → DISPENSING
+============================================================
+
+Patient:
+Abebe Kebede
+
+Prescription:
+
+Amoxicillin 500mg × 20
+Paracetamol 500mg × 10
+
+Pharmacist validates prescription.
+
+Stock available.
+
+Amoxicillin batches:
+
+Batch A:
+Expiry 2027-03
+Quantity 10
+
+Batch B:
+Expiry 2028-05
+Quantity 100
+
+FEFO:
+
+10 from Batch A
+10 from Batch B
+
+Technician prepares dispensing.
+
+Pharmacist verifies.
+
+Payment recorded.
+
+Dispensing completed.
+
+Inventory decreases from both batches.
+
+Prescription status:
+Completed
+
+Receipt generated.
+
+Audit recorded.
+
+============================================================
+56. END-TO-END SCENARIO C
+PARTIAL DISPENSING
+============================================================
+
+Prescription:
+20 units
+
+Available:
+12 units
+
+System allocates:
+12
+
+Dispensing:
+12
+
+Remaining:
+8
+
+Prescription status:
+Partially Dispensed
+
+The system must preserve the remaining quantity.
+
+A later authorized dispensing may complete the remaining
+quantity according to applicable rules.
+
+============================================================
+57. END-TO-END SCENARIO D
+STOCK ADJUSTMENT
+============================================================
+
+System stock:
+100
+
+Physical stock:
+96
+
+Storekeeper performs stock count.
+
+Variance:
+-4
+
+Adjustment request created.
+
+Reason:
+Physical count discrepancy
+
+Approval required.
+
+Authorized manager approves.
+
+Inventory becomes:
+96
+
+Stock movement created.
+
+Audit recorded.
+
+Report reflects the adjustment.
+
+============================================================
+58. END-TO-END SCENARIO E
+CROSS-BRANCH TRANSFER
+============================================================
+
+Piassa needs:
+50 units
+
+Megenagna has:
+200 units
+
+Authorized transfer requested.
+
+Transfer:
+
+Megenagna → Piassa
+
+Quantity:
+50
+
+Source stock is prepared.
+
+Dispatch recorded.
+
+Piassa receives.
+
+If 50 received:
+
+Megenagna:
+200 → 150
+
+Piassa:
+existing stock + 50
+
+Transfer completed.
+
+All steps are audited.
+
+============================================================
+59. END-TO-END SCENARIO F
+CUSTOMER RETURN
+============================================================
+
+Customer returns a product.
+
+System identifies original sale.
+
+Product:
+Amoxicillin
+
+Batch:
+AMX-2026-05
+
+Quantity:
+2
+
+Reason:
+Customer return
+
+Inspection:
+
+If saleable:
+Return to available stock.
+
+If not saleable:
+Move to quarantine.
+
+Financial effect:
+Appropriate refund/reversal.
+
+Audit:
+Recorded.
+
+============================================================
+60. END-TO-END SCENARIO G
+RECALL
+============================================================
+
+Batch:
+AMX-2026-05
+
+Recall initiated.
+
+System identifies:
+
+- Piassa stock
+- Megenagna stock
+- Warehouse locations
+- Remaining quantity
+- Relevant sales/dispensing records where traceability exists
+
+Affected stock is blocked/quarantined.
+
+Relevant users receive notification.
+
+Stock is reconciled.
+
+Recall is completed.
+
+Audit history remains available.
+
+============================================================
+61. DATA INTEGRITY PRINCIPLE
+============================================================
+
+Business operations must preserve consistency.
+
+Example:
+
+If a sale is completed:
+
+Sale record
++
+Payment
++
+Stock movement
++
+Inventory quantity
++
+Receipt
++
+Audit
+
+must remain logically consistent.
+
+If part of the operation fails, the system should not leave
+the database in an invalid half-completed state.
+
+Database transactions will be designed in the technical stages.
+
+============================================================
+62. BUSINESS RULE PRIORITY
+============================================================
+
+When implementing features, prioritize:
+
+1. Correct inventory behavior
+2. Correct permissions
+3. Correct transaction states
+4. Correct approval behavior
+5. Correct financial effects
+6. Correct audit trail
+7. Correct reporting
+8. UI convenience
+
+A beautiful UI must never override a business rule.
+
+============================================================
+63. AI IMPLEMENTATION RULE
+============================================================
+
+AI coding agents must NOT invent business behavior.
+
+Before implementing a module, the agent must understand:
+
+- Actors
+- Permissions
+- Scope
+- Workflow
+- Business rules
+- Exceptions
+- Inventory effects
+- Financial effects
+- Approval requirements
+- Audit requirements
+
+If something is not defined:
+
+DO NOT silently invent a major business rule.
+
+Mark it as:
+
+UNDEFINED / REQUIRES DESIGN DECISION
+
+and continue only when a safe implementation is possible.
+
+============================================================
+64. STAGE 03 IMPLEMENTATION RULE
+============================================================
+
+DO NOT implement the application in this stage.
+
+This stage establishes the business rules and workflows.
+
+Later stages will translate these rules into:
+
+- Database design
+- Backend architecture
+- API design
+- React UI
+- Validation
+- Services
+- Transactions
+- Authorization
+- Testing
+
+============================================================
+65. FINAL PRINCIPLE
+============================================================
+
+The Pharmacy ERP is a connected business system.
+
+The implementation must preserve the relationship:
+
+USER
+ ↓
+PERMISSION
+ ↓
+BUSINESS ACTION
+ ↓
+TRANSACTION
+ ↓
+APPROVAL WHEN REQUIRED
+ ↓
+INVENTORY / FINANCIAL EFFECT
+ ↓
+AUDIT
+ ↓
+NOTIFICATION
+ ↓
+REPORTING
+
+No major business feature should be implemented as an isolated
+CRUD operation when it has real operational consequences.
+
+============================================================
+END OF STAGE 03
+============================================================

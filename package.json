@@ -1,0 +1,14 @@
+{
+  "name": "pharmacy-erp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-Branch Pharmacy Management / ERP System - EthioCodes Software Development PLC",
+  "scripts": {
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "start": "npm --prefix server run start",
+    "build": "npm --prefix client run build",
+    "health": "node scripts/check-health.mjs"
+  }
+}
