@@ -59,9 +59,30 @@ export function StatusBadge({ status }) {
     // Stock count statuses
     in_progress: 'bg-sky-50 text-sky-700 border-sky-300 font-medium',
     partially_applied: 'bg-amber-50 text-amber-700 border-amber-300 font-medium',
+    // Task 17 Quarantine & Recall statuses & priorities
+    under_review: 'bg-amber-50 text-amber-800 border-amber-300 font-medium',
+    released: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
+    monitoring: 'bg-purple-50 text-purple-700 border-purple-300 font-semibold',
+    resolved: 'bg-teal-50 text-teal-800 border-teal-300 font-semibold',
+    disposition_pending: 'bg-orange-50 text-orange-800 border-orange-300 font-semibold',
+    critical: 'bg-rose-100 text-rose-800 border-rose-400 font-bold',
+    high: 'bg-orange-100 text-orange-800 border-orange-300 font-semibold',
+    medium: 'bg-amber-50 text-amber-800 border-amber-300',
+    low: 'bg-slate-100 text-slate-700 border-slate-300',
+    near_expiry: 'bg-amber-50 text-amber-700 border-amber-300 font-medium',
   };
 
   const labels = {
+    under_review: 'Under Review',
+    released: 'Released',
+    monitoring: 'Monitoring',
+    resolved: 'Resolved',
+    disposition_pending: 'Disposition Pending',
+    critical: 'Critical',
+    high: 'High',
+    medium: 'Medium',
+    low: 'Low',
+    near_expiry: 'Near Expiry',
     draft: 'Draft',
     in_progress: 'In Progress',
     partially_applied: 'Partially Applied',

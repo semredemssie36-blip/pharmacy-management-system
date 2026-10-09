@@ -50,6 +50,13 @@ import StockTransferDetailPage from '../pages/StockTransferDetailPage.jsx';
 import StockCountsPage from '../pages/StockCountsPage.jsx';
 import StockCountCreatePage from '../pages/StockCountCreatePage.jsx';
 import StockCountDetailPage from '../pages/StockCountDetailPage.jsx';
+import ExpiryManagementPage from '../pages/ExpiryManagementPage.jsx';
+import QuarantinePage from '../pages/QuarantinePage.jsx';
+import QuarantineCreatePage from '../pages/QuarantineCreatePage.jsx';
+import QuarantineDetailPage from '../pages/QuarantineDetailPage.jsx';
+import RecallsPage from '../pages/RecallsPage.jsx';
+import RecallCreatePage from '../pages/RecallCreatePage.jsx';
+import RecallDetailPage from '../pages/RecallDetailPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -96,6 +103,13 @@ const router = createBrowserRouter([
       { path: 'inventory/stock-counts', element: <StockCountsPage /> },
       { path: 'inventory/stock-counts/new', element: <StockCountCreatePage /> },
       { path: 'inventory/stock-counts/:id', element: <StockCountDetailPage /> },
+      { path: 'inventory/expiry', element: <ExpiryManagementPage /> },
+      { path: 'inventory/quarantines', element: <QuarantinePage /> },
+      { path: 'inventory/quarantines/new', element: <QuarantineCreatePage /> },
+      { path: 'inventory/quarantines/:id', element: <QuarantineDetailPage /> },
+      { path: 'inventory/recalls', element: <RecallsPage /> },
+      { path: 'inventory/recalls/new', element: <RecallCreatePage /> },
+      { path: 'inventory/recalls/:id', element: <RecallDetailPage /> },
       { path: 'inventory/batches', element: <BatchesPage /> },
       { path: 'inventory/stock-movements', element: <StockMovementsPage /> },
       { path: 'inventory/opening-balance', element: <OpeningBalancePage /> },

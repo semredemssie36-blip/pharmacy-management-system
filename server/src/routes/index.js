@@ -23,6 +23,9 @@ import customerReturnRoutes from './customerReturnRoutes.js';
 import supplierReturnRoutes from './supplierReturnRoutes.js';
 import stockTransferRoutes from './stockTransferRoutes.js';
 import stockCountRoutes from './stockCountRoutes.js';
+import quarantineRoutes from './quarantineRoutes.js';
+import expiryRoutes from './expiryRoutes.js';
+import recallRoutes from './recallRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -52,6 +55,9 @@ router.use(customerReturnRoutes);
 router.use(supplierReturnRoutes);
 router.use(stockTransferRoutes);
 router.use(stockCountRoutes);
+router.use(quarantineRoutes);
+router.use(expiryRoutes);
+router.use(recallRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

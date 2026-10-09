@@ -1450,6 +1450,250 @@ async function applyStockAdjustment({
   return appliedMovements;
 }
 
+/**
+ * Task 17 — Transfers inventory between statuses (e.g. available -> quarantined, available -> recalled, available -> expired).
+ * Locks source and destination positions with FOR UPDATE inside caller's transaction.
+ */
+async function transferInventoryStatus({
+  organizationId,
+  branchId,
+  warehouseId,
+  storageLocationId,
+  productId,
+  batchId,
+  unitId,
+  fromStatus,
+  toStatus,
+  quantity,
+  userId,
+  reason,
+  referenceType,
+  referenceId,
+  connection,
+}) {
+  if (!connection) throw new Error('transferInventoryStatus requires an active connection');
+
+  const qty = Number(quantity);
+  if (!Number.isFinite(qty) || qty <= 0) {
+    throw new ValidationError('Validation failed', [
+      { field: 'quantity', message: 'Quantity must be positive' },
+    ]);
+  }
+
+  // 1. Lock and verify source inventory position
+  const [sourceRows] = await connection.query(
+    `SELECT id, quantity FROM inventory
+     WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+       AND storage_location_id = ? AND product_id = ? AND batch_id = ?
+       AND unit_id = ? AND status = ?
+     FOR UPDATE`,
+    [organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId, fromStatus],
+  );
+
+  const sourceRow = sourceRows[0];
+  const availableInSource = sourceRow ? Number(sourceRow.quantity) : 0;
+
+  if (availableInSource < qty) {
+    throw new AppError(
+      `Insufficient stock in '${fromStatus}' status. Available: ${availableInSource}, Requested: ${qty}`,
+      { statusCode: 409, code: 'INSUFFICIENT_STOCK' },
+    );
+  }
+
+  // Deduct from source
+  await connection.query(
+    'UPDATE inventory SET quantity = GREATEST(0, quantity - ?) WHERE id = ?',
+    [qty, sourceRow.id],
+  );
+
+  // 2. Lock and upsert destination inventory position
+  const [destRows] = await connection.query(
+    `SELECT id, quantity FROM inventory
+     WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+       AND storage_location_id = ? AND product_id = ? AND batch_id = ?
+       AND unit_id = ? AND status = ?
+     FOR UPDATE`,
+    [organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId, toStatus],
+  );
+
+  let destInventoryId;
+  if (destRows.length > 0) {
+    destInventoryId = destRows[0].id;
+    await connection.query(
+      'UPDATE inventory SET quantity = quantity + ? WHERE id = ?',
+      [qty, destInventoryId],
+    );
+  } else {
+    const [insRes] = await connection.query(
+      `INSERT INTO inventory (
+         organization_id, branch_id, warehouse_id, storage_location_id,
+         product_id, batch_id, unit_id, status, quantity
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId, toStatus, qty],
+    );
+    destInventoryId = insRes.insertId;
+  }
+
+  return { sourceId: sourceRow.id, destId: destInventoryId, transferredQuantity: qty };
+}
+
+/**
+ * Task 17 — Releases quarantined inventory back to available stock.
+ * Strictly verifies that the batch is NOT expired and NOT subject to an active recall.
+ */
+async function releaseQuarantineStock({
+  organizationId,
+  branchId,
+  warehouseId,
+  storageLocationId,
+  productId,
+  batchId,
+  unitId,
+  quantity,
+  userId,
+  reason,
+  referenceId,
+  connection,
+}) {
+  if (!connection) throw new Error('releaseQuarantineStock requires an active connection');
+
+  // Check batch expiry & active status
+  const [batchRows] = await connection.query(
+    'SELECT id, batch_number, expiry_date, status FROM batches WHERE id = ? FOR UPDATE',
+    [batchId],
+  );
+  const batch = batchRows[0];
+  if (!batch) {
+    throw new AppError('Batch not found', { statusCode: 404, code: 'BATCH_NOT_FOUND' });
+  }
+
+  // Safety check 1: Expired stock must NEVER be released to available
+  if (new Date(batch.expiry_date).getTime() <= Date.now()) {
+    throw new AppError(
+      `Cannot release expired batch (${batch.batch_number}, expiry: ${batch.expiry_date}) to available stock. It must be segregated or disposed of.`,
+      { statusCode: 409, code: 'EXPIRED_BATCH_CANNOT_BE_RELEASED' },
+    );
+  }
+
+  // Safety check 2: Active recall check
+  const [activeRecallRows] = await connection.query(
+    `SELECT rc.id, rc.recall_number, rc.title
+     FROM recall_cases rc
+     JOIN recall_batches rb ON rb.recall_id = rc.id
+     WHERE rb.batch_id = ? AND rc.status IN ('active', 'monitoring')
+     LIMIT 1`,
+    [batchId],
+  );
+
+  if (activeRecallRows.length > 0) {
+    throw new AppError(
+      `Cannot release batch (${batch.batch_number}) to available stock: batch is subject to active product recall (${activeRecallRows[0].recall_number}).`,
+      { statusCode: 409, code: 'ACTIVE_RECALL_BLOCKS_RELEASE' },
+    );
+  }
+
+  return transferInventoryStatus({
+    organizationId,
+    branchId,
+    warehouseId,
+    storageLocationId,
+    productId,
+    batchId,
+    unitId,
+    fromStatus: 'quarantined',
+    toStatus: 'available',
+    quantity,
+    userId,
+    reason: reason || 'Quarantine hold released',
+    referenceType: 'quarantine',
+    referenceId,
+    connection,
+  });
+}
+
+/**
+ * Task 17 — Authoritative physical stock disposal / write-off.
+ * Permanently deducts stock from designated non-available status (quarantined, expired, damaged, awaiting_disposal)
+ * and records signed negative stock movement of type 'disposal'.
+ */
+async function disposeStock({
+  organizationId,
+  branchId,
+  warehouseId,
+  storageLocationId,
+  productId,
+  batchId,
+  unitId,
+  fromStatus,
+  quantity,
+  userId,
+  reason,
+  disposalMethod,
+  referenceType,
+  referenceId,
+  connection,
+}) {
+  if (!connection) throw new Error('disposeStock requires an active connection');
+
+  const qty = Number(quantity);
+  if (!Number.isFinite(qty) || qty <= 0) {
+    throw new ValidationError('Validation failed', [
+      { field: 'quantity', message: 'Disposal quantity must be positive' },
+    ]);
+  }
+
+  // Lock and verify inventory row
+  const [rows] = await connection.query(
+    `SELECT id, quantity FROM inventory
+     WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+       AND storage_location_id = ? AND product_id = ? AND batch_id = ?
+       AND unit_id = ? AND status = ?
+     FOR UPDATE`,
+    [organizationId, branchId, warehouseId, storageLocationId, productId, batchId, unitId, fromStatus],
+  );
+
+  const row = rows[0];
+  const currentQty = row ? Number(row.quantity) : 0;
+
+  if (currentQty < qty) {
+    throw new AppError(
+      `Insufficient stock to dispose in status '${fromStatus}'. Current: ${currentQty}, Requested: ${qty}`,
+      { statusCode: 409, code: 'INSUFFICIENT_STOCK' },
+    );
+  }
+
+  // Physical deduction
+  await connection.query(
+    'UPDATE inventory SET quantity = GREATEST(0, quantity - ?) WHERE id = ?',
+    [qty, row.id],
+  );
+
+  // Append-only stock movements ledger entry
+  const [movRes] = await connection.query(
+    `INSERT INTO stock_movements (
+       organization_id, branch_id, warehouse_id, storage_location_id,
+       product_id, batch_id, unit_id, movement_type, quantity_delta,
+       reference_type, reference_id, reason, created_by
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, 'disposal', ?, ?, ?, ?, ?)`,
+    [
+      organizationId,
+      branchId,
+      warehouseId,
+      storageLocationId,
+      productId,
+      batchId,
+      unitId,
+      -qty,
+      referenceType || 'disposal',
+      referenceId || null,
+      reason ? `${reason}${disposalMethod ? ` (${disposalMethod})` : ''}` : 'Authorized stock disposal',
+      userId,
+    ],
+  );
+
+  return { inventoryId: row.id, movementId: movRes.insertId, disposedQuantity: qty };
+}
+
 export default {
   listInventoryForUser,
   getInventoryForUser,
@@ -1472,6 +1716,10 @@ export default {
   dispatchStockTransfer,
   receiveStockTransfer,
   applyStockAdjustment,
+  transferInventoryStatus,
+  releaseQuarantineStock,
+  disposeStock,
 };
+
 
 

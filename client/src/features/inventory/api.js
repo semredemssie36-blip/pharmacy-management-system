@@ -66,11 +66,77 @@ export const stockCountsApi = {
   cancel: (id, data) => apiClient.post(`/stock-counts/${id}/cancel`, data || {}),
 };
 
+export const expiryApi = {
+  getSummary: (params) => {
+    const cleanParams = {};
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') cleanParams[k] = v;
+      });
+    }
+    const q = Object.keys(cleanParams).length > 0 ? `?${new URLSearchParams(cleanParams).toString()}` : '';
+    return apiClient.get(`/expiry/summary${q}`);
+  },
+  listBatches: (params) => {
+    const cleanParams = {};
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') cleanParams[k] = v;
+      });
+    }
+    const q = Object.keys(cleanParams).length > 0 ? `?${new URLSearchParams(cleanParams).toString()}` : '';
+    return apiClient.get(`/expiry/batches${q}`);
+  },
+  segregateExpired: (data) => apiClient.post('/expiry/segregate-expired', data),
+};
+
+export const quarantineApi = {
+  list: (params) => {
+    const cleanParams = {};
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') cleanParams[k] = v;
+      });
+    }
+    const q = Object.keys(cleanParams).length > 0 ? `?${new URLSearchParams(cleanParams).toString()}` : '';
+    return apiClient.get(`/quarantines${q}`);
+  },
+  get: (id) => apiClient.get(`/quarantines/${id}`),
+  create: (data) => apiClient.post('/quarantines', data),
+  review: (id, data) => apiClient.post(`/quarantines/${id}/review`, data || {}),
+  release: (id, data) => apiClient.post(`/quarantines/${id}/release`, data),
+  dispose: (id, data) => apiClient.post(`/quarantines/${id}/dispose`, data),
+  cancel: (id, data) => apiClient.post(`/quarantines/${id}/cancel`, data || {}),
+};
+
+export const recallsApi = {
+  list: (params) => {
+    const cleanParams = {};
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') cleanParams[k] = v;
+      });
+    }
+    const q = Object.keys(cleanParams).length > 0 ? `?${new URLSearchParams(cleanParams).toString()}` : '';
+    return apiClient.get(`/recalls${q}`);
+  },
+  get: (id) => apiClient.get(`/recalls/${id}`),
+  create: (data) => apiClient.post('/recalls', data),
+  approve: (id, data) => apiClient.post(`/recalls/${id}/approve`, data || {}),
+  activate: (id) => apiClient.post(`/recalls/${id}/activate`),
+  recordAction: (id, data) => apiClient.post(`/recalls/${id}/actions`, data),
+  close: (id, data) => apiClient.post(`/recalls/${id}/close`, data || {}),
+  cancel: (id, data) => apiClient.post(`/recalls/${id}/cancel`, data || {}),
+};
+
 export default {
   inventoryApi,
   batchesApi,
   stockMovementsApi,
   stockTransfersApi,
   stockCountsApi,
+  expiryApi,
+  quarantineApi,
+  recallsApi,
 };
 

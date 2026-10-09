@@ -179,6 +179,15 @@ function MainLayout() {
           <Can permission="stock_movement.view">
             <Link to="/inventory/stock-movements" className="block rounded px-3 py-2 hover:bg-slate-800">Stock Movements</Link>
           </Can>
+          <Can permission="expiry.view">
+            <Link to="/inventory/expiry" className="block rounded px-3 py-2 hover:bg-slate-800">Expiry Management</Link>
+          </Can>
+          <Can permission="quarantine.view">
+            <Link to="/inventory/quarantines" className="block rounded px-3 py-2 hover:bg-slate-800">Quarantine Holds</Link>
+          </Can>
+          <Can permission="recall.view">
+            <Link to="/inventory/recalls" className="block rounded px-3 py-2 hover:bg-slate-800">Product Recalls</Link>
+          </Can>
           <Can permission="inventory.create">
             <Link to="/inventory/opening-balance" className="block rounded px-3 py-2 hover:bg-slate-800">Opening Balance</Link>
           </Can>

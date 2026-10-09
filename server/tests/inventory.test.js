@@ -73,6 +73,10 @@ before(async () => {
 
   await pool.query('DELETE FROM stock_movements');
   await pool.query('DELETE FROM inventory');
+  await pool.query('DELETE FROM recall_actions').catch(() => {});
+  await pool.query('DELETE FROM recall_batches').catch(() => {});
+  await pool.query('DELETE FROM recall_cases').catch(() => {});
+  await pool.query('DELETE FROM quarantine_cases').catch(() => {});
   await pool.query('DELETE FROM batches');
   await pool.query('DELETE FROM product_relationships');
   await pool.query('DELETE FROM product_unit_conversions');
@@ -188,6 +192,10 @@ after(async () => {
     if (pool) {
       await pool.query('DELETE FROM stock_movements');
       await pool.query('DELETE FROM inventory');
+      await pool.query('DELETE FROM recall_actions').catch(() => {});
+      await pool.query('DELETE FROM recall_batches').catch(() => {});
+      await pool.query('DELETE FROM recall_cases').catch(() => {});
+      await pool.query('DELETE FROM quarantine_cases').catch(() => {});
       await pool.query('DELETE FROM batches');
       await pool.query('DELETE FROM products');
       await pool.query('DELETE FROM units');
