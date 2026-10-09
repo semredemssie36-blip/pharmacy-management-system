@@ -37,6 +37,14 @@ export function StatusBadge({ status }) {
     // General active/inactive
     active: 'bg-emerald-50 text-emerald-700 border-emerald-300',
     inactive: 'bg-slate-100 text-slate-500 border-slate-200',
+    // Financial & Payment statuses
+    paid: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
+    partially_paid: 'bg-amber-50 text-amber-800 border-amber-300 font-semibold',
+    unpaid: 'bg-rose-50 text-rose-800 border-rose-300 font-semibold',
+    credit: 'bg-purple-50 text-purple-800 border-purple-300 font-semibold',
+    failed: 'bg-red-50 text-red-800 border-red-300 font-semibold',
+    refunded: 'bg-slate-100 text-slate-700 border-slate-300 font-semibold',
+    partially_refunded: 'bg-orange-50 text-orange-700 border-orange-300 font-semibold',
   };
 
   const labels = {
@@ -54,7 +62,7 @@ export function StatusBadge({ status }) {
     rejected: 'Rejected',
     partially_received: 'Partially Received',
     fully_received: 'Fully Received',
-    pending: 'Pending Verification',
+    pending: 'Pending',
     stock_allocated: 'Stock Allocated',
     pending_verification: 'Pending Pharmacist Verification',
     verified: 'Verified',
@@ -65,6 +73,13 @@ export function StatusBadge({ status }) {
     expired: 'Expired',
     active: 'Active',
     inactive: 'Inactive',
+    paid: 'Paid',
+    partially_paid: 'Partially Paid',
+    unpaid: 'Unpaid',
+    credit: 'Credit',
+    failed: 'Failed',
+    refunded: 'Refunded',
+    partially_refunded: 'Partially Refunded',
   };
 
   const styleClass = styles[normalized] || 'bg-slate-100 text-slate-700 border-slate-300';

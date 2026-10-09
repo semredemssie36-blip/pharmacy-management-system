@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 
 import { dispensingsApi } from '../features/clinical/api.js';
+import { paymentsApi, receivablesApi } from '../features/finance/api.js';
 import { Can } from '../features/auth/Can.jsx';
 import PageHeader from '../components/common/PageHeader.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
@@ -37,6 +38,13 @@ export default function DispensingDetailPage() {
   // Cancellation Modal
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
+
+  // Task 13: Dispensing Payment Modal
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [dispPaymentMethod, setDispPaymentMethod] = useState('cash');
+  const [dispPaymentAmount, setDispPaymentAmount] = useState('');
+  const [dispPaymentNotes, setDispPaymentNotes] = useState('');
+  const [dispPaymentError, setDispPaymentError] = useState('');
 
   async function loadDetail() {
     setLoading(true);
@@ -152,6 +160,46 @@ export default function DispensingDetailPage() {
     }
   }
 
+  // Action: Open Payment Modal
+  function openPaymentModal() {
+    setDispPaymentAmount(Number(dispensing.total_amount || 0).toFixed(2));
+    setDispPaymentMethod('cash');
+    setDispPaymentNotes('');
+    setDispPaymentError('');
+    setShowPaymentModal(true);
+  }
+
+  // Action: Execute Payment and Finalize Dispensing
+  async function handleConfirmDispensingPayment(e) {
+    if (e) e.preventDefault();
+    const amountNum = parseFloat(dispPaymentAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setDispPaymentError('Please enter a valid amount greater than 0.');
+      return;
+    }
+
+    setActionLoading(true);
+    setDispPaymentError('');
+    setError(null);
+    try {
+      await paymentsApi.create({
+        referenceType: 'dispensing',
+        referenceId: Number(id),
+        amount: amountNum,
+        paymentMethod: dispPaymentMethod,
+        notes: dispPaymentNotes || undefined,
+      });
+
+      setShowPaymentModal(false);
+      setActionSuccess(`Payment of ${amountNum.toFixed(2)} ETB confirmed! Reserved inventory consumed and dispensing order completed.`);
+      await loadDetail();
+    } catch (err) {
+      setDispPaymentError(err?.response?.data?.error?.message || err.message || 'Payment processing failed.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-16 text-center text-slate-500">
@@ -243,7 +291,19 @@ export default function DispensingDetailPage() {
               </div>
             )}
 
-            {['draft', 'stock_allocated', 'pending_verification'].includes(dispensing.status) && (
+            {dispensing.status === 'payment_pending' && (
+              <Can permission="payment.create">
+                <button
+                  onClick={openPaymentModal}
+                  disabled={actionLoading}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-700 disabled:opacity-50 transition flex items-center gap-1.5"
+                >
+                  Collect Payment & Complete
+                </button>
+              </Can>
+            )}
+
+            {['draft', 'stock_allocated', 'pending_verification', 'payment_pending'].includes(dispensing.status) && (
               <Can permission="dispensing.cancel">
                 <button
                   onClick={() => setShowCancelModal(true)}
@@ -742,6 +802,101 @@ export default function DispensingDetailPage() {
                 {actionLoading ? 'Cancelling...' : 'Confirm Cancellation'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task 13: Dispensing Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Dispensing Settlement</h3>
+                <p className="text-xs text-slate-500">
+                  Record payment to consume reserved stock and complete dispensing.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-xl flex justify-between items-center">
+              <span className="text-sm font-semibold text-slate-600">Total Dispensing Amount:</span>
+              <span className="text-2xl font-black text-emerald-600 font-mono">
+                {Number(dispensing.total_amount || 0).toFixed(2)} ETB
+              </span>
+            </div>
+
+            {dispPaymentError && (
+              <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs">
+                {dispPaymentError}
+              </div>
+            )}
+
+            <form onSubmit={handleConfirmDispensingPayment} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Payment Method</label>
+                <select
+                  value={dispPaymentMethod}
+                  onChange={(e) => setDispPaymentMethod(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="cash">Cash</option>
+                  <option value="card">Debit / Credit Card</option>
+                  <option value="bank_transfer">Bank Transfer (Manual)</option>
+                  <option value="mobile_money">Mobile Money (Telebirr / CBEBirr)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Payment Amount (ETB)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={dispPaymentAmount}
+                  onChange={(e) => setDispPaymentAmount(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 font-mono font-bold"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Payment Remarks (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={dispPaymentNotes}
+                  onChange={(e) => setDispPaymentNotes(e.target.value)}
+                  placeholder="Optional reference / receipt note..."
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold shadow transition"
+                >
+                  {actionLoading ? 'Finalizing...' : 'Confirm Payment & Complete'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

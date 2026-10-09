@@ -699,3 +699,24 @@ test('REFILL USAGE: dispensing fully prescribed quantity with refills decrements
   assert.equal(refills[1].refill_number, 2);
   assert.equal(refills[1].status, 'available');
 });
+
+after(async () => {
+  if (pool) {
+    try {
+      await pool.query('DELETE FROM dispensing_batch_allocations');
+      await pool.query('DELETE FROM dispensing_lines');
+      await pool.query('DELETE FROM dispensings');
+      await pool.query('DELETE FROM prescription_attachments');
+      await pool.query('DELETE FROM prescription_refills');
+      await pool.query('DELETE FROM prescription_lines');
+      await pool.query('DELETE FROM prescriptions');
+      await pool.query('DELETE FROM prescribers');
+      await pool.query('DELETE FROM patients');
+    } catch (e) {
+      // ignore
+    }
+  }
+  if (closePool) {
+    await closePool();
+  }
+});

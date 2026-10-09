@@ -2,6 +2,8 @@ import { Router } from 'express';
 import authenticate from '../middleware/authenticate.js';
 import requirePermission from '../middleware/requirePermission.js';
 import dispensingController from '../controllers/dispensingController.js';
+import paymentController from '../controllers/paymentController.js';
+import receivableController from '../controllers/receivableController.js';
 
 const router = Router();
 
@@ -54,6 +56,24 @@ router.post(
   ['/dispensings/:id/cancel', '/dispensing/:id/cancel'],
   requirePermission('dispensing.cancel'),
   dispensingController.cancelDispensing,
+);
+
+router.post(
+  ['/dispensings/:id/payments', '/dispensing/:id/payments'],
+  requirePermission('payment.create'),
+  (req, res, next) => {
+    req.body = { ...req.body, referenceType: 'dispensing', referenceId: req.params.id };
+    return paymentController.create(req, res, next);
+  },
+);
+
+router.post(
+  ['/dispensings/:id/credit', '/dispensing/:id/credit'],
+  requirePermission('dispensing.create'),
+  (req, res, next) => {
+    req.body = { ...req.body, dispensingId: req.params.id };
+    return receivableController.createCreditDispensing(req, res, next);
+  },
 );
 
 export default router;

@@ -39,6 +39,19 @@ function MainLayout() {
             </Link>
           </Can>
           <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
+            Finance & Payments
+          </p>
+          <Can permission="payment.view">
+            <Link to="/finance/payments" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Payments & Settlements
+            </Link>
+          </Can>
+          <Can permission="receivable.view">
+            <Link to="/finance/receivables" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Accounts Receivable
+            </Link>
+          </Can>
+          <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
             Clinical Care
           </p>
           <Can permission="patient.view">

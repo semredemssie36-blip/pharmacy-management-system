@@ -17,6 +17,8 @@ import patientRoutes from './patientRoutes.js';
 import prescriberRoutes from './prescriberRoutes.js';
 import prescriptionRoutes from './prescriptionRoutes.js';
 import dispensingRoutes from './dispensingRoutes.js';
+import paymentRoutes from './paymentRoutes.js';
+import receivableRoutes from './receivableRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -40,6 +42,8 @@ router.use(patientRoutes);
 router.use(prescriberRoutes);
 router.use(prescriptionRoutes);
 router.use(dispensingRoutes);
+router.use(paymentRoutes);
+router.use(receivableRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

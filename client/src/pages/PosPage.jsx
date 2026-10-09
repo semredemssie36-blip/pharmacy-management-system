@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { salesApi } from '../features/sales/api.js';
+import { paymentsApi, receivablesApi } from '../features/finance/api.js';
 import { branchesApi } from '../features/organizations/api.js';
 import { customersApi } from '../features/partners/api.js';
 import { useAuth } from '../features/auth/AuthContext.jsx';
+import { Can } from '../features/auth/Can.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import ConfirmationDialog from '../components/common/ConfirmationDialog.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
@@ -39,6 +41,17 @@ export default function PosPage() {
 
   // Cancel dialog
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  // Task 13: Payment & Settlement Modal State
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [paymentMode, setPaymentMode] = useState('immediate'); // 'immediate' | 'credit'
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'card' | 'bank_transfer' | 'mobile_money'
+  const [paymentAmountPaid, setPaymentAmountPaid] = useState('');
+  const [creditDueDate, setCreditDueDate] = useState('');
+  const [creditOverrideReason, setCreditOverrideReason] = useState('');
+  const [customerCreditSummary, setCustomerCreditSummary] = useState(null);
+  const [loadingCreditSummary, setLoadingCreditSummary] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
 
   // Fetch branches and customers on mount
   useEffect(() => {
@@ -290,7 +303,7 @@ export default function PosPage() {
     }
   }
 
-  // Handle Complete Sale (Instant Checkout)
+  // Handle Complete Sale (Instant Direct Checkout)
   async function handleCompleteSale() {
     if (cartItems.length === 0) {
       setErrorMessage('Cart is empty. Add at least one product.');
@@ -334,6 +347,118 @@ export default function PosPage() {
       setSuccessMessage(`Sale ${completedSale.sale_number} completed successfully!`);
     } catch (err) {
       setErrorMessage(err.message || 'Failed to complete sale');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  // Open Task 13 Checkout / Payment Modal
+  async function openCheckoutModal() {
+    if (cartItems.length === 0) {
+      setErrorMessage('Cart is empty. Add at least one product.');
+      return;
+    }
+    setCheckoutError('');
+    setPaymentAmountPaid(finalTotal.toFixed(2));
+    setPaymentMode('immediate');
+    setPaymentMethod('cash');
+    setCreditDueDate('');
+    setCreditOverrideReason('');
+    setShowCheckoutModal(true);
+
+    if (selectedCustomerId) {
+      setLoadingCreditSummary(true);
+      try {
+        const res = await receivablesApi.getCustomerSummary(selectedCustomerId);
+        setCustomerCreditSummary(res.data?.summary);
+      } catch (err) {
+        console.warn('Could not load credit summary:', err);
+        setCustomerCreditSummary(null);
+      } finally {
+        setLoadingCreditSummary(false);
+      }
+    } else {
+      setCustomerCreditSummary(null);
+    }
+  }
+
+  // Handle Execute Checkout with Payment or Customer Credit
+  async function handleExecuteCheckout(e) {
+    if (e) e.preventDefault();
+    setIsLoading(true);
+    setCheckoutError('');
+    try {
+      let currentSale = activeSale;
+      if (!currentSale || currentSale.status === 'draft') {
+        const payload = {
+          organizationId: user.organization_id || 1,
+          branchId: Number(selectedBranchId),
+          customerId: selectedCustomerId ? Number(selectedCustomerId) : null,
+          discountAmount: Number(discountAmount || 0),
+          notes: saleNotes,
+          lines: cartItems.map((item) => ({
+            productId: item.product.id,
+            unitId: item.unitId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            discountAmount: item.discountAmount,
+          })),
+        };
+        const res = currentSale ? await salesApi.update(currentSale.id, payload) : await salesApi.create(payload);
+        currentSale = res.data?.sale;
+        const confRes = await salesApi.confirm(currentSale.id);
+        currentSale = confRes.data?.sale;
+      }
+
+      if (paymentMode === 'immediate') {
+        const paidAmount = parseFloat(paymentAmountPaid);
+        if (isNaN(paidAmount) || paidAmount <= 0) {
+          throw new Error('Please enter a valid payment amount greater than 0.');
+        }
+
+        const payRes = await paymentsApi.create({
+          referenceType: 'sale',
+          referenceId: currentSale.id,
+          amount: paidAmount,
+          paymentMethod: paymentMethod,
+          notes: saleNotes || undefined,
+        });
+
+        // The sale is now completed atomically by paymentService
+        const completedSaleRes = await salesApi.get(currentSale.id);
+        setActiveSale(completedSaleRes.data?.sale);
+
+        // Load receipt data
+        const receiptRes = await salesApi.getReceipt(currentSale.id);
+        setReceiptData(receiptRes.data?.receipt);
+        setShowCheckoutModal(false);
+        setShowReceiptModal(true);
+        setSuccessMessage(`Sale ${currentSale.sale_number} completed and payment recorded!`);
+      } else {
+        // Customer Credit Sale
+        if (!selectedCustomerId) {
+          throw new Error('Customer credit sales require a registered customer.');
+        }
+
+        await receivablesApi.creditSale({
+          saleId: currentSale.id,
+          customerId: Number(selectedCustomerId),
+          dueDate: creditDueDate || undefined,
+          overrideReason: creditOverrideReason.trim() || undefined,
+          notes: saleNotes || undefined,
+        });
+
+        const completedSaleRes = await salesApi.get(currentSale.id);
+        setActiveSale(completedSaleRes.data?.sale);
+
+        const receiptRes = await salesApi.getReceipt(currentSale.id);
+        setReceiptData(receiptRes.data?.receipt);
+        setShowCheckoutModal(false);
+        setShowReceiptModal(true);
+        setSuccessMessage(`Credit sale ${currentSale.sale_number} recorded in Accounts Receivable!`);
+      }
+    } catch (err) {
+      setCheckoutError(err?.response?.data?.error?.message || err.message || 'Failed to complete checkout');
     } finally {
       setIsLoading(false);
     }
@@ -701,6 +826,15 @@ export default function PosPage() {
                 <span>Complete Sale & Dispense</span>
               </button>
 
+              <button
+                type="button"
+                onClick={openCheckoutModal}
+                disabled={isLoading || cartItems.length === 0}
+                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl shadow transition flex items-center justify-center gap-2 text-sm"
+              >
+                <span>Payment & Customer Credit</span>
+              </button>
+
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -745,6 +879,208 @@ export default function PosPage() {
           onConfirm={handleCancelSale}
           onCancel={() => setShowCancelDialog(false)}
         />
+      )}
+
+      {/* Task 13: Checkout Payment & Settlement Modal */}
+      {showCheckoutModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[95vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b pb-3">
+              <div>
+                <h3 className="font-bold text-lg text-slate-900">Payment & Settlement</h3>
+                <p className="text-xs text-slate-500">
+                  Select payment method or authorized customer credit.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCheckoutModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Total Payable Banner */}
+            <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center">
+              <span className="text-sm font-semibold text-slate-600">Total Payable Amount:</span>
+              <span className="text-2xl font-black text-emerald-600 font-mono">
+                {finalTotal.toFixed(2)} ETB
+              </span>
+            </div>
+
+            {checkoutError && (
+              <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs">
+                {checkoutError}
+              </div>
+            )}
+
+            {/* Settlement Type Selector */}
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setPaymentMode('immediate')}
+                className={`py-2 text-xs font-bold rounded-md transition ${
+                  paymentMode === 'immediate'
+                    ? 'bg-white text-emerald-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Immediate Payment
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMode('credit')}
+                className={`py-2 text-xs font-bold rounded-md transition ${
+                  paymentMode === 'credit'
+                    ? 'bg-white text-purple-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Customer Credit (A/R)
+              </button>
+            </div>
+
+            {/* Mode 1: Immediate Payment Form */}
+            {paymentMode === 'immediate' && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Payment Method
+                  </label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="card">Debit / Credit Card</option>
+                    <option value="bank_transfer">Bank Transfer (Manual)</option>
+                    <option value="mobile_money">Mobile Money (Telebirr / CBEBirr)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Amount Tendered / Paid (ETB)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={paymentAmountPaid}
+                    onChange={(e) => setPaymentAmountPaid(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 font-mono font-bold"
+                  />
+                  {Number(paymentAmountPaid) < finalTotal && (
+                    <p className="text-[11px] text-amber-600 mt-1">
+                      Partial payment: {finalTotal - Number(paymentAmountPaid)} ETB will remain outstanding.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mode 2: Customer Credit Form */}
+            {paymentMode === 'credit' && (
+              <div className="space-y-3">
+                {!selectedCustomerId ? (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+                    <strong>Notice:</strong> Customer credit requires selecting a registered customer from
+                    the Customer dropdown on the POS sidebar. Walk-in credit is not permitted.
+                  </div>
+                ) : (
+                  <>
+                    {/* Customer Credit Profile Status */}
+                    {loadingCreditSummary ? (
+                      <div className="text-xs text-slate-400">Loading customer credit summary...</div>
+                    ) : customerCreditSummary ? (
+                      <div className="p-3 bg-purple-50/50 border border-purple-200 rounded-lg text-xs space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Credit Limit:</span>
+                          <span className="font-semibold text-slate-800">
+                            {customerCreditSummary.creditLimit.toFixed(2)} ETB
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Current Outstanding:</span>
+                          <span className="font-semibold text-rose-600">
+                            {customerCreditSummary.currentBalance.toFixed(2)} ETB
+                          </span>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-purple-200">
+                          <span className="font-bold text-slate-700">Available Credit:</span>
+                          <span
+                            className={`font-black ${
+                              customerCreditSummary.availableCredit >= finalTotal
+                                ? 'text-emerald-700'
+                                : 'text-rose-700'
+                            }`}
+                          >
+                            {customerCreditSummary.availableCredit.toFixed(2)} ETB
+                          </span>
+                        </div>
+
+                        {finalTotal > customerCreditSummary.availableCredit && (
+                          <div className="pt-1 text-[11px] text-rose-600 font-medium">
+                            Warning: Sale total exceeds customer available credit limit! Manager override
+                            authorization is required.
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Payment Due Date (Optional)
+                      </label>
+                      <input
+                        type="date"
+                        value={creditDueDate}
+                        onChange={(e) => setCreditDueDate(e.target.value)}
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    {customerCreditSummary &&
+                      finalTotal > customerCreditSummary.availableCredit && (
+                        <div>
+                          <label className="block text-xs font-semibold text-rose-700 mb-1">
+                            Credit Override Reason (Requires credit_sale.authorize permission)
+                          </label>
+                          <textarea
+                            rows="2"
+                            value={creditOverrideReason}
+                            onChange={(e) => setCreditOverrideReason(e.target.value)}
+                            placeholder="Reason for authorizing credit limit excess..."
+                            className="w-full border border-rose-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-rose-500"
+                            required
+                          />
+                        </div>
+                      )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                type="button"
+                onClick={() => setShowCheckoutModal(false)}
+                className="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100"
+              >
+                Back to POS
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteCheckout}
+                disabled={isLoading || (paymentMode === 'credit' && !selectedCustomerId)}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-sm font-bold shadow transition"
+              >
+                {isLoading ? 'Processing...' : 'Confirm & Complete'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Itemized Receipt Modal */}

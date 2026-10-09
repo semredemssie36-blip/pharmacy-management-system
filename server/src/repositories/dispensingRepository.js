@@ -68,6 +68,7 @@ export const dispensingRepository = {
       `SELECT d.id, d.organization_id, d.branch_id, d.warehouse_id,
               d.prescription_id, d.patient_id, d.dispensing_number,
               d.dispensing_date, d.status, d.notes,
+              d.subtotal, d.discount_amount, d.total_amount, d.paid_amount, d.payment_status, d.currency,
               d.verified_by, d.verified_at, d.verification_notes,
               d.rejected_by, d.rejected_at, d.rejection_reason,
               d.cancelled_by, d.cancelled_at, d.cancelled_reason,
@@ -102,6 +103,7 @@ export const dispensingRepository = {
       `SELECT d.id, d.organization_id, d.branch_id, d.warehouse_id,
               d.prescription_id, d.patient_id, d.dispensing_number,
               d.dispensing_date, d.status, d.notes,
+              d.subtotal, d.discount_amount, d.total_amount, d.paid_amount, d.payment_status, d.currency,
               d.verified_by, d.verified_at, d.verification_notes,
               d.rejected_by, d.rejected_at, d.rejection_reason,
               d.cancelled_by, d.cancelled_at, d.cancelled_reason,
@@ -139,6 +141,7 @@ export const dispensingRepository = {
       `SELECT dl.id, dl.dispensing_id, dl.prescription_line_id,
               dl.product_id, dl.unit_id,
               dl.quantity_requested, dl.quantity_allocated, dl.quantity_dispensed,
+              dl.unit_price, dl.discount_amount, dl.line_total,
               dl.notes, dl.created_at, dl.updated_at,
               p.code AS product_code, p.name AS product_name,
               p.prescription_classification, p.controlled_classification, p.antibiotic_classification,
@@ -208,8 +211,10 @@ export const dispensingRepository = {
       `INSERT INTO dispensings (
         organization_id, branch_id, warehouse_id,
         prescription_id, patient_id, dispensing_number,
-        dispensing_date, status, notes, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        dispensing_date, status, notes,
+        subtotal, discount_amount, total_amount, paid_amount, payment_status, currency,
+        created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         header.organizationId,
         header.branchId,
@@ -220,6 +225,12 @@ export const dispensingRepository = {
         header.dispensingDate || new Date(),
         header.status || 'draft',
         header.notes || null,
+        header.subtotal || 0,
+        header.discountAmount || 0,
+        header.totalAmount || 0,
+        header.paidAmount || 0,
+        header.paymentStatus || 'unpaid',
+        header.currency || 'ETB',
         header.createdBy,
       ],
     );
@@ -229,14 +240,17 @@ export const dispensingRepository = {
       await runner.query(
         `INSERT INTO dispensing_lines (
           dispensing_id, prescription_line_id, product_id,
-          unit_id, quantity_requested, notes
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
+          unit_id, quantity_requested, unit_price, discount_amount, line_total, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           dispensingId,
           l.prescriptionLineId,
           l.productId,
           l.unitId,
           l.quantityRequested,
+          l.unitPrice || 0,
+          l.discountAmount || 0,
+          l.lineTotal || 0,
           l.notes || null,
         ],
       );

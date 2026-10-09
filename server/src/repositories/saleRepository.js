@@ -3,7 +3,7 @@ import { getPool } from '../database/pool.js';
 const SALE_FIELDS = `
   s.id, s.organization_id, s.branch_id, s.warehouse_id, s.customer_id,
   s.sale_number, s.sale_date, s.status, s.subtotal, s.discount_amount,
-  s.total_amount, s.currency, s.notes, s.void_reason, s.cancelled_reason,
+  s.total_amount, s.paid_amount, s.payment_status, s.currency, s.notes, s.void_reason, s.cancelled_reason,
   s.created_by, s.created_at, s.updated_at,
   b.name AS branch_name, b.code AS branch_code,
   w.name AS warehouse_name, w.code AS warehouse_code,

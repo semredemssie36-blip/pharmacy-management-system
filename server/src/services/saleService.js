@@ -4,6 +4,7 @@ import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import saleRepository from '../repositories/saleRepository.js';
 import productRepository from '../repositories/productRepository.js';
+import paymentRepository from '../repositories/paymentRepository.js';
 import { getPool } from '../database/pool.js';
 
 const STATUS_TRANSITIONS = {
@@ -226,7 +227,9 @@ async function getSaleById(id, userId) {
   const sets = await getScopeSets(userId);
   if (!canAccess(sets, sale)) throw new AppError('You do not have access to this scope.', { statusCode: 403, code: 'FORBIDDEN' });
   const lines = await saleRepository.getLines(id);
-  return { ...sale, lines };
+  const payments = await paymentRepository.getAllocationsByReference('sale', id);
+  const refunds = await paymentRepository.getRefundsByReference('sale', id);
+  return { ...sale, lines, payments, refunds };
 }
 
 async function createSale(input, userId) {
@@ -442,6 +445,11 @@ async function completeSale(id, userId) {
     const sets = await getScopeSets(userId);
     if (!canAccess(sets, sale)) throw new AppError('You do not have access to this scope.', { statusCode: 403, code: 'FORBIDDEN' });
 
+    if (sale.status === 'completed') {
+      await connection.commit();
+      return getSaleById(id, userId);
+    }
+
     if (!STATUS_TRANSITIONS[sale.status]?.has('completed')) {
       throw new AppError(`Cannot complete sale with status "${sale.status}"`, { statusCode: 409, code: 'INVALID_STATUS_TRANSITION' });
     }
@@ -462,7 +470,17 @@ async function completeSale(id, userId) {
       connection,
     });
 
-    await saleRepository.updateStatus(id, 'completed', {}, connection);
+    const paidAmount = Number(sale.paid_amount || 0) <= 0 ? roundTo2(sale.total_amount) : roundTo2(sale.paid_amount);
+    const paymentStatus = sale.payment_status === 'unpaid' ? 'paid' : sale.payment_status;
+
+    await connection.query(
+      `UPDATE sales
+       SET status = 'completed',
+           paid_amount = ?,
+           payment_status = ?
+       WHERE id = ?`,
+      [paidAmount, paymentStatus, id],
+    );
 
     await connection.commit();
     return getSaleById(id, userId);
@@ -661,6 +679,9 @@ async function getReceiptData(id, userId) {
     subtotal: sale.subtotal,
     discountAmount: sale.discount_amount,
     totalAmount: sale.total_amount,
+    paidAmount: sale.paid_amount,
+    paymentStatus: sale.payment_status,
+    remainingBalance: roundTo2(Math.max(0, Number(sale.total_amount) - Number(sale.paid_amount || 0))),
     notes: sale.notes,
     voidReason: sale.void_reason,
     lines: sale.lines.map((l) => ({

@@ -2,6 +2,7 @@ import AppError from '../errors/AppError.js';
 import ValidationError from '../errors/ValidationError.js';
 import authorizationService from './authorizationService.js';
 import dispensingRepository from '../repositories/dispensingRepository.js';
+import paymentRepository from '../repositories/paymentRepository.js';
 import inventoryService from './inventoryService.js';
 import { getPool } from '../database/pool.js';
 
@@ -20,6 +21,10 @@ function canAccess(sets, row) {
     sets.branchIds.includes(Number(row.branch_id)) ||
     sets.warehouseIds.includes(Number(row.warehouse_id))
   );
+}
+
+function roundTo2(num) {
+  return Math.round((Number(num) + Number.EPSILON) * 100) / 100;
 }
 
 async function generateDispensingNumber(organizationId, connection) {
@@ -73,6 +78,8 @@ export const dispensingService = {
     }
 
     dispensing.lines = lines;
+    dispensing.payments = await paymentRepository.getAllocationsByReference('dispensing', id);
+    dispensing.refunds = await paymentRepository.getRefundsByReference('dispensing', id);
     return dispensing;
   },
 
@@ -226,15 +233,24 @@ export const dispensingService = {
         }
       }
 
+      // Calculate line price and total
+      const [prodRows] = await pool.query('SELECT selling_price FROM products WHERE id = ? LIMIT 1', [rxLine.product_id]);
+      const unitPrice = roundTo2(prodRows[0]?.selling_price || 0);
+      const lineTotal = roundTo2(qtyRequested * unitPrice);
+
       processedLines.push({
         prescriptionLineId: rxLine.id,
         productId: rxLine.product_id,
         unitId: resolvedUnitId,
         quantityRequested: qtyRequested,
+        unitPrice,
+        discountAmount: 0,
+        lineTotal,
         notes: typeof l.notes === 'string' ? l.notes.trim() : null,
       });
     }
 
+    const subtotal = roundTo2(processedLines.reduce((sum, item) => sum + (item.lineTotal || 0), 0));
     const dispensingNumber = await generateDispensingNumber(organizationId);
 
     const connection = await pool.getConnection();
@@ -252,6 +268,12 @@ export const dispensingService = {
           dispensingDate: input.dispensingDate ? new Date(input.dispensingDate) : new Date(),
           status: 'draft',
           notes: typeof input.notes === 'string' ? input.notes.trim() : null,
+          subtotal,
+          discountAmount: 0,
+          totalAmount: subtotal,
+          paidAmount: 0,
+          paymentStatus: 'unpaid',
+          currency: 'ETB',
           createdBy: userId,
         },
         processedLines,
