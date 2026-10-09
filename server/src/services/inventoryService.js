@@ -1306,6 +1306,150 @@ async function receiveStockTransfer({
   return receivedMovements;
 }
 
+async function applyStockAdjustment({
+  countId,
+  organizationId,
+  branchId,
+  warehouseId,
+  adjustments,
+  userId,
+  connection,
+}) {
+  if (!adjustments || adjustments.length === 0) return [];
+
+  const appliedMovements = [];
+
+  for (const item of adjustments) {
+    const variance = Number(item.varianceQuantity);
+    if (!Number.isFinite(variance) || variance === 0) continue;
+
+    // Check batch status and expiry
+    const [batchRows] = await connection.query(
+      'SELECT id, batch_number, expiry_date, status FROM batches WHERE id = ?',
+      [item.batchId],
+    );
+    const batch = batchRows[0];
+    if (!batch) {
+      throw new AppError(`Batch not found for product #${item.productId}`, { statusCode: 404, code: 'BATCH_NOT_FOUND' });
+    }
+
+    let targetStatus = item.inventoryStatus || 'available';
+    if (variance > 0) {
+      // Physical variance surplus must NEVER make expired, damaged, or recalled stock available
+      if (batch.status !== 'active') {
+        targetStatus = 'quarantined';
+      } else if (new Date(batch.expiry_date).getTime() <= Date.now()) {
+        targetStatus = 'expired';
+      } else if (item.condition === 'damaged') {
+        targetStatus = 'damaged';
+      }
+    }
+
+    // Lock existing inventory row
+    const [existing] = await connection.query(
+      `SELECT id, quantity FROM inventory
+       WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+         AND storage_location_id = ? AND product_id = ? AND batch_id = ? AND unit_id = ?
+         AND status = ?
+       LIMIT 1 FOR UPDATE`,
+      [
+        organizationId,
+        branchId,
+        warehouseId,
+        item.storageLocationId,
+        item.productId,
+        item.batchId,
+        item.unitId,
+        targetStatus,
+      ],
+    );
+
+    let inventoryId;
+    if (variance < 0) {
+      // Shortage / Negative adjustment
+      if (existing.length === 0) {
+        throw new AppError(
+          `Cannot apply negative adjustment for product #${item.productId}: no inventory found at location.`,
+          { statusCode: 409, code: 'INSUFFICIENT_STOCK' },
+        );
+      }
+      const currentQty = Number(existing[0].quantity);
+      if (currentQty < Math.abs(variance)) {
+        throw new AppError(
+          `Cannot apply negative adjustment of ${variance} units: current stock is ${currentQty}. Negative stock is forbidden.`,
+          { statusCode: 409, code: 'INSUFFICIENT_STOCK' },
+        );
+      }
+
+      inventoryId = existing[0].id;
+      await connection.query(
+        'UPDATE inventory SET quantity = quantity + ? WHERE id = ?',
+        [variance, inventoryId],
+      );
+    } else {
+      // Surplus / Positive adjustment
+      if (existing.length > 0) {
+        inventoryId = existing[0].id;
+        await connection.query(
+          'UPDATE inventory SET quantity = quantity + ? WHERE id = ?',
+          [variance, inventoryId],
+        );
+      } else {
+        const [insertRes] = await connection.query(
+          `INSERT INTO inventory (
+             organization_id, branch_id, warehouse_id, storage_location_id,
+             product_id, batch_id, unit_id, status, quantity
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            organizationId,
+            branchId,
+            warehouseId,
+            item.storageLocationId,
+            item.productId,
+            item.batchId,
+            item.unitId,
+            targetStatus,
+            variance,
+          ],
+        );
+        inventoryId = insertRes.insertId;
+      }
+    }
+
+    // Record stock movement ledger entry
+    const [movRes] = await connection.query(
+      `INSERT INTO stock_movements (
+         organization_id, branch_id, warehouse_id, storage_location_id,
+         product_id, batch_id, unit_id, movement_type, quantity_delta,
+         reference_type, reference_id, reason, created_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'adjustment', ?, 'stock_count', ?, ?, ?)`,
+      [
+        organizationId,
+        branchId,
+        warehouseId,
+        item.storageLocationId,
+        item.productId,
+        item.batchId,
+        item.unitId,
+        variance,
+        countId,
+        item.varianceReason || 'Stock count adjustment',
+        userId,
+      ],
+    );
+
+    appliedMovements.push({
+      countLineId: item.countLineId,
+      inventoryId,
+      movementId: movRes.insertId,
+      varianceQuantity: variance,
+      status: targetStatus,
+    });
+  }
+
+  return appliedMovements;
+}
+
 export default {
   listInventoryForUser,
   getInventoryForUser,
@@ -1327,6 +1471,7 @@ export default {
   deductSupplierReturnStock,
   dispatchStockTransfer,
   receiveStockTransfer,
+  applyStockAdjustment,
 };
 
 

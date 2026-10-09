@@ -41,9 +41,36 @@ export const stockTransfersApi = {
   getAvailableBatches: (id) => apiClient.get(`/stock-transfers/${id}/available-batches`),
 };
 
+export const stockCountsApi = {
+  list: (params) => {
+    const cleanParams = {};
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') {
+          cleanParams[k] = v;
+        }
+      });
+    }
+    const q = Object.keys(cleanParams).length > 0 ? `?${new URLSearchParams(cleanParams).toString()}` : '';
+    return apiClient.get(`/stock-counts${q}`);
+  },
+  get: (id) => apiClient.get(`/stock-counts/${id}`),
+  create: (data) => apiClient.post('/stock-counts', data),
+  start: (id) => apiClient.post(`/stock-counts/${id}/start`),
+  recordCount: (id, data) => apiClient.post(`/stock-counts/${id}/record-count`, data),
+  recount: (id, data) => apiClient.post(`/stock-counts/${id}/recount`, data),
+  submit: (id, data) => apiClient.post(`/stock-counts/${id}/submit`, data || {}),
+  approve: (id, data) => apiClient.post(`/stock-counts/${id}/approve`, data || {}),
+  reject: (id, data) => apiClient.post(`/stock-counts/${id}/reject`, data),
+  apply: (id, data) => apiClient.post(`/stock-counts/${id}/apply`, data || {}),
+  cancel: (id, data) => apiClient.post(`/stock-counts/${id}/cancel`, data || {}),
+};
+
 export default {
   inventoryApi,
   batchesApi,
   stockMovementsApi,
   stockTransfersApi,
+  stockCountsApi,
 };
+

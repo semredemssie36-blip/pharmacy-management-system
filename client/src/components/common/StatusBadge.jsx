@@ -56,10 +56,15 @@ export function StatusBadge({ status }) {
     in_transit: 'bg-indigo-50 text-indigo-700 border-indigo-300 font-semibold',
     allocated: 'bg-teal-50 text-teal-700 border-teal-300',
     received: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
+    // Stock count statuses
+    in_progress: 'bg-sky-50 text-sky-700 border-sky-300 font-medium',
+    partially_applied: 'bg-amber-50 text-amber-700 border-amber-300 font-medium',
   };
 
   const labels = {
     draft: 'Draft',
+    in_progress: 'In Progress',
+    partially_applied: 'Partially Applied',
     receiving: 'Receiving In-Progress',
     completed: 'Completed',
     discrepancy: 'Discrepancy Flagged',
