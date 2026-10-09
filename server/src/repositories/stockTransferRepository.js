@@ -118,10 +118,10 @@ export const stockTransferRepository = {
          db.code AS destination_branch_code,
          dw.name AS destination_warehouse_name,
          dw.code AS destination_warehouse_code,
-         ru.username AS requested_by_name,
-         au.username AS approved_by_name,
-         du.username AS dispatched_by_name,
-         rcu.username AS received_by_name,
+         ru.name AS requested_by_name,
+         au.name AS approved_by_name,
+         du.name AS dispatched_by_name,
+         rcu.name AS received_by_name,
          (SELECT COUNT(*) FROM stock_transfer_lines stl WHERE stl.transfer_id = st.id) AS line_count,
          (SELECT COALESCE(SUM(stl.quantity_requested), 0) FROM stock_transfer_lines stl WHERE stl.transfer_id = st.id) AS total_quantity_requested,
          (SELECT COALESCE(SUM(stl.quantity_dispatched), 0) FROM stock_transfer_lines stl WHERE stl.transfer_id = st.id) AS total_quantity_dispatched,
@@ -172,13 +172,13 @@ export const stockTransferRepository = {
          db.code AS destination_branch_code,
          dw.name AS destination_warehouse_name,
          dw.code AS destination_warehouse_code,
-         ru.username AS requested_by_name,
-         au.username AS approved_by_name,
-         rju.username AS rejected_by_name,
-         du.username AS dispatched_by_name,
-         rcu.username AS received_by_name,
-         cu.username AS cancelled_by_name,
-         dru.username AS discrepancy_resolved_by_name
+         ru.name AS requested_by_name,
+         au.name AS approved_by_name,
+         rju.name AS rejected_by_name,
+         du.name AS dispatched_by_name,
+         rcu.name AS received_by_name,
+         cu.name AS cancelled_by_name,
+         dru.name AS discrepancy_resolved_by_name
        FROM stock_transfers st
        JOIN organizations o ON o.id = st.organization_id
        JOIN branches sb ON sb.id = st.source_branch_id

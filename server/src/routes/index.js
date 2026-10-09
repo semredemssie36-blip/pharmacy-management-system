@@ -21,6 +21,7 @@ import paymentRoutes from './paymentRoutes.js';
 import receivableRoutes from './receivableRoutes.js';
 import customerReturnRoutes from './customerReturnRoutes.js';
 import supplierReturnRoutes from './supplierReturnRoutes.js';
+import stockTransferRoutes from './stockTransferRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -48,6 +49,7 @@ router.use(paymentRoutes);
 router.use(receivableRoutes);
 router.use(customerReturnRoutes);
 router.use(supplierReturnRoutes);
+router.use(stockTransferRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

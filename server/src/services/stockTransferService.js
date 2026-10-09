@@ -79,7 +79,13 @@ export const stockTransferService = {
 
   async getEligibleStock(warehouseId, productId, user) {
     const pool = getPool();
-    const [whRows] = await pool.query('SELECT * FROM warehouses WHERE id = ? LIMIT 1', [warehouseId]);
+    const [whRows] = await pool.query(
+      `SELECT w.*, b.organization_id 
+       FROM warehouses w
+       JOIN branches b ON b.id = w.branch_id
+       WHERE w.id = ? LIMIT 1`,
+      [warehouseId],
+    );
     const wh = whRows[0];
     if (!wh) {
       throw new AppError('Warehouse not found', { statusCode: 404, code: 'WAREHOUSE_NOT_FOUND' });
@@ -670,7 +676,8 @@ export const stockTransferService = {
       }, connection);
 
       await connection.commit();
-      return stockTransferRepository.findWithDetails(id);
+      const details = await stockTransferRepository.findWithDetails(id);
+      return details;
     } catch (err) {
       await connection.rollback();
       throw err;

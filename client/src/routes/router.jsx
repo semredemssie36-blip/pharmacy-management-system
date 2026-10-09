@@ -44,6 +44,9 @@ import CustomerReturnDetailPage from '../pages/CustomerReturnDetailPage.jsx';
 import SupplierReturnsPage from '../pages/SupplierReturnsPage.jsx';
 import SupplierReturnCreatePage from '../pages/SupplierReturnCreatePage.jsx';
 import SupplierReturnDetailPage from '../pages/SupplierReturnDetailPage.jsx';
+import StockTransfersPage from '../pages/StockTransfersPage.jsx';
+import StockTransferCreatePage from '../pages/StockTransferCreatePage.jsx';
+import StockTransferDetailPage from '../pages/StockTransferDetailPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -84,6 +87,9 @@ const router = createBrowserRouter([
       { path: 'master-data/products', element: <ProductsPage /> },
       { path: 'master-data/products/:id', element: <ProductDetailPage /> },
       { path: 'inventory/stock', element: <StockOverviewPage /> },
+      { path: 'inventory/transfers', element: <StockTransfersPage /> },
+      { path: 'inventory/transfers/new', element: <StockTransferCreatePage /> },
+      { path: 'inventory/transfers/:id', element: <StockTransferDetailPage /> },
       { path: 'inventory/batches', element: <BatchesPage /> },
       { path: 'inventory/stock-movements', element: <StockMovementsPage /> },
       { path: 'inventory/opening-balance', element: <OpeningBalancePage /> },

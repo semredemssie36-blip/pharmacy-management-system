@@ -167,6 +167,9 @@ function MainLayout() {
           <Can permission="inventory.view">
             <Link to="/inventory/stock" className="block rounded px-3 py-2 hover:bg-slate-800">Stock Overview</Link>
           </Can>
+          <Can permission="stock_transfer.view">
+            <Link to="/inventory/transfers" className="block rounded px-3 py-2 hover:bg-slate-800">Stock Transfers</Link>
+          </Can>
           <Can permission="batch.view">
             <Link to="/inventory/batches" className="block rounded px-3 py-2 hover:bg-slate-800">Batches</Link>
           </Can>

@@ -52,6 +52,10 @@ export function StatusBadge({ status }) {
     awaiting_disposal: 'bg-orange-50 text-orange-800 border-orange-300 font-semibold',
     disposed: 'bg-slate-200 text-slate-800 border-slate-400 font-semibold',
     return_to_stock: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
+    // Stock Transfer statuses
+    in_transit: 'bg-indigo-50 text-indigo-700 border-indigo-300 font-semibold',
+    allocated: 'bg-teal-50 text-teal-700 border-teal-300',
+    received: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
   };
 
   const labels = {
@@ -93,6 +97,9 @@ export function StatusBadge({ status }) {
     awaiting_disposal: 'Awaiting Disposal',
     disposed: 'Disposed',
     return_to_stock: 'Return To Stock',
+    in_transit: 'In Transit',
+    allocated: 'Allocated',
+    received: 'Received',
   };
 
   const styleClass = styles[normalized] || 'bg-slate-100 text-slate-700 border-slate-300';
