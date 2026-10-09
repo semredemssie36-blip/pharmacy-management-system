@@ -206,6 +206,10 @@ before(async () => {
 after(async () => {
   if (pool) {
     try {
+      await pool.query('DELETE FROM customer_return_lines');
+      await pool.query('DELETE FROM customer_returns');
+      await pool.query('DELETE FROM supplier_return_lines');
+      await pool.query('DELETE FROM supplier_returns');
       await pool.query('DELETE FROM refunds');
       await pool.query('DELETE FROM payment_allocations');
       await pool.query('DELETE FROM customer_receivables');

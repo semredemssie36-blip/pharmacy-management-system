@@ -38,6 +38,12 @@ import DispensingDetailPage from '../pages/DispensingDetailPage.jsx';
 import PaymentsPage from '../pages/PaymentsPage.jsx';
 import PaymentDetailPage from '../pages/PaymentDetailPage.jsx';
 import ReceivablesPage from '../pages/ReceivablesPage.jsx';
+import CustomerReturnsPage from '../pages/CustomerReturnsPage.jsx';
+import CustomerReturnCreatePage from '../pages/CustomerReturnCreatePage.jsx';
+import CustomerReturnDetailPage from '../pages/CustomerReturnDetailPage.jsx';
+import SupplierReturnsPage from '../pages/SupplierReturnsPage.jsx';
+import SupplierReturnCreatePage from '../pages/SupplierReturnCreatePage.jsx';
+import SupplierReturnDetailPage from '../pages/SupplierReturnDetailPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -52,6 +58,12 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'pos', element: <PosPage /> },
       { path: 'sales', element: <SalesPage /> },
+      { path: 'returns/customer', element: <CustomerReturnsPage /> },
+      { path: 'returns/customer/new', element: <CustomerReturnCreatePage /> },
+      { path: 'returns/customer/:id', element: <CustomerReturnDetailPage /> },
+      { path: 'returns/supplier', element: <SupplierReturnsPage /> },
+      { path: 'returns/supplier/new', element: <SupplierReturnCreatePage /> },
+      { path: 'returns/supplier/:id', element: <SupplierReturnDetailPage /> },
       { path: 'finance/payments', element: <PaymentsPage /> },
       { path: 'finance/payments/:id', element: <PaymentDetailPage /> },
       { path: 'finance/receivables', element: <ReceivablesPage /> },

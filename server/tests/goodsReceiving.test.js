@@ -74,6 +74,8 @@ before(async () => {
   closePool = (await import('../src/database/pool.js')).closePool;
   app = (await import('../src/app.js')).default;
 
+  await pool.query('DELETE FROM supplier_return_lines');
+  await pool.query('DELETE FROM supplier_returns');
   await pool.query('DELETE FROM goods_receipt_lines');
   await pool.query('DELETE FROM goods_receipts');
   await pool.query('DELETE FROM purchase_order_lines');

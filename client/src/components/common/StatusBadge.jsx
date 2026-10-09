@@ -45,6 +45,13 @@ export function StatusBadge({ status }) {
     failed: 'bg-red-50 text-red-800 border-red-300 font-semibold',
     refunded: 'bg-slate-100 text-slate-700 border-slate-300 font-semibold',
     partially_refunded: 'bg-orange-50 text-orange-700 border-orange-300 font-semibold',
+    // Return & Disposition statuses
+    pending_inspection: 'bg-amber-50 text-amber-800 border-amber-300 font-semibold',
+    quarantined: 'bg-yellow-50 text-yellow-800 border-yellow-300 font-semibold',
+    damaged: 'bg-red-50 text-red-800 border-red-300 font-semibold',
+    awaiting_disposal: 'bg-orange-50 text-orange-800 border-orange-300 font-semibold',
+    disposed: 'bg-slate-200 text-slate-800 border-slate-400 font-semibold',
+    return_to_stock: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
   };
 
   const labels = {
@@ -80,6 +87,12 @@ export function StatusBadge({ status }) {
     failed: 'Failed',
     refunded: 'Refunded',
     partially_refunded: 'Partially Refunded',
+    pending_inspection: 'Pending Inspection',
+    quarantined: 'Quarantined',
+    damaged: 'Damaged',
+    awaiting_disposal: 'Awaiting Disposal',
+    disposed: 'Disposed',
+    return_to_stock: 'Return To Stock',
   };
 
   const styleClass = styles[normalized] || 'bg-slate-100 text-slate-700 border-slate-300';

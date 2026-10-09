@@ -86,7 +86,14 @@ before(async () => {
   await pool.query('DELETE FROM product_unit_conversions');
   await pool.query('DELETE FROM product_units');
   await pool.query('DELETE FROM product_active_ingredients');
-  await pool.query('DELETE FROM products');
+  await pool.query('DELETE FROM customer_return_lines');
+  await pool.query('DELETE FROM customer_returns');
+  await pool.query('DELETE FROM supplier_return_lines');
+  await pool.query('DELETE FROM supplier_returns');
+  await pool.query('DELETE FROM refunds');
+  await pool.query('DELETE FROM payment_allocations');
+  await pool.query('DELETE FROM customer_receivables');
+  await pool.query('DELETE FROM payments');
   await pool.query('DELETE FROM suppliers');
   await pool.query('DELETE FROM customers');
   await pool.query('DELETE FROM manufacturers');

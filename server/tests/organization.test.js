@@ -31,6 +31,14 @@ before(async () => {
   closePool = (await import('../src/database/pool.js')).closePool;
   app = (await import('../src/app.js')).default;
 
+  await pool.query('DELETE FROM customer_return_lines');
+  await pool.query('DELETE FROM customer_returns');
+  await pool.query('DELETE FROM supplier_return_lines');
+  await pool.query('DELETE FROM supplier_returns');
+  await pool.query('DELETE FROM refunds');
+  await pool.query('DELETE FROM payment_allocations');
+  await pool.query('DELETE FROM customer_receivables');
+  await pool.query('DELETE FROM payments');
   await pool.query('DELETE FROM storage_locations');
   await pool.query('DELETE FROM warehouses');
   await pool.query('DELETE FROM branches');
@@ -61,6 +69,14 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('DELETE FROM customer_return_lines');
+      await pool.query('DELETE FROM customer_returns');
+      await pool.query('DELETE FROM supplier_return_lines');
+      await pool.query('DELETE FROM supplier_returns');
+      await pool.query('DELETE FROM refunds');
+      await pool.query('DELETE FROM payment_allocations');
+      await pool.query('DELETE FROM customer_receivables');
+      await pool.query('DELETE FROM payments');
       await pool.query('DELETE FROM storage_locations');
       await pool.query('DELETE FROM warehouses');
       await pool.query('DELETE FROM branches');

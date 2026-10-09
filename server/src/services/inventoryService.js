@@ -832,6 +832,262 @@ async function finalizeDispensingStockDeduction({ dispensingId, userId, connecti
   return allocations.length;
 }
 
+/**
+ * Task 14 — Customer return inventory disposition.
+ * Mutates stock positions according to inspection disposition:
+ * - 'quarantine' -> 'quarantined'
+ * - 'return_to_stock' -> 'available' (strictly validated: sealed_intact, unexpired, active batch)
+ * - 'damaged' -> 'damaged'
+ * - 'awaiting_disposal' -> 'awaiting_disposal'
+ * - 'disposed' -> 'disposed'
+ * - 'none' -> no stock change
+ *
+ * Records stock_movements with movement_type = 'customer_return', signed positive delta.
+ */
+async function disposeCustomerReturnStock({
+  customerReturnId,
+  organizationId,
+  branchId,
+  warehouseId,
+  lines,
+  userId,
+  connection,
+}) {
+  if (!connection) throw new Error('disposeCustomerReturnStock requires an active connection');
+
+  const dispositionToStatus = {
+    quarantine: 'quarantined',
+    return_to_stock: 'available',
+    damaged: 'damaged',
+    awaiting_disposal: 'awaiting_disposal',
+    disposed: 'disposed',
+  };
+
+  const processedMovements = [];
+
+  for (const line of lines) {
+    const disposition = line.disposition || 'none';
+    if (disposition === 'none') {
+      continue;
+    }
+
+    const targetStatus = dispositionToStatus[disposition];
+    if (!targetStatus) {
+      throw new ValidationError('Validation failed', [
+        { field: 'disposition', message: `Unsupported disposition outcome: ${disposition}` },
+      ]);
+    }
+
+    const qty = Number(line.quantity);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      throw new ValidationError('Validation failed', [
+        { field: 'quantity', message: 'Return quantity must be positive' },
+      ]);
+    }
+
+    // Safety checks for returning to saleable/available stock
+    if (disposition === 'return_to_stock') {
+      if (line.conditionState && line.conditionState !== 'sealed_intact') {
+        throw new AppError(
+          `Only sealed intact medicines may be returned to available stock (got condition: ${line.conditionState})`,
+          { statusCode: 409, code: 'UNSEALED_CANNOT_RESTOCK' },
+        );
+      }
+
+      // Check batch active status & expiry
+      const [batchRows] = await connection.query(
+        'SELECT id, batch_number, expiry_date, status FROM batches WHERE id = ? FOR UPDATE',
+        [line.batchId],
+      );
+      const batch = batchRows[0];
+      if (!batch) {
+        throw new AppError('Batch not found for returned product', { statusCode: 404, code: 'BATCH_NOT_FOUND' });
+      }
+      if (batch.status !== 'active') {
+        throw new AppError(
+          `Cannot return inactive or recalled batch (${batch.batch_number}) to available stock`,
+          { statusCode: 409, code: 'INACTIVE_BATCH_RESTOCK_REJECTED' },
+        );
+      }
+      if (new Date(batch.expiry_date).getTime() <= Date.now()) {
+        throw new AppError(
+          `Cannot return expired batch (${batch.batch_number}) to available stock. Must quarantine or dispose.`,
+          { statusCode: 409, code: 'EXPIRED_BATCH_RESTOCK_REJECTED' },
+        );
+      }
+    }
+
+    // Determine storage location
+    let locationId = line.storageLocationId;
+    if (!locationId) {
+      const [locs] = await connection.query(
+        'SELECT id FROM storage_locations WHERE warehouse_id = ? AND status = "active" LIMIT 1',
+        [warehouseId],
+      );
+      if (locs.length > 0) {
+        locationId = locs[0].id;
+      } else {
+        throw new ValidationError('Validation failed', [
+          { field: 'storageLocationId', message: 'Storage location is required for returned stock disposition' },
+        ]);
+      }
+    }
+
+    // Lock and upsert inventory position
+    const [existingRows] = await connection.query(
+      `SELECT id, quantity FROM inventory
+       WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ? AND storage_location_id = ?
+         AND product_id = ? AND batch_id = ? AND unit_id = ? AND status = ?
+       FOR UPDATE`,
+      [organizationId, branchId, warehouseId, locationId, line.productId, line.batchId, line.unitId, targetStatus],
+    );
+
+    let inventoryId;
+    if (existingRows.length > 0) {
+      inventoryId = existingRows[0].id;
+      await connection.query(
+        'UPDATE inventory SET quantity = quantity + ? WHERE id = ?',
+        [qty, inventoryId],
+      );
+    } else {
+      const [insertRes] = await connection.query(
+        `INSERT INTO inventory (organization_id, branch_id, warehouse_id, storage_location_id, product_id, batch_id, unit_id, status, quantity)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [organizationId, branchId, warehouseId, locationId, line.productId, line.batchId, line.unitId, targetStatus, qty],
+      );
+      inventoryId = insertRes.insertId;
+    }
+
+    // Insert signed positive movement in append-only stock_movements ledger
+    const reasonText = line.dispositionNotes
+      ? `Customer return disposition (${disposition}): ${line.dispositionNotes}`
+      : `Customer return disposition (${disposition})`;
+
+    const [movRes] = await connection.query(
+      `INSERT INTO stock_movements (
+         organization_id, branch_id, warehouse_id, storage_location_id,
+         product_id, batch_id, unit_id, movement_type, quantity_delta,
+         reference_type, reference_id, reason, created_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'customer_return', ?, 'customer_return', ?, ?, ?)`,
+      [
+        organizationId, branchId, warehouseId, locationId,
+        line.productId, line.batchId, line.unitId,
+        qty, customerReturnId, reasonText, userId,
+      ],
+    );
+
+    processedMovements.push({
+      inventoryId,
+      movementId: movRes.insertId,
+      disposition,
+      targetStatus,
+      quantity: qty,
+    });
+  }
+
+  return processedMovements;
+}
+
+/**
+ * Task 14 — Supplier return inventory deduction.
+ * When supplier return is completed / dispatched to supplier,
+ * locks inventory rows in the warehouse and deducts physical stock.
+ *
+ * Records stock_movements with movement_type = 'supplier_return', signed negative delta.
+ */
+async function deductSupplierReturnStock({
+  supplierReturnId,
+  organizationId,
+  branchId,
+  warehouseId,
+  lines,
+  userId,
+  connection,
+}) {
+  if (!connection) throw new Error('deductSupplierReturnStock requires an active connection');
+
+  const deductions = [];
+
+  for (const line of lines) {
+    const qtyToDeduct = Number(line.quantity);
+    if (!Number.isFinite(qtyToDeduct) || qtyToDeduct <= 0) {
+      throw new ValidationError('Validation failed', [
+        { field: 'quantity', message: 'Supplier return quantity must be positive' },
+      ]);
+    }
+
+    // Lock candidate inventory rows in warehouse for this product, batch, and unit
+    // Supplier return can deduct from available or quarantined stock
+    let query = `
+      SELECT id, storage_location_id, quantity, status
+      FROM inventory
+      WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+        AND product_id = ? AND batch_id = ? AND unit_id = ?
+        AND status IN ('available', 'quarantined')
+        AND quantity > 0
+    `;
+    const params = [organizationId, branchId, warehouseId, line.productId, line.batchId, line.unitId];
+
+    if (line.storageLocationId) {
+      query += ' AND storage_location_id = ?';
+      params.push(line.storageLocationId);
+    }
+
+    query += ' ORDER BY FIELD(status, "quarantined", "available"), id ASC FOR UPDATE';
+
+    const [rows] = await connection.query(query, params);
+
+    const totalAvailable = rows.reduce((acc, r) => acc + Number(r.quantity), 0);
+    if (totalAvailable < qtyToDeduct) {
+      throw new AppError(
+        `Insufficient stock for batch ${line.batchNumber || line.batchId} to fulfill supplier return. Required: ${qtyToDeduct}, Available: ${totalAvailable}`,
+        { statusCode: 409, code: 'INSUFFICIENT_STOCK' },
+      );
+    }
+
+    let remainingToDeduct = qtyToDeduct;
+
+    for (const row of rows) {
+      if (remainingToDeduct <= 0) break;
+      const rowQty = Number(row.quantity);
+      const deductFromRow = Math.min(rowQty, remainingToDeduct);
+
+      await connection.query(
+        'UPDATE inventory SET quantity = GREATEST(0, quantity - ?) WHERE id = ?',
+        [deductFromRow, row.id],
+      );
+
+      // Record negative movement
+      const reasonText = line.reason
+        ? `Supplier return dispatch: ${line.reason}`
+        : 'Supplier return dispatch';
+
+      const [movRes] = await connection.query(
+        `INSERT INTO stock_movements (
+           organization_id, branch_id, warehouse_id, storage_location_id,
+           product_id, batch_id, unit_id, movement_type, quantity_delta,
+           reference_type, reference_id, reason, created_by
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, 'supplier_return', ?, 'supplier_return', ?, ?, ?)`,
+        [
+          organizationId, branchId, warehouseId, row.storage_location_id,
+          line.productId, line.batchId, line.unitId,
+          -deductFromRow, supplierReturnId, reasonText, userId,
+        ],
+      );
+
+      deductions.push({
+        inventoryId: row.id,
+        movementId: movRes.insertId,
+        deductedQuantity: deductFromRow,
+      });
+
+      remainingToDeduct -= deductFromRow;
+    }
+  }
+
+  return deductions;
+}
+
 export default {
   listInventoryForUser,
   getInventoryForUser,
@@ -849,4 +1105,7 @@ export default {
   reserveDispensingFefoStock,
   releaseDispensingReservations,
   finalizeDispensingStockDeduction,
+  disposeCustomerReturnStock,
+  deductSupplierReturnStock,
 };
+
