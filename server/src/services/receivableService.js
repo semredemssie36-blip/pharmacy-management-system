@@ -6,6 +6,7 @@ import receivableRepository from '../repositories/receivableRepository.js';
 import saleRepository from '../repositories/saleRepository.js';
 import dispensingRepository from '../repositories/dispensingRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
+import approvalRepository from '../repositories/approvalRepository.js';
 import { getPool } from '../database/pool.js';
 import logger from '../utils/logger.js';
 
@@ -202,9 +203,26 @@ export const receivableService = {
         if (projectedBalance > creditLimit) {
           // Check if user has permission to authorize credit sale override
           const userPermissions = await authorizationService.getUserPermissions(userId);
-          const hasCreditAuth = userPermissions.includes('credit_sale.authorize') || userPermissions.includes('*');
+          const hasCreditAuth = userPermissions.includes('credit_sale.authorize') || userPermissions.includes('approval.credit') || userPermissions.includes('*');
 
-          if (!hasCreditAuth || !authorizedOverride) {
+          // Check if an approved approval request exists for this customer
+          let hasApprovedRequest = false;
+          const approvedReq = await approvalRepository.findApprovedRequestForTarget(
+            customer.organization_id,
+            'credit_limit_override',
+            'customer',
+            targetCustomerId,
+            connection,
+          );
+          if (approvedReq && (approvedReq.requested_value === null || Number(approvedReq.requested_value) >= projectedBalance)) {
+            hasApprovedRequest = true;
+            await approvalRepository.updateStatus(approvedReq.id, {
+              status: 'executed',
+              executedAt: new Date(),
+            }, connection);
+          }
+
+          if ((!hasCreditAuth && !hasApprovedRequest) || (!authorizedOverride && !hasApprovedRequest)) {
             throw new AppError(
               `Credit limit exceeded. Current balance: ${currentBalance} ETB, Proposed: ${proposedCredit} ETB, Limit: ${creditLimit} ETB`,
               { statusCode: 409, code: 'CREDIT_LIMIT_EXCEEDED' },
@@ -218,6 +236,7 @@ export const receivableService = {
             currentBalance,
             proposedCredit,
             projectedBalance,
+            approvalRequestId: approvedReq?.id || null,
           });
         }
       }
@@ -360,9 +379,25 @@ export const receivableService = {
         const creditLimit = Number(customer.credit_limit);
         if (projectedBalance > creditLimit) {
           const userPermissions = await authorizationService.getUserPermissions(userId);
-          const hasCreditAuth = userPermissions.includes('credit_sale.authorize') || userPermissions.includes('*');
+          const hasCreditAuth = userPermissions.includes('credit_sale.authorize') || userPermissions.includes('approval.credit') || userPermissions.includes('*');
 
-          if (!hasCreditAuth || !authorizedOverride) {
+          let hasApprovedRequest = false;
+          const approvedReq = await approvalRepository.findApprovedRequestForTarget(
+            customer.organization_id,
+            'credit_limit_override',
+            'customer',
+            targetCustomerId,
+            connection,
+          );
+          if (approvedReq && (approvedReq.requested_value === null || Number(approvedReq.requested_value) >= projectedBalance)) {
+            hasApprovedRequest = true;
+            await approvalRepository.updateStatus(approvedReq.id, {
+              status: 'executed',
+              executedAt: new Date(),
+            }, connection);
+          }
+
+          if ((!hasCreditAuth && !hasApprovedRequest) || (!authorizedOverride && !hasApprovedRequest)) {
             throw new AppError(
               `Credit limit exceeded. Current balance: ${currentBalance} ETB, Proposed: ${proposedCredit} ETB, Limit: ${creditLimit} ETB`,
               { statusCode: 409, code: 'CREDIT_LIMIT_EXCEEDED' },

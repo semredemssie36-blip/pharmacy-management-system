@@ -26,6 +26,7 @@ import stockCountRoutes from './stockCountRoutes.js';
 import quarantineRoutes from './quarantineRoutes.js';
 import expiryRoutes from './expiryRoutes.js';
 import recallRoutes from './recallRoutes.js';
+import approvalRoutes from './approvalRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -58,6 +59,7 @@ router.use(stockCountRoutes);
 router.use(quarantineRoutes);
 router.use(expiryRoutes);
 router.use(recallRoutes);
+router.use(approvalRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

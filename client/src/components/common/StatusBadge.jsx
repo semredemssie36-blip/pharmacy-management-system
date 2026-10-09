@@ -20,6 +20,8 @@ export function StatusBadge({ status }) {
     rejected: 'bg-red-50 text-red-700 border-red-300',
     partially_received: 'bg-blue-50 text-blue-700 border-blue-300',
     fully_received: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+    executed: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold',
+    execution_failed: 'bg-rose-100 text-rose-800 border-rose-400 font-bold',
     // Sales & POS statuses
     confirmed: 'bg-sky-50 text-sky-700 border-sky-300',
     payment_pending: 'bg-purple-50 text-purple-700 border-purple-300',
@@ -99,6 +101,8 @@ export function StatusBadge({ status }) {
     rejected: 'Rejected',
     partially_received: 'Partially Received',
     fully_received: 'Fully Received',
+    executed: 'Executed',
+    execution_failed: 'Execution Failed',
     pending: 'Pending',
     stock_allocated: 'Stock Allocated',
     pending_verification: 'Pending Pharmacist Verification',

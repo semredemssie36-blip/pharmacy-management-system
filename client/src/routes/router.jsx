@@ -57,6 +57,8 @@ import QuarantineDetailPage from '../pages/QuarantineDetailPage.jsx';
 import RecallsPage from '../pages/RecallsPage.jsx';
 import RecallCreatePage from '../pages/RecallCreatePage.jsx';
 import RecallDetailPage from '../pages/RecallDetailPage.jsx';
+import ApprovalsPage from '../pages/ApprovalsPage.jsx';
+import ApprovalDetailPage from '../pages/ApprovalDetailPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -94,6 +96,8 @@ const router = createBrowserRouter([
       { path: 'administration/users', element: <UsersPage /> },
       { path: 'administration/roles', element: <RolesPage /> },
       { path: 'administration/permissions', element: <PermissionsPage /> },
+      { path: 'approvals', element: <ApprovalsPage /> },
+      { path: 'approvals/:id', element: <ApprovalDetailPage /> },
       { path: 'master-data/products', element: <ProductsPage /> },
       { path: 'master-data/products/:id', element: <ProductDetailPage /> },
       { path: 'inventory/stock', element: <StockOverviewPage /> },

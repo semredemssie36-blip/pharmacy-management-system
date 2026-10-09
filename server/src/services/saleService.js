@@ -5,6 +5,7 @@ import inventoryService from './inventoryService.js';
 import saleRepository from '../repositories/saleRepository.js';
 import productRepository from '../repositories/productRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
+import approvalRepository from '../repositories/approvalRepository.js';
 import { getPool } from '../database/pool.js';
 
 const STATUS_TRANSITIONS = {
@@ -91,7 +92,7 @@ async function validateCustomer(customerId, organizationId) {
   return cust;
 }
 
-async function validateAndComputeLines(organizationId, branchId, warehouseId, lines, userId, saleDiscount = 0) {
+async function validateAndComputeLines(organizationId, branchId, warehouseId, lines, userId, saleDiscount = 0, targetSaleId = null) {
   if (!Array.isArray(lines) || lines.length === 0) {
     throw new ValidationError('Validation failed', [{ field: 'lines', message: 'A sale must have at least one line item' }]);
   }
@@ -190,14 +191,28 @@ async function validateAndComputeLines(organizationId, branchId, warehouseId, li
   // Validate discount authorization limit
   const discountPercent = subtotal > 0 ? (overallDiscount / subtotal) * 100 : 0;
   if (discountPercent > MAX_STANDARD_DISCOUNT_PERCENT) {
-    // Check if user has admin/override privileges
     const permissions = await authorizationService.getUserPermissions(userId);
-    const hasAdminOverride = permissions.includes('*') || permissions.includes('sale.void');
+    const hasAdminOverride = permissions.includes('*') || permissions.includes('approval.discount') || permissions.includes('sale.void');
     if (!hasAdminOverride) {
-      throw new AppError(
-        `Discount (${roundTo2(discountPercent)}%) exceeds standard cashier authorization limit (${MAX_STANDARD_DISCOUNT_PERCENT}%). Manager authorization required.`,
-        { statusCode: 403, code: 'EXCESS_DISCOUNT_UNAUTHORIZED' },
-      );
+      let isApproved = false;
+      if (targetSaleId) {
+        const approvedReq = await approvalRepository.findApprovedRequestForTarget(
+          organizationId,
+          'sale_discount',
+          'sale',
+          targetSaleId,
+        );
+        if (approvedReq && (approvedReq.requested_value === null || Number(approvedReq.requested_value) >= roundTo2(discountPercent) || Number(approvedReq.requested_value) >= roundTo2(overallDiscount))) {
+          isApproved = true;
+        }
+      }
+
+      if (!isApproved) {
+        throw new AppError(
+          `Discount (${roundTo2(discountPercent)}%) exceeds standard cashier authorization limit (${MAX_STANDARD_DISCOUNT_PERCENT}%). Manager authorization required.`,
+          { statusCode: 403, code: 'EXCESS_DISCOUNT_UNAUTHORIZED' },
+        );
+      }
     }
   }
 
@@ -331,13 +346,24 @@ async function updateSale(id, input, userId) {
     await validateCustomer(input.customerId, existing.organization_id);
   }
 
+  const existingLines = await saleRepository.getLines(id);
+  const rawLines = input.lines || existingLines.map((l) => ({
+    productId: l.product_id,
+    unitId: l.unit_id,
+    quantity: l.quantity,
+    unitPrice: l.unit_price,
+    discountAmount: l.discount_amount,
+    notes: l.notes,
+  }));
+
   const { lines, subtotal, discountAmount, totalAmount } = await validateAndComputeLines(
     existing.organization_id,
     existing.branch_id,
     existing.warehouse_id,
-    input.lines || [],
+    rawLines,
     userId,
     input.discountAmount !== undefined ? input.discountAmount : existing.discount_amount,
+    id,
   );
 
   const saleDate = input.saleDate ? new Date(input.saleDate) : existing.sale_date;
@@ -481,6 +507,26 @@ async function completeSale(id, userId) {
        WHERE id = ?`,
       [paidAmount, paymentStatus, id],
     );
+
+    const approvedDiscountReq = await approvalRepository.findApprovedRequestForTarget(
+      sale.organization_id,
+      'sale_discount',
+      'sale',
+      sale.id,
+      connection,
+    );
+    if (approvedDiscountReq && approvedDiscountReq.status === 'approved') {
+      await approvalRepository.updateStatus(approvedDiscountReq.id, {
+        status: 'executed',
+        executedAt: new Date(),
+      }, connection);
+      await approvalRepository.recordHistory({
+        approvalRequestId: approvedDiscountReq.id,
+        action: 'executed',
+        actorId: userId,
+        notes: `Sale #${sale.sale_number} completed with authorized discount`,
+      }, connection);
+    }
 
     await connection.commit();
     return getSaleById(id, userId);

@@ -128,6 +128,11 @@ function MainLayout() {
               Permissions
             </Link>
           </Can>
+          <Can permission="approval.view">
+            <Link to="/approvals" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Approvals & Overrides
+            </Link>
+          </Can>
           <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
             Master Data
           </p>
