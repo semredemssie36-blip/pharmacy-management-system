@@ -1088,6 +1088,224 @@ async function deductSupplierReturnStock({
   return deductions;
 }
 
+/**
+ * Task 15 — Stock Transfer Dispatch.
+ * Deducts dispatched stock from source warehouse and location.
+ * Logs stock_movements with movement_type = 'transfer_out', negative quantity_delta.
+ */
+async function dispatchStockTransfer({
+  transferId,
+  organizationId,
+  sourceBranchId,
+  sourceWarehouseId,
+  allocations,
+  userId,
+  connection,
+}) {
+  if (!connection) throw new Error('dispatchStockTransfer requires an active connection');
+
+  const dispatchedMovements = [];
+
+  for (const alloc of allocations) {
+    const qtyToDeduct = Number(alloc.quantity);
+    if (!Number.isFinite(qtyToDeduct) || qtyToDeduct <= 0) {
+      throw new ValidationError('Validation failed', [
+        { field: 'quantity', message: 'Dispatched transfer quantity must be positive' },
+      ]);
+    }
+
+    // Lock candidate inventory rows in source warehouse for product, batch, unit, location
+    const query = `
+      SELECT id, storage_location_id, quantity
+      FROM inventory
+      WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+        AND storage_location_id = ? AND product_id = ? AND batch_id = ? AND unit_id = ?
+        AND status = 'available'
+      FOR UPDATE
+    `;
+    const [rows] = await connection.query(query, [
+      organizationId,
+      sourceBranchId,
+      sourceWarehouseId,
+      alloc.sourceStorageLocationId,
+      alloc.productId,
+      alloc.batchId,
+      alloc.unitId,
+    ]);
+
+    const availableQty = rows.reduce((acc, r) => acc + Number(r.quantity), 0);
+    if (availableQty < qtyToDeduct) {
+      throw new AppError(
+        `Insufficient available stock for batch ${alloc.batchNumber || alloc.batchId} in source location. Required: ${qtyToDeduct}, Available: ${availableQty}`,
+        { statusCode: 409, code: 'INSUFFICIENT_STOCK' },
+      );
+    }
+
+    const row = rows[0];
+    await connection.query(
+      'UPDATE inventory SET quantity = GREATEST(0, quantity - ?) WHERE id = ?',
+      [qtyToDeduct, row.id],
+    );
+
+    const [movRes] = await connection.query(
+      `INSERT INTO stock_movements (
+         organization_id, branch_id, warehouse_id, storage_location_id,
+         product_id, batch_id, unit_id, movement_type, quantity_delta,
+         reference_type, reference_id, reason, created_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'transfer_out', ?, 'stock_transfer', ?, ?, ?)`,
+      [
+        organizationId,
+        sourceBranchId,
+        sourceWarehouseId,
+        alloc.sourceStorageLocationId,
+        alloc.productId,
+        alloc.batchId,
+        alloc.unitId,
+        -qtyToDeduct,
+        transferId,
+        alloc.reason || 'Stock transfer dispatch',
+        userId,
+      ],
+    );
+
+    dispatchedMovements.push({
+      inventoryId: row.id,
+      movementId: movRes.insertId,
+      deductedQuantity: qtyToDeduct,
+    });
+  }
+
+  return dispatchedMovements;
+}
+
+/**
+ * Task 15 — Stock Transfer Receive.
+ * Adds received stock into destination warehouse and location.
+ * Validates batch status and expiry to ensure expired/damaged/quarantined stock
+ * is never received as 'available' saleable inventory.
+ * Logs stock_movements with movement_type = 'transfer_in', positive quantity_delta.
+ */
+async function receiveStockTransfer({
+  transferId,
+  organizationId,
+  destinationBranchId,
+  destinationWarehouseId,
+  receipts,
+  userId,
+  connection,
+}) {
+  if (!connection) throw new Error('receiveStockTransfer requires an active connection');
+
+  const receivedMovements = [];
+
+  for (const item of receipts) {
+    const qtyToReceive = Number(item.quantity);
+    if (!Number.isFinite(qtyToReceive) || qtyToReceive <= 0) {
+      throw new ValidationError('Validation failed', [
+        { field: 'quantity', message: 'Received transfer quantity must be positive' },
+      ]);
+    }
+
+    // Check batch status and expiry
+    const [batchRows] = await connection.query(
+      'SELECT id, batch_number, expiry_date, status FROM batches WHERE id = ?',
+      [item.batchId],
+    );
+    const batch = batchRows[0];
+    if (!batch) {
+      throw new AppError('Batch not found for received product', { statusCode: 404, code: 'BATCH_NOT_FOUND' });
+    }
+
+    let targetStatus = 'available';
+    if (batch.status !== 'active') {
+      targetStatus = 'quarantined';
+    } else if (new Date(batch.expiry_date).getTime() <= Date.now()) {
+      targetStatus = 'expired';
+    } else if (item.condition === 'damaged') {
+      targetStatus = 'damaged';
+    } else if (item.condition === 'quarantined') {
+      targetStatus = 'quarantined';
+    }
+
+    // Upsert destination inventory row
+    const [existing] = await connection.query(
+      `SELECT id, quantity FROM inventory
+       WHERE organization_id = ? AND branch_id = ? AND warehouse_id = ?
+         AND storage_location_id = ? AND product_id = ? AND batch_id = ? AND unit_id = ?
+         AND status = ?
+       LIMIT 1 FOR UPDATE`,
+      [
+        organizationId,
+        destinationBranchId,
+        destinationWarehouseId,
+        item.destinationStorageLocationId,
+        item.productId,
+        item.batchId,
+        item.unitId,
+        targetStatus,
+      ],
+    );
+
+    let inventoryId;
+    if (existing.length > 0) {
+      inventoryId = existing[0].id;
+      await connection.query(
+        'UPDATE inventory SET quantity = quantity + ? WHERE id = ?',
+        [qtyToReceive, inventoryId],
+      );
+    } else {
+      const [insertRes] = await connection.query(
+        `INSERT INTO inventory (
+           organization_id, branch_id, warehouse_id, storage_location_id,
+           product_id, batch_id, unit_id, status, quantity
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          organizationId,
+          destinationBranchId,
+          destinationWarehouseId,
+          item.destinationStorageLocationId,
+          item.productId,
+          item.batchId,
+          item.unitId,
+          targetStatus,
+          qtyToReceive,
+        ],
+      );
+      inventoryId = insertRes.insertId;
+    }
+
+    const [movRes] = await connection.query(
+      `INSERT INTO stock_movements (
+         organization_id, branch_id, warehouse_id, storage_location_id,
+         product_id, batch_id, unit_id, movement_type, quantity_delta,
+         reference_type, reference_id, reason, created_by
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'transfer_in', ?, 'stock_transfer', ?, ?, ?)`,
+      [
+        organizationId,
+        destinationBranchId,
+        destinationWarehouseId,
+        item.destinationStorageLocationId,
+        item.productId,
+        item.batchId,
+        item.unitId,
+        qtyToReceive,
+        transferId,
+        item.reason || `Stock transfer receipt (${targetStatus})`,
+        userId,
+      ],
+    );
+
+    receivedMovements.push({
+      inventoryId,
+      movementId: movRes.insertId,
+      receivedQuantity: qtyToReceive,
+      status: targetStatus,
+    });
+  }
+
+  return receivedMovements;
+}
+
 export default {
   listInventoryForUser,
   getInventoryForUser,
@@ -1107,5 +1325,8 @@ export default {
   finalizeDispensingStockDeduction,
   disposeCustomerReturnStock,
   deductSupplierReturnStock,
+  dispatchStockTransfer,
+  receiveStockTransfer,
 };
+
 
