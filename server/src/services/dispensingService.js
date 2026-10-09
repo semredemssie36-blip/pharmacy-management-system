@@ -501,7 +501,9 @@ export const dispensingService = {
   },
 
   async rejectDispensing(dispensingId, input, userId) {
-    const reason = typeof input?.rejectionReason === 'string' ? input.rejectionReason.trim() : '';
+    const reason = typeof input?.rejectionReason === 'string'
+      ? input.rejectionReason.trim()
+      : (typeof input?.reason === 'string' ? input.reason.trim() : '');
     if (!reason) {
       throw new ValidationError('Validation failed', [{ field: 'rejectionReason', message: 'Rejection reason is required' }]);
     }
@@ -551,7 +553,9 @@ export const dispensingService = {
   },
 
   async cancelDispensing(dispensingId, input, userId) {
-    const reason = typeof input?.reason === 'string' ? input.reason.trim() : '';
+    const reason = typeof input?.cancellationReason === 'string'
+      ? input.cancellationReason.trim()
+      : (typeof input?.reason === 'string' ? input.reason.trim() : '');
     if (!reason) {
       throw new ValidationError('Validation failed', [{ field: 'reason', message: 'Cancellation reason is required' }]);
     }

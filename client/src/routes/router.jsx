@@ -32,6 +32,9 @@ import PatientsPage from '../pages/PatientsPage.jsx';
 import PatientDetailPage from '../pages/PatientDetailPage.jsx';
 import PrescribersPage from '../pages/PrescribersPage.jsx';
 import PrescriptionsPage from '../pages/PrescriptionsPage.jsx';
+import DispensingsPage from '../pages/DispensingsPage.jsx';
+import DispensingCreatePage from '../pages/DispensingCreatePage.jsx';
+import DispensingDetailPage from '../pages/DispensingDetailPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -50,6 +53,9 @@ const router = createBrowserRouter([
       { path: 'clinical/patients/:id', element: <PatientDetailPage /> },
       { path: 'clinical/prescribers', element: <PrescribersPage /> },
       { path: 'clinical/prescriptions', element: <PrescriptionsPage /> },
+      { path: 'clinical/dispensings', element: <DispensingsPage /> },
+      { path: 'clinical/dispensings/new', element: <DispensingCreatePage /> },
+      { path: 'clinical/dispensings/:id', element: <DispensingDetailPage /> },
       { path: 'administration/organizations', element: <OrganizationPage /> },
       { path: 'administration/branches', element: <BranchesPage /> },
       { path: 'administration/warehouses', element: <WarehousesPage /> },
