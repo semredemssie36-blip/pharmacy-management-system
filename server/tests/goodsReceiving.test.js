@@ -92,6 +92,7 @@ before(async () => {
   await pool.query('DELETE FROM batches').catch(() => {});
   await pool.query('DELETE FROM product_units');
   await pool.query('DELETE FROM products');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM suppliers');
   await pool.query('DELETE FROM units');
   await pool.query('DELETE FROM users');
@@ -103,6 +104,7 @@ before(async () => {
   await pool.query('DELETE FROM warehouses');
   await pool.query('DELETE FROM branches');
   await pool.query('DELETE FROM organizations');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
   const [o1] = await pool.query("INSERT INTO organizations (name, code) VALUES ('GR Org1', 'GRORG1')");
   org1Id = o1.insertId;
@@ -194,6 +196,7 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('SET FOREIGN_KEY_CHECKS = 0');
       await pool.query('DELETE FROM goods_receipt_lines');
       await pool.query('DELETE FROM goods_receipts');
       await pool.query('DELETE FROM purchase_order_lines');
@@ -214,6 +217,7 @@ after(async () => {
       await pool.query('DELETE FROM warehouses');
       await pool.query('DELETE FROM branches');
       await pool.query('DELETE FROM organizations');
+      await pool.query('SET FOREIGN_KEY_CHECKS = 1');
     }
   } finally {
     if (closePool) await closePool();

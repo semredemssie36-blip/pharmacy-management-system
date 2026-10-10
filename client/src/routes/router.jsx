@@ -63,6 +63,7 @@ import AuditLogsPage from '../pages/AuditLogsPage.jsx';
 import NotificationsPage from '../pages/NotificationsPage.jsx';
 import DashboardOverviewPage from '../pages/DashboardOverviewPage.jsx';
 import ReportsPage from '../pages/ReportsPage.jsx';
+import DataExchangePage from '../pages/DataExchangePage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -77,6 +78,7 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: 'dashboard', element: <DashboardOverviewPage /> },
       { path: 'reports', element: <ReportsPage /> },
+      { path: 'import-export', element: <DataExchangePage /> },
       { path: 'notifications', element: <NotificationsPage /> },
       { path: 'pos', element: <PosPage /> },
       { path: 'sales', element: <SalesPage /> },

@@ -38,7 +38,8 @@ async function insertUser(name, email) {
 }
 
 async function addRolePerms(userId, codes) {
-  const [roleRow] = await pool.query(`INSERT INTO roles (name, code, status) VALUES (?, ?, 'active')`, ['TMP-' + codes.join('-'), 'TMPCODE' + userId + Math.random().toString(36).slice(2, 8)]);
+  const roleName = ('TMP-' + codes.join('-')).slice(0, 100);
+  const [roleRow] = await pool.query(`INSERT INTO roles (name, code, status) VALUES (?, ?, 'active')`, [roleName, 'TMPCODE' + userId + Math.random().toString(36).slice(2, 8)]);
   for (const code of codes) {
     await pool.query(
       'INSERT INTO role_permissions (role_id, permission_id) SELECT ?, id FROM permissions WHERE code = ?',
@@ -67,6 +68,7 @@ before(async () => {
   closePool = (await import('../src/database/pool.js')).closePool;
   app = (await import('../src/app.js')).default;
 
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM customer_return_lines');
   await pool.query('DELETE FROM customer_returns');
   await pool.query('DELETE FROM supplier_return_lines');
@@ -86,6 +88,7 @@ before(async () => {
   await pool.query('DELETE FROM warehouses');
   await pool.query('DELETE FROM branches');
   await pool.query('DELETE FROM organizations');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
   const [o1] = await pool.query("INSERT INTO organizations (name, code) VALUES ('Partner Org 1', 'ORGP1')");
   const [o2] = await pool.query("INSERT INTO organizations (name, code) VALUES ('Partner Org 2', 'ORGP2')");
@@ -115,6 +118,7 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('SET FOREIGN_KEY_CHECKS = 0');
       await pool.query('DELETE FROM customer_return_lines');
       await pool.query('DELETE FROM customer_returns');
       await pool.query('DELETE FROM supplier_return_lines');
@@ -134,6 +138,7 @@ after(async () => {
       await pool.query('DELETE FROM warehouses');
       await pool.query('DELETE FROM branches');
       await pool.query('DELETE FROM organizations');
+      await pool.query('SET FOREIGN_KEY_CHECKS = 1');
     }
   } finally {
     if (closePool) await closePool();

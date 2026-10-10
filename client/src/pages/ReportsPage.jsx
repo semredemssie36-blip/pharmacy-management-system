@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import reportsApi from '../features/reports/api.js';
+import { exportCsv } from '../features/dataExchange/api.js';
 import { useCan } from '../features/auth/Can.jsx';
 import PageHeader from '../components/common/PageHeader.jsx';
 import SummaryCard from '../components/common/SummaryCard.jsx';
@@ -134,6 +135,21 @@ export default function ReportsPage() {
   };
 
   const formatNumber = (val) => new Intl.NumberFormat('en-US').format(Number(val || 0));
+
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExportCsv = async () => {
+    setIsExporting(true);
+    try {
+      let exportType = 'reports_sales';
+      if (activeTab === 'inventory') exportType = 'reports_inventory';
+      else if (activeTab === 'finance') exportType = 'reports_financial';
+      await exportCsv(exportType, { startDate, endDate, status: inventoryStatus });
+    } catch (err) {
+      setErrorMessage(`Export failed: ${err.message}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -322,6 +338,18 @@ export default function ReportsPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={isExporting}
+            className="px-3 py-1.5 text-xs text-slate-700 bg-white hover:bg-slate-50 font-semibold rounded-lg border border-slate-300 shadow-sm flex items-center gap-1.5 transition"
+            title="Export Report to CSV"
+          >
+            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            {isExporting ? 'Exporting...' : 'Export CSV'}
+          </button>
           <button
             type="button"
             onClick={handleResetFilters}

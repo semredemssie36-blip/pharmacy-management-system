@@ -3,6 +3,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext.jsx';
 import { Can } from '../features/auth/Can.jsx';
 import NotificationBell from '../components/NotificationBell.jsx';
+import GlobalSearchBar from '../components/GlobalSearchBar.jsx';
 
 /**
  * Application shell: sidebar + top navigation placeholder.
@@ -34,6 +35,11 @@ function MainLayout() {
           <Can permission="report.sales.view">
             <Link to="/reports" className="block rounded px-3 py-2 hover:bg-slate-800">
               Reports & Analytics
+            </Link>
+          </Can>
+          <Can permission="data.import.view">
+            <Link to="/import-export" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Data Import & Export
             </Link>
           </Can>
           <Link to="/notifications" className="block rounded px-3 py-2 hover:bg-slate-800">
@@ -236,8 +242,11 @@ function MainLayout() {
         </nav>
       </aside>
       <div className="flex-1 flex flex-col">
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6">
-          <span className="font-medium text-slate-700">EthioCodes Pharmacy ERP</span>
+        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 gap-4">
+          <div className="flex items-center gap-6">
+            <span className="font-semibold text-slate-800 hidden sm:inline">EthioCodes Pharmacy ERP</span>
+            <GlobalSearchBar />
+          </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
             {user && <span className="text-sm text-slate-600">{user.name}</span>}

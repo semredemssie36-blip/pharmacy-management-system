@@ -30,6 +30,9 @@ import approvalRoutes from './approvalRoutes.js';
 import auditRoutes from './auditRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
 import reportRoutes from './reportRoutes.js';
+import searchRoutes from './searchRoutes.js';
+import importRoutes from './importRoutes.js';
+import exportRoutes from './exportRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -66,6 +69,9 @@ router.use(approvalRoutes);
 router.use(auditRoutes);
 router.use(notificationRoutes);
 router.use(reportRoutes);
+router.use(searchRoutes);
+router.use(importRoutes);
+router.use(exportRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

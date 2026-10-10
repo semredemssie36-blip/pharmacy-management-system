@@ -31,6 +31,7 @@ before(async () => {
   closePool = (await import('../src/database/pool.js')).closePool;
   app = (await import('../src/app.js')).default;
 
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM customer_return_lines');
   await pool.query('DELETE FROM customer_returns');
   await pool.query('DELETE FROM supplier_return_lines');
@@ -48,6 +49,7 @@ before(async () => {
   await pool.query('DELETE FROM role_permissions');
   await pool.query('DELETE FROM roles');
   await pool.query("DELETE FROM users WHERE email = 'orgtest@pharmacy.local'");
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
   const [userInsert] = await pool.query(
     'INSERT INTO users (name, email, password_hash, status) VALUES (?, ?, ?, ?)',
     ['Org Test', 'orgtest@pharmacy.local', await bcrypt.hash('Test12345!', 10), 'active'],
@@ -69,6 +71,7 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('SET FOREIGN_KEY_CHECKS = 0');
       await pool.query('DELETE FROM customer_return_lines');
       await pool.query('DELETE FROM customer_returns');
       await pool.query('DELETE FROM supplier_return_lines');
@@ -82,6 +85,7 @@ after(async () => {
       await pool.query('DELETE FROM branches');
       await pool.query('DELETE FROM organizations');
       await pool.query("DELETE FROM users WHERE email = 'orgtest@pharmacy.local'");
+      await pool.query('SET FOREIGN_KEY_CHECKS = 1');
     }
   } finally {
     if (closePool) await closePool();
