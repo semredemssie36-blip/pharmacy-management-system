@@ -74,6 +74,7 @@ before(async () => {
   closePool = (await import('../src/database/pool.js')).closePool;
   app = (await import('../src/app.js')).default;
 
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM stock_count_line_events').catch(() => {});
   await pool.query('DELETE FROM stock_count_lines').catch(() => {});
   await pool.query('DELETE FROM stock_counts').catch(() => {});
@@ -92,7 +93,6 @@ before(async () => {
   await pool.query('DELETE FROM batches').catch(() => {});
   await pool.query('DELETE FROM product_units');
   await pool.query('DELETE FROM products');
-  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM suppliers');
   await pool.query('DELETE FROM units');
   await pool.query('DELETE FROM users');

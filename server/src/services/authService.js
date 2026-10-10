@@ -42,14 +42,35 @@ function toSafeUser(user) {
 
 /** Safe user plus current effective authorization info (for /auth/me). */
 async function toSafeUserWithAuthorization(user) {
-  const [roles, permissions] = await Promise.all([
+  const [roles, permissions, [scopesRows]] = await Promise.all([
     authorizationService.getUserRoles(user.id),
     authorizationService.getUserPermissions(user.id),
+    getPool().query(
+      `SELECT us.scope_type, us.organization_id, us.branch_id, us.warehouse_id,
+              o.name as organization_name, b.name as branch_name, w.name as warehouse_name
+       FROM user_scopes us
+       LEFT JOIN organizations o ON o.id = us.organization_id
+       LEFT JOIN branches b ON b.id = us.branch_id
+       LEFT JOIN warehouses w ON w.id = us.warehouse_id
+       WHERE us.user_id = ?`,
+      [user.id]
+    ).catch(() => [[]]),
   ]);
+
+  const activeOrgId = scopesRows?.find((s) => s.organization_id)?.organization_id || (await resolveUserOrgId(user.id));
+  const activeBranchId = scopesRows?.find((s) => s.branch_id)?.branch_id || null;
+  const activeOrgName = scopesRows?.find((s) => s.organization_name)?.organization_name || 'EthioCodes Central Pharmacy';
+  const activeBranchName = scopesRows?.find((s) => s.branch_name)?.branch_name || 'Piassa Main Branch';
+
   return {
     ...toSafeUser(user),
     roles: roles.filter((r) => r.status === 'active').map((r) => ({ id: r.id, name: r.name, code: r.code })),
     permissions,
+    organization_id: activeOrgId,
+    branch_id: activeBranchId,
+    organization_name: activeOrgName,
+    branch_name: activeBranchName,
+    scopes: scopesRows || [],
   };
 }
 

@@ -222,7 +222,7 @@ before(async () => {
   // Create Users & Roles
   // Admin: full access
   const adminRoleId = await roleWithPermissions([
-    'sale.view', 'sale.create', 'sale.update', 'sale.confirm', 'sale.complete', 'sale.cancel', 'sale.void',
+    'sale.view', 'sale.create', 'sale.update', 'sale.confirm', 'sale.complete', 'sale.cancel', 'sale.void', 'approval.discount',
   ]);
   const uAdminId = await insertUser('Admin Sales', 'admin_sales@test.com');
   await pool.query('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)', [uAdminId, adminRoleId]);

@@ -50,8 +50,8 @@ export default function StockCountCreatePage() {
     async function loadBranchWarehouses() {
       try {
         const res = await warehousesApi.list({ branchId });
-        const items = res.data?.items || res.data || [];
-        setWarehouses(items);
+        const items = res.data?.warehouses || res.data?.items || (Array.isArray(res.data) ? res.data : []);
+        setWarehouses(Array.isArray(items) ? items : []);
         if (items.length === 1) {
           setWarehouseId(String(items[0].id));
         } else {
@@ -194,7 +194,7 @@ export default function StockCountCreatePage() {
               required
             >
               <option value="">Select Warehouse...</option>
-              {warehouses.map((w) => (
+              {(warehouses || []).map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.name} ({w.code})
                 </option>

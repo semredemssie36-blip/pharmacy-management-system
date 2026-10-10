@@ -87,6 +87,7 @@ before(async () => {
   await pool.query('DELETE FROM therapeutic_categories');
   await pool.query('DELETE FROM categories');
   await pool.query('DELETE FROM routes');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM dosage_forms');
   await pool.query('DELETE FROM generics');
   await pool.query('DELETE FROM brands');
@@ -103,6 +104,7 @@ before(async () => {
   await pool.query('DELETE FROM notifications');
   await pool.query('DELETE FROM audit_logs');
   await pool.query('DELETE FROM organizations');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
   const [o1] = await pool.query("INSERT INTO organizations (name, code) VALUES ('Inv Org One', 'INV1')");
   const [o2] = await pool.query("INSERT INTO organizations (name, code) VALUES ('Inv Org Two', 'INV2')");
@@ -192,6 +194,7 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('SET FOREIGN_KEY_CHECKS = 0');
       await pool.query('DELETE FROM stock_movements');
       await pool.query('DELETE FROM inventory');
       await pool.query('DELETE FROM recall_actions').catch(() => {});
@@ -212,6 +215,7 @@ after(async () => {
       await pool.query('DELETE FROM notifications');
       await pool.query('DELETE FROM audit_logs');
       await pool.query('DELETE FROM organizations');
+      await pool.query('SET FOREIGN_KEY_CHECKS = 1');
     }
   } finally {
     if (closePool) await closePool();

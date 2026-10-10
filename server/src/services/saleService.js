@@ -193,7 +193,7 @@ async function validateAndComputeLines(organizationId, branchId, warehouseId, li
   const discountPercent = subtotal > 0 ? (overallDiscount / subtotal) * 100 : 0;
   if (discountPercent > MAX_STANDARD_DISCOUNT_PERCENT) {
     const permissions = await authorizationService.getUserPermissions(userId);
-    const hasAdminOverride = permissions.includes('*') || permissions.includes('approval.discount') || permissions.includes('sale.void');
+    const hasAdminOverride = permissions.includes('*') || permissions.includes('approval.discount');
     if (!hasAdminOverride) {
       let isApproved = false;
       if (targetSaleId) {

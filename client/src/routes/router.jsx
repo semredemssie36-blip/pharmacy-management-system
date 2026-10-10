@@ -1,7 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 import MainLayout from '../layouts/MainLayout.jsx';
-import HomePage from '../pages/HomePage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
 import LoginPage from '../pages/LoginPage.jsx';
 import ProtectedRoute from '../features/auth/ProtectedRoute.jsx';
@@ -75,7 +74,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <HomePage /> },
+      { index: true, element: <DashboardOverviewPage /> },
       { path: 'dashboard', element: <DashboardOverviewPage /> },
       { path: 'reports', element: <ReportsPage /> },
       { path: 'import-export', element: <DataExchangePage /> },

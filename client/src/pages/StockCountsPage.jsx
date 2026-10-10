@@ -26,9 +26,10 @@ export default function StockCountsPage() {
   async function loadWarehouses() {
     try {
       const res = await warehousesApi.list();
-      setWarehouses(res.data?.items || res.data || []);
+      const list = res.data?.warehouses || res.data?.items || (Array.isArray(res.data) ? res.data : []);
+      setWarehouses(Array.isArray(list) ? list : []);
     } catch {
-      // Non-blocking
+      setWarehouses([]);
     }
   }
 
@@ -174,7 +175,7 @@ export default function StockCountsPage() {
               className="w-full text-sm border-slate-300 rounded-md shadow-sm px-3 py-2 border"
             >
               <option value="">All Warehouses</option>
-              {warehouses.map((w) => (
+              {(warehouses || []).map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.name} ({w.code})
                 </option>

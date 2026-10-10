@@ -40,6 +40,20 @@ class ReportService {
       wRows.forEach((r) => orgIds.add(Number(r.organization_id)));
     }
 
+    // Fallback: If no explicit scope rows exist, resolve user's assigned organization or system default
+    if (orgIds.size === 0) {
+      const runner = reportRepository.getPool();
+      const [uRows] = await runner.query(`SELECT organization_id FROM users WHERE id = ?`, [userId]);
+      if (uRows[0]?.organization_id) {
+        orgIds.add(Number(uRows[0].organization_id));
+      } else {
+        const [oRows] = await runner.query(`SELECT id FROM organizations WHERE status = 'active' LIMIT 1`);
+        if (oRows[0]?.id) {
+          orgIds.add(Number(oRows[0].id));
+        }
+      }
+    }
+
     return {
       organizationIds: orgIds,
       explicitOrgIds: scope.organizationIds,
