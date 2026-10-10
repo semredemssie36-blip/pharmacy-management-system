@@ -100,6 +100,8 @@ before(async () => {
   await pool.query('DELETE FROM storage_locations');
   await pool.query('DELETE FROM warehouses');
   await pool.query('DELETE FROM branches');
+  await pool.query('DELETE FROM notifications');
+  await pool.query('DELETE FROM audit_logs');
   await pool.query('DELETE FROM organizations');
 
   const [o1] = await pool.query("INSERT INTO organizations (name, code) VALUES ('Inv Org One', 'INV1')");
@@ -207,6 +209,8 @@ after(async () => {
       await pool.query('DELETE FROM storage_locations');
       await pool.query('DELETE FROM warehouses');
       await pool.query('DELETE FROM branches');
+      await pool.query('DELETE FROM notifications');
+      await pool.query('DELETE FROM audit_logs');
       await pool.query('DELETE FROM organizations');
     }
   } finally {

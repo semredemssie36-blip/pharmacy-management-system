@@ -60,6 +60,9 @@ import RecallDetailPage from '../pages/RecallDetailPage.jsx';
 import ApprovalsPage from '../pages/ApprovalsPage.jsx';
 import ApprovalDetailPage from '../pages/ApprovalDetailPage.jsx';
 import AuditLogsPage from '../pages/AuditLogsPage.jsx';
+import NotificationsPage from '../pages/NotificationsPage.jsx';
+import DashboardOverviewPage from '../pages/DashboardOverviewPage.jsx';
+import ReportsPage from '../pages/ReportsPage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -72,6 +75,9 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'dashboard', element: <DashboardOverviewPage /> },
+      { path: 'reports', element: <ReportsPage /> },
+      { path: 'notifications', element: <NotificationsPage /> },
       { path: 'pos', element: <PosPage /> },
       { path: 'sales', element: <SalesPage /> },
       { path: 'returns/customer', element: <CustomerReturnsPage /> },

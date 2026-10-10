@@ -5,6 +5,7 @@ import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import stockCountRepository from '../repositories/stockCountRepository.js';
 import auditService from './auditService.js';
+import notificationService from './notificationService.js';
 
 async function getScopeSets(userId) {
   const scope = await authorizationService.getUserScope(userId);
@@ -506,6 +507,25 @@ export const stockCountService = {
         reason: 'Approved stock count variance adjustments applied to inventory',
         details: { linesAdjusted: varianceLines.length },
       }, connection);
+
+      if (varianceLines.length > 0) {
+        await notificationService.notifyByPermission({
+          organizationId: count.organization_id,
+          branchId: count.branch_id,
+          warehouseId: count.warehouse_id,
+          permission: 'stock_count.view',
+          type: 'stock_adjustment',
+          title: 'Stock Count Adjustments Applied',
+          message: `Stock count ${count.count_number} finalized with ${varianceLines.length} line adjustments.`,
+          severity: 'warning',
+          resourceType: 'stock_count',
+          resourceId: count.id,
+          resourceReference: count.count_number,
+          actionUrl: `/inventory/stock-counts/${count.id}`,
+          dedupKey: `stock_count:adjusted:${count.id}`,
+          connection,
+        });
+      }
 
       await connection.commit();
       return stockCountRepository.findWithDetails(id);

@@ -5,6 +5,7 @@ import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import stockTransferRepository from '../repositories/stockTransferRepository.js';
 import auditService from './auditService.js';
+import notificationService from './notificationService.js';
 
 async function generateTransferNumber(connection) {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -531,6 +532,22 @@ export const stockTransferService = {
         details: { destinationWarehouseId: transfer.destination_warehouse_id },
       }, connection);
 
+      await notificationService.notifyByPermission({
+        organizationId: transfer.organization_id,
+        branchId: transfer.destination_branch_id,
+        permission: 'stock_transfer.view',
+        type: 'transfer_in_transit',
+        title: 'Incoming Stock Transfer',
+        message: `Transfer ${transfer.transfer_number} dispatched from source and is now in transit.`,
+        severity: 'info',
+        resourceType: 'stock_transfer',
+        resourceId: id,
+        resourceReference: transfer.transfer_number,
+        actionUrl: `/inventory/transfers/${id}`,
+        dedupKey: `transfer:dispatched:${id}`,
+        connection,
+      });
+
       await connection.commit();
       return stockTransferRepository.findWithDetails(id);
     } catch (err) {
@@ -701,6 +718,24 @@ export const stockTransferService = {
         reason: payload.receivingNotes || 'Transfer received at destination',
         details: { status: newTransferStatus, hasDiscrepancy: Boolean(hasDiscrepancy) },
       }, connection);
+
+      if (hasDiscrepancy) {
+        await notificationService.notifyByPermission({
+          organizationId: transfer.organization_id,
+          branchId: transfer.source_branch_id,
+          permission: 'stock_transfer.view',
+          type: 'transfer_discrepancy',
+          title: 'Stock Transfer Discrepancy',
+          message: `Transfer ${transfer.transfer_number} received with discrepancies. Resolution required.`,
+          severity: 'warning',
+          resourceType: 'stock_transfer',
+          resourceId: id,
+          resourceReference: transfer.transfer_number,
+          actionUrl: `/inventory/transfers/${id}`,
+          dedupKey: `transfer:discrepancy:${id}`,
+          connection,
+        });
+      }
 
       await connection.commit();
       const details = await stockTransferRepository.findWithDetails(id);

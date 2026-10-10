@@ -28,6 +28,8 @@ import expiryRoutes from './expiryRoutes.js';
 import recallRoutes from './recallRoutes.js';
 import approvalRoutes from './approvalRoutes.js';
 import auditRoutes from './auditRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
+import reportRoutes from './reportRoutes.js';
 import partnerRoutes from '../partners/partnerRouter.js';
 import masterDataRouter from '../masterData/masterDataRouter.js';
 
@@ -62,6 +64,8 @@ router.use(expiryRoutes);
 router.use(recallRoutes);
 router.use(approvalRoutes);
 router.use(auditRoutes);
+router.use(notificationRoutes);
+router.use(reportRoutes);
 for (const buildRouter of partnerRoutes) router.use(buildRouter());
 router.use(masterDataRouter);
 

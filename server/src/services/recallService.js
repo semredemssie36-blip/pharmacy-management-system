@@ -4,6 +4,7 @@ import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import recallRepository from '../repositories/recallRepository.js';
 import auditService from './auditService.js';
+import notificationService from './notificationService.js';
 import { getPool } from '../database/pool.js';
 
 export class RecallService {
@@ -136,7 +137,7 @@ export class RecallService {
       }
 
       await auditService.log({
-        organizationId: orgId,
+        organizationId: product.organization_id,
         actorUserId: userId,
         action: 'recall.created',
         resourceType: 'recall_case',
@@ -282,6 +283,21 @@ export class RecallService {
         reason: `Activated recall containment: ${totalContained} units held`,
         details: { totalContained, batchCount: batchIds.length },
       }, connection);
+
+      await notificationService.notifyByPermission({
+        organizationId: recall.organization_id,
+        permission: 'recall.view',
+        type: 'recall_alert',
+        title: `Product Recall Activated: ${recall.recall_number}`,
+        message: `Product recall ${recall.recall_number} is now active. ${totalContained} units contained across batches.`,
+        severity: 'danger',
+        resourceType: 'recall_case',
+        resourceId: recall.id,
+        resourceReference: recall.recall_number,
+        actionUrl: `/inventory/recalls/${recall.id}`,
+        dedupKey: `recall:activated:${recall.id}`,
+        connection,
+      });
 
       await connection.commit();
       return this.getRecallById(id, userId);

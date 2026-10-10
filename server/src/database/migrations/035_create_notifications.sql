@@ -1,0 +1,32 @@
+-- Task 20 — Notifications and User Alerts Schema
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  organization_id INT UNSIGNED NOT NULL,
+  branch_id INT UNSIGNED NULL,
+  warehouse_id INT UNSIGNED NULL,
+  user_id INT UNSIGNED NOT NULL,
+  type VARCHAR(80) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  message TEXT NOT NULL,
+  severity ENUM('info', 'warning', 'danger', 'success') NOT NULL DEFAULT 'info',
+  resource_type VARCHAR(80) NULL,
+  resource_id BIGINT UNSIGNED NULL,
+  resource_reference VARCHAR(100) NULL,
+  action_url VARCHAR(255) NULL,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  read_at TIMESTAMP NULL,
+  dedup_key VARCHAR(191) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_notif_dedup (dedup_key),
+  KEY idx_notif_user_read (user_id, is_read, created_at),
+  KEY idx_notif_user_created (user_id, created_at),
+  KEY idx_notif_org (organization_id, created_at),
+  KEY idx_notif_branch (branch_id, created_at),
+  KEY idx_notif_resource (resource_type, resource_id),
+  CONSTRAINT fk_notif_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON UPDATE CASCADE,
+  CONSTRAINT fk_notif_branch FOREIGN KEY (branch_id) REFERENCES branches (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_notif_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

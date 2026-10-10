@@ -7,6 +7,7 @@ import dispensingRepository from '../repositories/dispensingRepository.js';
 import receivableRepository from '../repositories/receivableRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
 import auditService from './auditService.js';
+import notificationService from './notificationService.js';
 import { getPool } from '../database/pool.js';
 import logger from '../utils/logger.js';
 
@@ -754,6 +755,22 @@ export const paymentService = {
         reason,
         details: { amount: refundAmount, refundMethod, paymentNumber: payment.payment_number },
       }, connection);
+
+      await notificationService.notifyByPermission({
+        organizationId: payment.organization_id,
+        branchId: payment.branch_id,
+        permission: 'payment.view',
+        type: 'refund_processed',
+        title: 'Payment Refund Issued',
+        message: `Refund ${refundNumber} issued for ${refundAmount} ETB against payment ${payment.payment_number}. Reason: ${reason}`,
+        severity: 'info',
+        resourceType: 'refund',
+        resourceId: refundId,
+        resourceReference: refundNumber,
+        actionUrl: `/finance/payments/${payment.id}`,
+        dedupKey: `refund:created:${refundId}`,
+        connection,
+      });
 
       await connection.commit();
 

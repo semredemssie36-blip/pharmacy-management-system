@@ -498,7 +498,7 @@ async function completeSale(id, userId) {
     });
 
     const paidAmount = Number(sale.paid_amount || 0) <= 0 ? roundTo2(sale.total_amount) : roundTo2(sale.paid_amount);
-    const paymentStatus = sale.payment_status === 'unpaid' ? 'paid' : sale.payment_status;
+    const paymentStatus = (sale.payment_status === 'unpaid' || !sale.payment_status) ? 'paid' : sale.payment_status;
 
     await connection.query(
       `UPDATE sales

@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import approvalRepository from '../repositories/approvalRepository.js';
 import authorizationService from './authorizationService.js';
 import auditService from './auditService.js';
+import notificationService from './notificationService.js';
 import { getPool } from '../database/pool.js';
 import AppError from '../errors/AppError.js';
 import ValidationError from '../errors/ValidationError.js';
@@ -231,6 +232,23 @@ class ApprovalService {
         details: { category, requestedValue, originalValue, targetEntityType, targetEntityId },
       }, connection);
 
+      await notificationService.notifyByPermission({
+        organizationId,
+        branchId,
+        permission: policy?.required_permission || 'approval.view',
+        excludeUserIds: [user.id],
+        type: 'approval_pending',
+        title: `Pending Approval: ${policy?.name || category}`,
+        message: `Approval request ${requestNumber} for ${category} submitted by ${user.name || 'user'}.`,
+        severity: 'warning',
+        resourceType: 'approval_request',
+        resourceId: requestId,
+        resourceReference: requestNumber,
+        actionUrl: '/approvals',
+        dedupKey: `approval:pending:${requestId}`,
+        connection,
+      });
+
       await connection.commit();
 
       logger.info('Approval request created', {
@@ -420,6 +438,22 @@ class ApprovalService {
         details: { category: request.category },
       }, connection);
 
+      await notificationService.notifyUsers({
+        userIds: [request.requester_id],
+        organizationId: request.organization_id,
+        branchId: request.branch_id,
+        type: 'approval_decision',
+        title: 'Approval Request Approved',
+        message: `Your request ${request.request_number} for ${request.category} was approved.`,
+        severity: 'success',
+        resourceType: 'approval_request',
+        resourceId: id,
+        resourceReference: request.request_number,
+        actionUrl: '/approvals',
+        dedupKey: `approval:approved:${id}`,
+        connection,
+      });
+
       await connection.commit();
 
       logger.info('Approval request approved', {
@@ -514,6 +548,22 @@ class ApprovalService {
         reason: decisionReason.trim(),
         details: { category: request.category },
       }, connection);
+
+      await notificationService.notifyUsers({
+        userIds: [request.requester_id],
+        organizationId: request.organization_id,
+        branchId: request.branch_id,
+        type: 'approval_decision',
+        title: 'Approval Request Rejected',
+        message: `Your request ${request.request_number} for ${request.category} was rejected. Reason: ${decisionReason.trim()}`,
+        severity: 'danger',
+        resourceType: 'approval_request',
+        resourceId: id,
+        resourceReference: request.request_number,
+        actionUrl: '/approvals',
+        dedupKey: `approval:rejected:${id}`,
+        connection,
+      });
 
       await connection.commit();
 

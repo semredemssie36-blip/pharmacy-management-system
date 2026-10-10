@@ -2,6 +2,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../features/auth/AuthContext.jsx';
 import { Can } from '../features/auth/Can.jsx';
+import NotificationBell from '../components/NotificationBell.jsx';
 
 /**
  * Application shell: sidebar + top navigation placeholder.
@@ -24,6 +25,19 @@ function MainLayout() {
         <nav className="mt-6 space-y-1">
           <Link to="/" className="block rounded px-3 py-2 hover:bg-slate-800">
             System Status
+          </Link>
+          <Can permission="report.dashboard.view">
+            <Link to="/dashboard" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Dashboard
+            </Link>
+          </Can>
+          <Can permission="report.sales.view">
+            <Link to="/reports" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Reports & Analytics
+            </Link>
+          </Can>
+          <Link to="/notifications" className="block rounded px-3 py-2 hover:bg-slate-800">
+            Notifications
           </Link>
           <p className="px-3 pt-4 pb-1 text-xs uppercase tracking-wide text-slate-500">
             Sales & POS
@@ -225,6 +239,7 @@ function MainLayout() {
         <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6">
           <span className="font-medium text-slate-700">EthioCodes Pharmacy ERP</span>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             {user && <span className="text-sm text-slate-600">{user.name}</span>}
             <button
               onClick={handleLogout}

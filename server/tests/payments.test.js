@@ -533,13 +533,13 @@ test('DISPENSING INTEGRATION: unverified dispensing rejects payment; verified di
 
   // Create Patient & Doctor
   const [pat] = await pool.query(
-    'INSERT INTO patients (organization_id, patient_number, first_name, last_name, gender, status) VALUES (?, "P-999", "John", "Doe", "male", "active")',
+    'INSERT INTO patients (organization_id, patient_number, first_name, last_name, gender, date_of_birth, status) VALUES (?, "P-999", "John", "Doe", "male", "1990-01-01", "active")',
     [org1Id],
   );
   const patientId = pat.insertId;
 
   const [doc] = await pool.query(
-    'INSERT INTO prescribers (organization_id, name, license_number, status) VALUES (?, "Dr. Test", "DOC-99", "active")',
+    'INSERT INTO prescribers (organization_id, prescriber_number, name, license_number, status) VALUES (?, "PR-999", "Dr. Test", "DOC-99", "active")',
     [org1Id],
   );
   const prescriberId = doc.insertId;

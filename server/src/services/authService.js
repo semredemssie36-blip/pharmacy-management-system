@@ -8,6 +8,7 @@ import AuthenticationError from '../errors/AuthenticationError.js';
 import AppError from '../errors/AppError.js';
 import authorizationService from './authorizationService.js';
 import auditService from './auditService.js';
+import notificationService from './notificationService.js';
 import { getPool } from '../database/pool.js';
 
 export async function resolveUserOrgId(userId) {
@@ -88,6 +89,18 @@ async function login({ email, password }, ipAddress = null) {
       details: { attemptedEmail: user.email },
       ipAddress,
     }).catch(() => {});
+
+    await notificationService.notifyUsers({
+      userIds: [user.id],
+      organizationId: orgId,
+      type: 'security_alert',
+      title: 'Failed Login Attempt',
+      message: 'A failed login attempt was detected on your account.',
+      severity: 'danger',
+      resourceType: 'auth',
+      resourceId: user.id,
+    }).catch(() => {});
+
     throw invalid();
   }
 

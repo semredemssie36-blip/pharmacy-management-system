@@ -4,6 +4,7 @@ import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import quarantineRepository from '../repositories/quarantineRepository.js';
 import auditService from './auditService.js';
+import notificationService from './notificationService.js';
 import { getPool } from '../database/pool.js';
 
 export class QuarantineService {
@@ -157,6 +158,23 @@ export class QuarantineService {
         reason,
         details: { productId, batchId, quantity },
       }, connection);
+
+      await notificationService.notifyByPermission({
+        organizationId: orgId,
+        branchId,
+        warehouseId,
+        permission: 'quarantine.view',
+        type: 'quarantine_alert',
+        title: 'New Quarantine Hold',
+        message: `Quarantine hold ${quarantineNumber} created for ${quantity} units. Reason: ${reason}`,
+        severity: 'danger',
+        resourceType: 'quarantine_case',
+        resourceId: caseId,
+        resourceReference: quarantineNumber,
+        actionUrl: `/inventory/quarantines/${caseId}`,
+        dedupKey: `quarantine:created:${caseId}`,
+        connection,
+      });
 
       await connection.commit();
       return this.getQuarantineById(caseId, userId);

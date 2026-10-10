@@ -1,6 +1,7 @@
 import AppError from '../errors/AppError.js';
 import ValidationError from '../errors/ValidationError.js';
 import authorizationService from '../services/authorizationService.js';
+import notificationService from '../services/notificationService.js';
 import purchaseOrderRepository from './purchaseOrderRepository.js';
 import { getPool } from '../database/pool.js';
 
@@ -264,16 +265,66 @@ async function markFinalStatus(id, target, { reason, statusPrevious } = {}, user
 }
 
 async function submit(id, userId) {
-  return markFinalStatus(id, 'pending_approval', { statusPrevious: ['draft', 'submitted'] }, userId);
+  const result = await markFinalStatus(id, 'pending_approval', { statusPrevious: ['draft', 'submitted'] }, userId);
+  await notificationService.notifyByPermission({
+    organizationId: result.organization_id,
+    branchId: result.branch_id,
+    permission: 'purchase_order.approve',
+    excludeUserIds: [userId],
+    type: 'purchase_order_pending',
+    title: `Purchase Order Awaiting Approval: ${result.po_number}`,
+    message: `PO ${result.po_number} submitted for approval. Total: ${result.total_amount} ${result.currency}.`,
+    severity: 'warning',
+    resourceType: 'purchase_order',
+    resourceId: result.id,
+    resourceReference: result.po_number,
+    actionUrl: `/procurement/purchase-orders/${result.id}`,
+    dedupKey: `po:pending:${result.id}`,
+  }).catch(() => {});
+  return result;
 }
 
 async function approve(id, userId) {
-  return markFinalStatus(id, 'approved', { statusPrevious: ['pending_approval'] }, userId);
+  const result = await markFinalStatus(id, 'approved', { statusPrevious: ['pending_approval'] }, userId);
+  if (result.created_by) {
+    await notificationService.notifyUsers({
+      userIds: [result.created_by],
+      organizationId: result.organization_id,
+      branchId: result.branch_id,
+      type: 'purchase_order_decision',
+      title: 'Purchase Order Approved',
+      message: `PO ${result.po_number} was approved.`,
+      severity: 'success',
+      resourceType: 'purchase_order',
+      resourceId: result.id,
+      resourceReference: result.po_number,
+      actionUrl: `/procurement/purchase-orders/${result.id}`,
+      dedupKey: `po:approved:${result.id}`,
+    }).catch(() => {});
+  }
+  return result;
 }
 
 async function reject(id, reason, userId) {
   const r = ENUM_REJECT(reason);
-  return markFinalStatus(id, 'rejected', { reason: r, statusPrevious: ['pending_approval'] }, userId);
+  const result = await markFinalStatus(id, 'rejected', { reason: r, statusPrevious: ['pending_approval'] }, userId);
+  if (result.created_by) {
+    await notificationService.notifyUsers({
+      userIds: [result.created_by],
+      organizationId: result.organization_id,
+      branchId: result.branch_id,
+      type: 'purchase_order_decision',
+      title: 'Purchase Order Rejected',
+      message: `PO ${result.po_number} was rejected. Reason: ${r}`,
+      severity: 'danger',
+      resourceType: 'purchase_order',
+      resourceId: result.id,
+      resourceReference: result.po_number,
+      actionUrl: `/procurement/purchase-orders/${result.id}`,
+      dedupKey: `po:rejected:${result.id}`,
+    }).catch(() => {});
+  }
+  return result;
 }
 
 async function cancel(id, reason, userId) {

@@ -99,6 +99,11 @@ before(async () => {
   app = (await import('../src/app.js')).default;
 
   // Reset product master tables (preserve users/roles/permissions used by other suites).
+  await pool.query('DELETE FROM quarantine_cases');
+  await pool.query('DELETE FROM recall_batches');
+  await pool.query('DELETE FROM stock_count_lines');
+  await pool.query('DELETE FROM stock_transfer_lines');
+  await pool.query('DELETE FROM dispensing_lines');
   await pool.query('DELETE FROM sale_batch_allocations');
   await pool.query('DELETE FROM sale_lines');
   await pool.query('DELETE FROM goods_receipt_lines');
@@ -125,9 +130,11 @@ before(async () => {
   await pool.query('DELETE FROM role_permissions');
   await pool.query('DELETE FROM roles');
   await pool.query("DELETE FROM users WHERE email LIKE '%@product-test.local'");
-  await pool.query('DELETE FROM branches');
-  await pool.query('DELETE FROM warehouses');
   await pool.query('DELETE FROM storage_locations');
+  await pool.query('DELETE FROM warehouses');
+  await pool.query('DELETE FROM branches');
+  await pool.query('DELETE FROM notifications');
+  await pool.query('DELETE FROM audit_logs');
   await pool.query('DELETE FROM organizations');
 
   const [o1] = await pool.query("INSERT INTO organizations (name, code) VALUES ('Org One (Test)', 'ORG1_TEST')");
@@ -170,6 +177,11 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('DELETE FROM quarantine_cases');
+      await pool.query('DELETE FROM recall_batches');
+      await pool.query('DELETE FROM stock_count_lines');
+      await pool.query('DELETE FROM stock_transfer_lines');
+      await pool.query('DELETE FROM dispensing_lines');
       await pool.query('DELETE FROM sale_batch_allocations');
       await pool.query('DELETE FROM sale_lines');
       await pool.query('DELETE FROM goods_receipt_lines');
@@ -196,9 +208,11 @@ after(async () => {
       await pool.query('DELETE FROM role_permissions');
       await pool.query('DELETE FROM roles');
       await pool.query("DELETE FROM users WHERE email LIKE '%@product-test.local'");
-      await pool.query('DELETE FROM branches');
-      await pool.query('DELETE FROM warehouses');
       await pool.query('DELETE FROM storage_locations');
+      await pool.query('DELETE FROM warehouses');
+      await pool.query('DELETE FROM branches');
+      await pool.query('DELETE FROM notifications');
+      await pool.query('DELETE FROM audit_logs');
       await pool.query('DELETE FROM organizations');
     }
   } finally {
