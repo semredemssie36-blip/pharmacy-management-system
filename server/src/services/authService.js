@@ -188,4 +188,35 @@ async function getUserByToken(token) {
   return toSafeUserWithAuthorization(user);
 }
 
-export default { login, getUserByToken, toSafeUser };
+async function updateProfile(userId, { name }) {
+  if (!name || !name.trim()) {
+    throw new AppError('Full name is required', { statusCode: 400, code: 'VALIDATION_FAILED' });
+  }
+  const pool = getPool();
+  await pool.query('UPDATE users SET name = ? WHERE id = ?', [name.trim(), userId]);
+  const user = await authRepository.findById(userId);
+  return toSafeUserWithAuthorization(user);
+}
+
+async function changePassword(userId, { currentPassword, newPassword }) {
+  if (!currentPassword) {
+    throw new AppError('Current password is required', { statusCode: 400, code: 'VALIDATION_FAILED' });
+  }
+  if (!newPassword || newPassword.length < 8) {
+    throw new AppError('New password must be at least 8 characters long', { statusCode: 400, code: 'VALIDATION_FAILED' });
+  }
+  const user = await authRepository.findById(userId);
+  if (!user) {
+    throw new AppError('User not found', { statusCode: 404, code: 'USER_NOT_FOUND' });
+  }
+  const match = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!match) {
+    throw new AppError('Current password is incorrect', { statusCode: 400, code: 'INVALID_CREDENTIALS' });
+  }
+  const newHash = await bcrypt.hash(newPassword, 10);
+  const pool = getPool();
+  await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, userId]);
+  return { success: true, message: 'Password updated successfully' };
+}
+
+export default { login, getUserByToken, toSafeUser, updateProfile, changePassword };

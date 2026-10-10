@@ -530,14 +530,14 @@ export default function StockTransferCreatePage() {
         <div className="flex items-center justify-end gap-3 pt-2">
           <Link
             to="/inventory/transfers"
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-xs hover:bg-slate-50 transition"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting || isSameWarehouse}
-            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 disabled:pointer-events-none transition flex items-center gap-2"
+            className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none transition flex items-center gap-2"
           >
             {submitting ? (
               <>

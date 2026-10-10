@@ -3,8 +3,12 @@ import { customersApi } from '../features/partners/api.js';
 import { organizationsApi } from '../features/organizations/api.js';
 
 async function loadOrganizations() {
-  const res = await organizationsApi.list();
-  return res.data.organizations.map((o) => ({ value: o.id, label: `${o.name} (${o.code})` }));
+  try {
+    const res = await organizationsApi.list();
+    return (res.data?.organizations || []).map((o) => ({ value: o.id, label: `${o.name} (${o.code})` }));
+  } catch {
+    return [];
+  }
 }
 
 function CustomersPage() {
@@ -15,7 +19,7 @@ function CustomersPage() {
       itemListKey="items"
       parentOptions={loadOrganizations}
       fields={[
-        { key: 'organizationId', label: 'Organization', type: 'parent' },
+        { key: 'organizationId', label: 'Organization', type: 'parent', itemProp: 'organization_id' },
         { key: 'name', label: 'Name' },
         { key: 'code', label: 'Code', required: false },
         {

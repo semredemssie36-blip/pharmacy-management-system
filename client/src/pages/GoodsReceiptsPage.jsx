@@ -8,6 +8,7 @@ import PageHeader from '../components/common/PageHeader.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import SummaryCard from '../components/common/SummaryCard.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
+import { ReceiptIcon, ClockIcon, CheckCircleIcon, WarningIcon, BoxIcon } from '../components/common/Icons.jsx';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -118,7 +119,7 @@ function GoodsReceiptsPage() {
             <Link
               to="/procurement/goods-receipts/new"
               data-testid="new-goods-receipt-button"
-              className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-sm transition-all"
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-all"
             >
               <span>+</span> New Goods Receipt
             </Link>
@@ -132,28 +133,28 @@ function GoodsReceiptsPage() {
           title="Total Receipts"
           value={stats.total}
           subtitle="All recorded receipts"
-          icon="📋"
+          icon={<ReceiptIcon className="w-5 h-5 text-slate-600" />}
           tone="slate"
         />
         <SummaryCard
           title="In Progress"
           value={stats.inProgress}
           subtitle="Draft or currently receiving"
-          icon="⏳"
+          icon={<ClockIcon className="w-5 h-5 text-blue-600" />}
           tone="blue"
         />
         <SummaryCard
           title="Completed"
           value={stats.completed}
           subtitle="Stock intake posted to inventory"
-          icon="✅"
+          icon={<CheckCircleIcon className="w-5 h-5 text-emerald-600" />}
           tone="emerald"
         />
         <SummaryCard
           title="Discrepancies"
           value={stats.discrepancy}
           subtitle="Requires inspection or resolution"
-          icon="⚠️"
+          icon={<WarningIcon className="w-5 h-5 text-amber-600" />}
           tone="amber"
         />
       </div>
@@ -211,7 +212,7 @@ function GoodsReceiptsPage() {
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition"
           >
             Apply
           </button>
@@ -245,14 +246,14 @@ function GoodsReceiptsPage() {
         {!loading && receipts.length === 0 && (
           <div className="p-6">
             <EmptyState
-              icon="📥"
+              icon={<BoxIcon className="w-8 h-8 text-slate-400" />}
               title="No goods receipts found"
               description="No receipts matched your search or filters. You can record a new stock intake against an approved PO."
               action={
                 <Can permission="goods_receipt.create">
                   <Link
                     to="/procurement/goods-receipts/new"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-xs transition"
                   >
                     Create Goods Receipt
                   </Link>

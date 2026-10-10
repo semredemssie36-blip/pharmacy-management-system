@@ -14,7 +14,7 @@ export function SummaryCard({ title, value, subtitle, icon, tone = 'slate' }) {
     <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm hover:shadow transition-shadow">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</span>
-        {icon && <span className={`p-2 rounded-lg text-sm border ${toneMap[tone] || toneMap.slate}`}>{icon}</span>}
+        {icon && <span className={`p-2 rounded-lg text-sm border select-none pointer-events-none flex items-center justify-center ${toneMap[tone] || toneMap.slate}`}>{icon}</span>}
       </div>
       <div className="mt-2 text-2xl font-bold text-slate-900">{value}</div>
       {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}

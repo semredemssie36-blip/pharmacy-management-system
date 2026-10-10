@@ -119,7 +119,7 @@ function OpeningBalancePage() {
         <input type="number" placeholder="Quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className="w-full rounded border border-slate-300 px-3 py-2" />
         <input placeholder="Reason (optional)" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} className="w-full rounded border border-slate-300 px-3 py-2" />
         <div className="flex gap-2">
-          <button type="submit" disabled={loading} className="bg-slate-900 text-white rounded px-4 py-2 text-sm disabled:opacity-50">
+          <button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition disabled:opacity-50">
             {loading ? 'Saving…' : 'Record opening balance'}
           </button>
         </div>

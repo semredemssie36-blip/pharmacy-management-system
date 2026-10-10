@@ -26,9 +26,9 @@ export default function QuarantinePage() {
   async function loadBranches() {
     try {
       const res = await branchesApi.list();
-      setBranches(res.data?.items || res.data || []);
+      setBranches(res.data?.branches || res.data?.items || (Array.isArray(res.data) ? res.data : []));
     } catch {
-      // Non-blocking
+      setBranches([]);
     }
   }
 
@@ -82,7 +82,7 @@ export default function QuarantinePage() {
         <Can permission="quarantine.create">
           <button
             onClick={() => navigate('/inventory/quarantines/new')}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs transition"
           >
             <span>+</span> Place Stock On Hold
           </button>
@@ -150,7 +150,7 @@ export default function QuarantinePage() {
               className="w-full text-sm border border-slate-300 rounded px-3 py-1.5 focus:outline-none focus:border-indigo-500"
             >
               <option value="">All Branches</option>
-              {branches.map((b) => (
+              {(Array.isArray(branches) ? branches : []).map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>

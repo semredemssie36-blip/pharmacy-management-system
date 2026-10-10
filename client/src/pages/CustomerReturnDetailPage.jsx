@@ -368,8 +368,8 @@ export default function CustomerReturnDetailPage() {
             <div>
               <span className="text-slate-500 text-xs block">Refund Transaction:</span>
               {returnRecord.refund_id ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  ✓ Refund Issued (#{returnRecord.refund_id})
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Refund Issued (#{returnRecord.refund_id})
                 </span>
               ) : returnRecord.status === 'completed' && returnRecord.outcome === 'refund' ? (
                 <span className="text-xs text-amber-700 font-medium">

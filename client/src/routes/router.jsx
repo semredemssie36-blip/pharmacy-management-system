@@ -63,6 +63,7 @@ import NotificationsPage from '../pages/NotificationsPage.jsx';
 import DashboardOverviewPage from '../pages/DashboardOverviewPage.jsx';
 import ReportsPage from '../pages/ReportsPage.jsx';
 import DataExchangePage from '../pages/DataExchangePage.jsx';
+import ProfilePage from '../pages/ProfilePage.jsx';
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -76,6 +77,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardOverviewPage /> },
       { path: 'dashboard', element: <DashboardOverviewPage /> },
+      { path: 'profile', element: <ProfilePage /> },
       { path: 'reports', element: <ReportsPage /> },
       { path: 'import-export', element: <DataExchangePage /> },
       { path: 'notifications', element: <NotificationsPage /> },

@@ -30,9 +30,9 @@ export default function QuarantineCreatePage() {
           warehousesApi.list(),
           batchesApi.list({ limit: 100 }),
         ]);
-        setBranches(bRes.data?.items || bRes.data || []);
-        setWarehouses(wRes.data?.items || wRes.data || []);
-        setBatches(batRes.data?.items || batRes.data || []);
+        setBranches(bRes.data?.branches || bRes.data?.items || (Array.isArray(bRes.data) ? bRes.data : []));
+        setWarehouses(wRes.data?.warehouses || wRes.data?.items || (Array.isArray(wRes.data) ? wRes.data : []));
+        setBatches(batRes.data?.batches || batRes.data?.items || (Array.isArray(batRes.data) ? batRes.data : []));
       } catch (err) {
         // Non-blocking
       }
@@ -110,7 +110,7 @@ export default function QuarantineCreatePage() {
               className="w-full text-sm border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-indigo-500"
             >
               <option value="">Select Branch</option>
-              {branches.map((b) => (
+              {(Array.isArray(branches) ? branches : []).map((b) => (
                 <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
               ))}
             </select>
@@ -126,7 +126,7 @@ export default function QuarantineCreatePage() {
               className="w-full text-sm border border-slate-300 rounded px-3 py-2 focus:outline-none focus:border-indigo-500"
             >
               <option value="">Select Warehouse</option>
-              {warehouses.map((w) => (
+              {(Array.isArray(warehouses) ? warehouses : []).map((w) => (
                 <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
               ))}
             </select>
@@ -216,14 +216,14 @@ export default function QuarantineCreatePage() {
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
           <Link
             to="/inventory/quarantines"
-            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-medium rounded hover:bg-slate-50 transition"
+            className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-50 transition shadow-xs"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded shadow-sm disabled:opacity-50 transition"
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-xs disabled:opacity-50 transition"
           >
             {loading ? 'Processing Hold...' : 'Confirm Quarantine Hold'}
           </button>

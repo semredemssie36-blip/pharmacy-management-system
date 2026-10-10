@@ -18,7 +18,43 @@ export function definePartnerResource(config) {
 
   async function scopeOrgIds(userId) {
     const scope = await authorizationService.getUserScope(userId);
-    return [...scope.organizationIds];
+    const orgIds = new Set(scope.organizationIds);
+
+    // If user has branch scopes, resolve parent organizations
+    if (scope.branchIds.size > 0) {
+      const runner = getPool();
+      const branchArr = [...scope.branchIds];
+      const [bRows] = await runner.query(
+        `SELECT DISTINCT organization_id FROM branches WHERE id IN (${branchArr.map(() => '?').join(',')})`,
+        branchArr,
+      );
+      bRows.forEach((r) => orgIds.add(Number(r.organization_id)));
+    }
+
+    // If user has warehouse scopes, resolve parent organizations
+    if (scope.warehouseIds.size > 0) {
+      const runner = getPool();
+      const whArr = [...scope.warehouseIds];
+      const [wRows] = await runner.query(
+        `SELECT DISTINCT organization_id FROM warehouses WHERE id IN (${whArr.map(() => '?').join(',')})`,
+        whArr,
+      );
+      wRows.forEach((r) => orgIds.add(Number(r.organization_id)));
+    }
+
+    // Fallback: If no explicit scopes, resolve user's assigned organization or system default
+    if (orgIds.size === 0) {
+      const runner = getPool();
+      const [uRows] = await runner.query(`SELECT organization_id FROM users WHERE id = ?`, [userId]);
+      if (uRows[0]?.organization_id) {
+        orgIds.add(Number(uRows[0].organization_id));
+      } else {
+        const [oRows] = await runner.query(`SELECT id FROM organizations WHERE status = 'active' LIMIT 1`);
+        if (oRows[0]?.id) orgIds.add(Number(oRows[0].id));
+      }
+    }
+
+    return [...orgIds];
   }
 
   async function list(userId, { search, status, page = 1, limit = 20, sort = 'created_at', organizationId } = {}) {
@@ -62,6 +98,11 @@ export function definePartnerResource(config) {
   }
 
   async function create(input, userId) {
+    const scopes = await scopeOrgIds(userId);
+    if (!input.organizationId && scopes.length > 0) {
+      input.organizationId = scopes[0];
+    }
+
     const details = [];
     if (!Number.isInteger(Number(input.organizationId)) || Number(input.organizationId) <= 0) details.push({ field: 'organizationId', message: 'A valid organizationId is required' });
     if (typeof input.name !== 'string' || !input.name.trim()) details.push({ field: 'name', message: 'Name is required' });
@@ -70,7 +111,6 @@ export function definePartnerResource(config) {
     if (validate) details.push(...validate(input, 'create'));
     if (details.length) throw new ValidationError('Validation failed', details);
 
-    const scopes = await scopeOrgIds(userId);
     if (!scopes.includes(Number(input.organizationId))) {
       throw new AppError('You do not have access to this scope.', { statusCode: 403, code: 'FORBIDDEN' });
     }

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-
+import { useEffect, useState, useContext } from 'react';
+import { AuthContext } from '../../features/auth/AuthContext.jsx';
 import { Can } from '../../features/auth/Can.jsx';
 
 /**
@@ -10,6 +10,8 @@ import { Can } from '../../features/auth/Can.jsx';
  * permissions: optional {create, update, deactivate} permission codes for gating UI actions.
  */
 function AdminDirectoryPage({ title, api, itemListKey, fields, columns, parentOptions, parentOptionsLabel, relatedData = [], permissions = {} }) {
+  const auth = useContext(AuthContext);
+  const user = auth?.user || null;
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,15 +41,40 @@ function AdminDirectoryPage({ title, api, itemListKey, fields, columns, parentOp
     load();
     if (parentOptions) {
       parentOptions()
-        .then((opts) => setParentOptionsData(opts))
-        .catch(() => setParentOptionsData([]));
+        .then((opts) => {
+          if (Array.isArray(opts) && opts.length > 0) {
+            setParentOptionsData(opts);
+          } else if (user?.organization_id) {
+            setParentOptionsData([{ value: user.organization_id, label: user.organization_name || 'Current Organization' }]);
+          }
+        })
+        .catch(() => {
+          if (user?.organization_id) {
+            setParentOptionsData([{ value: user.organization_id, label: user.organization_name || 'Current Organization' }]);
+          }
+        });
+    } else if (user?.organization_id) {
+      setParentOptionsData([{ value: user.organization_id, label: user.organization_name || 'Current Organization' }]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   function openCreate() {
     setEditingId(null);
-    setForm({});
+    const initial = {};
+    fields.forEach((f) => {
+      if (f.type === 'parent') {
+        initial[f.key] = user?.organization_id || parentOptionsData[0]?.value || '';
+      } else if (f.type === 'select' && f.options?.[0]?.value) {
+        initial[f.key] = f.options[0].value;
+      }
+    });
+    if (!initial.organizationId && user?.organization_id) {
+      initial.organizationId = user.organization_id;
+    } else if (!initial.organizationId && parentOptionsData.length > 0) {
+      initial.organizationId = parentOptionsData[0].value;
+    }
+    setForm(initial);
     setShowForm(true);
     setError(null);
     setNotice(null);
@@ -57,8 +84,9 @@ function AdminDirectoryPage({ title, api, itemListKey, fields, columns, parentOp
     setEditingId(item.id);
     const next = {};
     fields.forEach((f) => {
+      const prop = f.itemProp || (f.key === 'organizationId' ? 'organization_id' : f.key);
       if (f.parentField) next[f.key] = item[f.parentField] ?? '';
-      else next[f.key] = item[f.itemProp || f.key] ?? '';
+      else next[f.key] = item[prop] ?? '';
     });
     setForm(next);
     setShowForm(true);
@@ -84,19 +112,22 @@ function AdminDirectoryPage({ title, api, itemListKey, fields, columns, parentOp
         if (form[f.key] === '' || form[f.key] === undefined) return;
         payload[f.key] = f.type === 'parent' ? Number(form[f.key]) : form[f.key];
       });
+      if (!payload.organizationId && user?.organization_id) {
+        payload.organizationId = Number(user.organization_id);
+      }
       if (editingId) {
         await api.update(editingId, payload);
-        setNotice(`${title.slice(0, -1)} updated.`);
+        setNotice(`${title.slice(0, -1)} updated successfully.`);
       } else {
         await api.create(payload);
-        setNotice(`${title.slice(0, -1)} created.`);
+        setNotice(`${title.slice(0, -1)} created successfully.`);
       }
       setShowForm(false);
       setForm({});
       setEditingId(null);
       await load();
     } catch (err) {
-      setError(err.message);
+      setError(err?.response?.data?.error?.message || err?.response?.data?.message || err.message || 'Operation failed');
     } finally {
       setSubmitting(false);
     }
@@ -125,13 +156,13 @@ function AdminDirectoryPage({ title, api, itemListKey, fields, columns, parentOp
         <h1 className="text-xl font-bold text-slate-900">{title}</h1>
         {permissions.create ? (
           <Can permission={permissions.create}>
-            <button onClick={openCreate} className="bg-slate-900 text-white rounded px-4 py-2 text-sm hover:bg-slate-800">
-              + New
+            <button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition">
+              + New {title.slice(0, -1)}
             </button>
           </Can>
         ) : (
-          <button onClick={openCreate} className="bg-slate-900 text-white rounded px-4 py-2 text-sm hover:bg-slate-800">
-            + New
+          <button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition">
+            + New {title.slice(0, -1)}
           </button>
         )}
       </div>
@@ -182,10 +213,10 @@ function AdminDirectoryPage({ title, api, itemListKey, fields, columns, parentOp
             </div>
           ))}
           <div className="flex gap-2">
-            <button type="submit" disabled={submitting} className="bg-slate-900 text-white rounded px-4 py-2 text-sm disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs disabled:opacity-50 transition">
               {submitting ? 'Saving…' : editingId ? 'Save changes' : 'Create'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="border border-slate-300 rounded px-4 py-2 text-sm">
+            <button type="button" onClick={() => setShowForm(false)} className="border border-slate-300 rounded-xl px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition">
               Cancel
             </button>
           </div>

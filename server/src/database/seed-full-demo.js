@@ -187,6 +187,76 @@ export async function seedFullDemo() {
     }
   }
 
+  // Sync robust role permissions so no authorized actor gets 'You do not have permission'
+  const rolePermMap = {
+    BRANCH_MANAGER: [
+      'approval.%', 'audit.%', 'batch.%', 'branch.%', 'customer.%', 'customer_return.%',
+      'dispensing.%', 'expiry.%', 'goods_receipt.%', 'inventory.%', 'notification.%',
+      'organization.%', 'patient.%', 'payment.%', 'prescriber.%', 'prescription.%',
+      'product.%', 'purchase_order.%', 'quarantine.%', 'recall.%', 'receivable.%',
+      'report.%', 'sale.%', 'search.%', 'stock_count.%', 'stock_movement.%',
+      'stock_transfer.%', 'storage_location.%', 'supplier.%', 'supplier_return.%',
+      'user.view', 'warehouse.view', 'data.export.%', 'data.import.%'
+    ],
+    PHARMACIST: [
+      'dispensing.%', 'prescription.%', 'patient.%', 'prescriber.%', 'quarantine.%',
+      'recall.%', 'expiry.%', 'inventory.view', 'batch.view', 'product.view',
+      'report.dispensing.view', 'search.view', 'notification.view'
+    ],
+    PHARMACY_TECHNICIAN: [
+      'dispensing.view', 'dispensing.create', 'dispensing.allocate', 'dispensing.update',
+      'prescription.view', 'patient.view', 'patient.create', 'prescriber.view',
+      'inventory.view', 'batch.view', 'product.view', 'search.view', 'notification.view'
+    ],
+    CASHIER: [
+      'sale.%', 'pos.view', 'payment.create', 'payment.view', 'receivable.view',
+      'customer.view', 'customer.create', 'product.view', 'inventory.view', 'batch.view',
+      'search.view', 'notification.view'
+    ],
+    STOREKEEPER: [
+      'inventory.%', 'batch.%', 'storage_location.%', 'stock_movement.%',
+      'stock_transfer.%', 'stock_count.%', 'goods_receipt.%', 'supplier_return.%',
+      'quarantine.%', 'recall.%', 'expiry.%', 'product.view', 'search.view', 'notification.view'
+    ],
+    PROCUREMENT_OFFICER: [
+      'purchase_order.%', 'supplier.%', 'goods_receipt.view', 'supplier_return.%',
+      'inventory.view', 'batch.view', 'product.view', 'report.procurement.view',
+      'search.view', 'notification.view'
+    ],
+    FINANCE_USER: [
+      'payment.%', 'receivable.%', 'customer.view', 'supplier.view', 'sale.view',
+      'purchase_order.view', 'report.financial.view', 'report.sales.view',
+      'report.dashboard.view', 'search.view', 'notification.view'
+    ],
+    MANAGEMENT_REPORTING: [
+      'report.%', 'sale.view', 'inventory.view', 'purchase_order.view',
+      'dispensing.view', 'payment.view', 'search.view', 'notification.view'
+    ],
+  };
+
+  for (const [rCode, patterns] of Object.entries(rolePermMap)) {
+    const [rRows] = await pool.query('SELECT id FROM roles WHERE code = ? LIMIT 1', [rCode]);
+    if (rRows.length === 0) continue;
+    const rId = rRows[0].id;
+
+    for (const pat of patterns) {
+      if (pat.endsWith('.%')) {
+        const prefix = pat.replace('.%', '');
+        await pool.query(
+          `INSERT IGNORE INTO role_permissions (role_id, permission_id)
+           SELECT ?, id FROM permissions WHERE code LIKE ? OR module = ?`,
+          [rId, `${prefix}.%`, prefix]
+        );
+      } else {
+        await pool.query(
+          `INSERT IGNORE INTO role_permissions (role_id, permission_id)
+           SELECT ?, id FROM permissions WHERE code = ?`,
+          [rId, pat]
+        );
+      }
+    }
+  }
+
   // 7. Units of Measure
   async function getOrCreateUnit(name, code) {
     const [rows] = await pool.query('SELECT id FROM units WHERE organization_id = ? AND code = ? LIMIT 1', [orgId, code]);

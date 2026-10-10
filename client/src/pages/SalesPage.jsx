@@ -96,7 +96,7 @@ export default function SalesPage() {
           can('sale.create') && (
             <Link
               to="/pos"
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-lg shadow-sm transition inline-flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-xs transition inline-flex items-center gap-2"
             >
               <span>Open POS Terminal</span>
             </Link>
@@ -359,14 +359,14 @@ export default function SalesPage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-xl transition"
+                className="flex-1 py-2 px-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-semibold text-sm rounded-xl transition"
               >
                 Print
               </button>
               <button
                 type="button"
                 onClick={() => setShowReceiptModal(false)}
-                className="flex-1 py-2 px-4 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl transition"
+                className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition"
               >
                 Close
               </button>

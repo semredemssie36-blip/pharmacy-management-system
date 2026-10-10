@@ -30,9 +30,9 @@ export default function ExpiryManagementPage() {
   async function loadBranches() {
     try {
       const res = await branchesApi.list();
-      setBranches(res.data?.items || res.data || []);
+      setBranches(res.data?.branches || res.data?.items || (Array.isArray(res.data) ? res.data : []));
     } catch {
-      // Non-blocking
+      setBranches([]);
     }
   }
 
@@ -189,7 +189,7 @@ export default function ExpiryManagementPage() {
               className="w-full text-sm border border-slate-300 rounded px-3 py-1.5 focus:outline-none focus:border-indigo-500"
             >
               <option value="">All Branches</option>
-              {branches.map((b) => (
+              {(Array.isArray(branches) ? branches : []).map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>

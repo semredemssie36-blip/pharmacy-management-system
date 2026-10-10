@@ -234,7 +234,7 @@ function ProductsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900">Products</h1>
         <Can permission="product.create">
-          <button onClick={openCreate} className="bg-slate-900 text-white rounded px-4 py-2 text-sm hover:bg-slate-800">+ New product</button>
+          <button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition">+ New product</button>
         </Can>
       </div>
 
@@ -347,10 +347,10 @@ function ProductsPage() {
           </fieldset>
 
           <div className="flex gap-2">
-            <button type="submit" disabled={submitting} className="bg-slate-900 text-white rounded px-4 py-2 text-sm disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition disabled:opacity-50">
               {submitting ? 'Saving…' : editing ? 'Save changes' : 'Create'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="border border-slate-300 rounded px-4 py-2 text-sm">Cancel</button>
+            <button type="button" onClick={() => setShowForm(false)} className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-sm transition">Cancel</button>
           </div>
         </form>
       )}

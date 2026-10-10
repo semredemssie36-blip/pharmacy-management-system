@@ -79,12 +79,12 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <aside
-      className={`fixed lg:static inset-y-0 left-0 z-40 w-64 h-screen shrink-0 bg-white border-r border-slate-200/90 flex flex-col transition-transform duration-200 ease-in-out select-none ${
+      className={`fixed lg:static inset-y-0 left-0 z-40 w-64 h-screen shrink-0 bg-white border-r border-slate-200/90 flex flex-col overflow-hidden transition-transform duration-200 ease-in-out select-none ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}
     >
       {/* Brand Header */}
-      <div className="h-16 px-5 border-b border-slate-100 flex items-center justify-between">
+      <div className="h-16 shrink-0 px-5 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <PillCrossLogo className="w-8 h-8" />
           <div className="flex flex-col">
@@ -102,7 +102,7 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       {/* Navigation Scroll */}
-      <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5">
+      <div className="flex-1 overflow-y-auto min-h-0 px-3.5 py-4 space-y-1.5">
         {/* Dashboard (Home) */}
         <NavLink to="/dashboard" end className={linkClass}>
           <DashboardIcon className="w-5 h-5 text-current" />
@@ -328,7 +328,7 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       {/* Bottom Promo / Info Banner */}
-      <div className="p-3.5 border-t border-slate-100">
+      <div className="p-3.5 border-t border-slate-100 shrink-0">
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50/70 border border-blue-100/80 rounded-2xl p-3.5 text-center">
           <div className="w-8 h-8 mx-auto rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm mb-2 select-none">
             Rx

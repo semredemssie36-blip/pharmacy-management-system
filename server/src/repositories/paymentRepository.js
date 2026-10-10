@@ -11,6 +11,7 @@ export const paymentRepository = {
     endDate,
     search,
     page = 1,
+    limit = 20,
     accessibleOrgIds,
     accessibleBranchIds,
   }) {
@@ -18,7 +19,7 @@ export const paymentRepository = {
     const whereClauses = [];
     const params = [];
 
-    if (organizationId) {
+    if (organizationId && organizationId !== 'undefined') {
       whereClauses.push('p.organization_id = ?');
       params.push(organizationId);
     } else if (accessibleOrgIds?.length || accessibleBranchIds?.length) {
@@ -33,34 +34,38 @@ export const paymentRepository = {
       }
       whereClauses.push(`(${ors.join(' OR ')})`);
     } else {
-      return { items: [], total: 0, page: Number(page) || 1, limit: Number(limit) || 20 };
+      const [oRows] = await pool.query('SELECT id FROM organizations WHERE status = "active" LIMIT 1');
+      if (oRows.length > 0) {
+        whereClauses.push('p.organization_id = ?');
+        params.push(oRows[0].id);
+      }
     }
 
-    if (branchId) {
+    if (branchId && branchId !== 'undefined') {
       whereClauses.push('p.branch_id = ?');
       params.push(branchId);
     }
-    if (customerId) {
+    if (customerId && customerId !== 'undefined') {
       whereClauses.push('p.customer_id = ?');
       params.push(customerId);
     }
-    if (status) {
+    if (status && status !== 'undefined') {
       whereClauses.push('p.status = ?');
       params.push(status);
     }
-    if (paymentMethod) {
+    if (paymentMethod && paymentMethod !== 'undefined') {
       whereClauses.push('p.payment_method = ?');
       params.push(paymentMethod);
     }
-    if (startDate) {
+    if (startDate && startDate !== 'undefined') {
       whereClauses.push('p.payment_date >= ?');
       params.push(startDate);
     }
-    if (endDate) {
+    if (endDate && endDate !== 'undefined') {
       whereClauses.push('p.payment_date <= ?');
       params.push(endDate);
     }
-    if (search && search.trim()) {
+    if (search && search.trim() && search.trim() !== 'undefined') {
       const term = `%${search.trim()}%`;
       whereClauses.push('(p.payment_number LIKE ? OR p.external_reference LIKE ? OR c.name LIKE ?)');
       params.push(term, term, term);

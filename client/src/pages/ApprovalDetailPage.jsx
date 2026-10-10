@@ -5,6 +5,7 @@ import { AuthContext } from '../features/auth/AuthContext.jsx';
 import PageHeader from '../components/common/PageHeader.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import ConfirmationDialog from '../components/common/ConfirmationDialog.jsx';
+import { ShieldIcon, WarningIcon, CheckCircleIcon } from '../components/common/Icons.jsx';
 
 const CATEGORY_LABELS = {
   sale_discount: 'Sale Discount',
@@ -162,7 +163,7 @@ export default function ApprovalDetailPage() {
       {/* Status Banners */}
       {isPending && isRequester && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm flex items-start gap-3">
-          <span className="text-lg">🛡️</span>
+          <ShieldIcon className="w-6 h-6 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold">Separation of Duties Enforced</div>
             <div>
@@ -174,7 +175,7 @@ export default function ApprovalDetailPage() {
 
       {request.status === 'expired' && (
         <div className="p-4 bg-gray-100 border border-gray-300 rounded-xl text-gray-800 text-sm flex items-start gap-3">
-          <span className="text-lg">⚠️</span>
+          <WarningIcon className="w-6 h-6 text-gray-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold">Request Invalidated (Stale Data Detected)</div>
             <div>
@@ -186,7 +187,7 @@ export default function ApprovalDetailPage() {
 
       {request.status === 'approved' && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-sm flex items-start gap-3">
-          <span className="text-lg">✅</span>
+          <CheckCircleIcon className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold">Approved and Awaiting Operation Execution</div>
             <div>
@@ -198,7 +199,7 @@ export default function ApprovalDetailPage() {
 
       {request.status === 'executed' && (
         <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl text-teal-900 text-sm flex items-start gap-3">
-          <span className="text-lg">🎉</span>
+          <CheckCircleIcon className="w-6 h-6 text-teal-600 shrink-0 mt-0.5" />
           <div>
             <div className="font-bold">Override Successfully Executed</div>
             <div>
@@ -322,7 +323,7 @@ export default function ApprovalDetailPage() {
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <div className="text-xs text-slate-400 uppercase font-semibold">Separation of Duties</div>
                 <div className="font-semibold text-slate-800 mt-0.5 flex items-center gap-1.5">
-                  <span className="text-emerald-600 font-bold">✓</span> Requester cannot approve
+                  <CheckCircleIcon className="w-4 h-4 text-emerald-600" /> Requester cannot approve
                 </div>
               </div>
 

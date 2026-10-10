@@ -121,7 +121,7 @@ function PurchaseOrdersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900">Purchase Orders</h1>
         <Can permission="purchase_order.create">
-          <button onClick={() => setShowForm(!showForm)} className="bg-slate-900 text-white rounded px-4 py-2 text-sm hover:bg-slate-800">
+          <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition">
             {showForm ? 'Close' : '+ New Purchase Order'}
           </button>
         </Can>
@@ -179,7 +179,7 @@ function PurchaseOrdersPage() {
             <button type="button" onClick={addLine} className="mt-2 text-sm text-sky-700 hover:underline">+ Add line</button>
           </div>
 
-          <button type="submit" disabled={submitting} className="bg-slate-900 text-white rounded px-4 py-2 text-sm disabled:opacity-50">
+          <button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs disabled:opacity-50 transition">
             {submitting ? 'Saving…' : 'Create Purchase Order'}
           </button>
         </form>

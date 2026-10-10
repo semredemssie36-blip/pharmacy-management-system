@@ -1,10 +1,19 @@
 import apiClient from '../../services/apiClient.js';
 
+function buildCleanQuery(params) {
+  if (!params) return '';
+  const sp = new URLSearchParams();
+  Object.entries(params).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== '' && val !== 'undefined') {
+      sp.set(key, val);
+    }
+  });
+  const qs = sp.toString();
+  return qs ? `?${qs}` : '';
+}
+
 export const paymentsApi = {
-  list: (params) => {
-    const q = params ? `?${new URLSearchParams(params).toString()}` : '';
-    return apiClient.get(`/payments${q}`);
-  },
+  list: (params) => apiClient.get(`/payments${buildCleanQuery(params)}`),
   get: (id) => apiClient.get(`/payments/${id}`),
   getReceipt: (id) => apiClient.get(`/payments/${id}/receipt`),
   create: (data) => apiClient.post('/payments', data),
@@ -14,10 +23,7 @@ export const paymentsApi = {
 };
 
 export const receivablesApi = {
-  list: (params) => {
-    const q = params ? `?${new URLSearchParams(params).toString()}` : '';
-    return apiClient.get(`/receivables${q}`);
-  },
+  list: (params) => apiClient.get(`/receivables${buildCleanQuery(params)}`),
   get: (id) => apiClient.get(`/receivables/${id}`),
   getCustomerSummary: (customerId) => apiClient.get(`/customers/${customerId}/financial-summary`),
   creditSale: (data) => apiClient.post('/receivables/credit-sale', data),

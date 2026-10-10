@@ -43,126 +43,78 @@ export default function DashboardOverviewPage() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // Metric values with real data fallback
-  const totalSales = liveData?.sales?.totalSalesAmount
-    ? Number(liveData.sales.totalSalesAmount)
-    : 45250.0;
-  const totalPurchases = liveData?.procurement?.totalPurchased
-    ? Number(liveData.procurement.totalPurchased)
-    : 22680.0;
-  const totalProfit = totalSales - totalPurchases > 0 ? totalSales - totalPurchases : 22570.0;
-  const totalCustomers = 1245;
-  const lowStockCount = liveData?.inventory?.lowStockCount
-    ? Number(liveData.inventory.lowStockCount)
-    : 23;
+  // Metric values directly bound to real database records
+  const totalSales = Number(liveData?.sales?.totalSalesAmount || 0);
+  const totalPurchases = Number(liveData?.procurement?.totalPurchased || 0);
+  const totalProfit = totalSales - totalPurchases > 0 ? totalSales - totalPurchases : 0;
+  const totalCustomers = Number(liveData?.customers?.totalCustomers || 0);
+  const lowStockCount = Number(liveData?.inventory?.lowStockCount || 0);
 
-  // Monthly Sales Chart Data
-  const monthlyData = [
-    { month: 'Jan', val: 28000, x: 40, y: 150 },
-    { month: 'Feb', val: 32000, x: 100, y: 130 },
-    { month: 'Mar', val: 30000, x: 160, y: 140 },
-    { month: 'Apr', val: 38000, x: 220, y: 100 },
-    { month: 'May', val: 36000, x: 280, y: 110 },
-    { month: 'Jun', val: 42000, x: 340, y: 80 },
-    { month: 'Jul', val: 40000, x: 400, y: 90 },
-    { month: 'Aug', val: 46000, x: 460, y: 60 },
-    { month: 'Sep', val: 44000, x: 520, y: 70 },
-    { month: 'Oct', val: 45250, x: 580, y: 65 },
-    { month: 'Nov', val: 48000, x: 640, y: 50 },
-    { month: 'Dec', val: 52000, x: 700, y: 35 },
-  ];
+  // Dynamic Monthly Sales Coordinates from Database
+  const rawMonthly = liveData?.monthlySales?.length > 0
+    ? liveData.monthlySales
+    : [
+        { month: 'Jan', total: 0 },
+        { month: 'Feb', total: 0 },
+        { month: 'Mar', total: 0 },
+        { month: 'Apr', total: 0 },
+        { month: 'May', total: 0 },
+        { month: 'Jun', total: 0 },
+        { month: 'Jul', total: 0 },
+        { month: 'Aug', total: 0 },
+        { month: 'Sep', total: 0 },
+        { month: 'Oct', total: totalSales },
+        { month: 'Nov', total: 0 },
+        { month: 'Dec', total: 0 },
+      ];
 
-  // Top Selling Medicines List
-  const topMedicines = [
-    { name: 'Paracetamol 500mg', category: 'Analgesic', sold: '1,420 units', amount: '$7,100.00' },
-    { name: 'Amoxicillin 250mg', category: 'Antibiotic', sold: '980 units', amount: '$14,700.00' },
-    { name: 'Cetirizine 10mg', category: 'Antihistamine', sold: '850 units', amount: '$4,250.00' },
-    { name: 'Omeprazole 20mg', category: 'Antacid', sold: '720 units', amount: '$7,200.00' },
-    { name: 'Azithromycin 500mg', category: 'Antibiotic', sold: '610 units', amount: '$12,200.00' },
-  ];
+  const maxMonthVal = Math.max(1000, ...rawMonthly.map((m) => m.total));
+  const monthlyData = rawMonthly.map((m, idx) => {
+    const x = 40 + idx * 60;
+    const y = Math.round(170 - (m.total / maxMonthVal) * 135);
+    return {
+      month: m.month,
+      val: m.total,
+      x,
+      y,
+    };
+  });
 
-  // Expiry Alerts List
-  const expiryAlerts = [
-    {
-      name: 'Amoxicillin 250mg',
-      batch: 'AMX123',
-      date: '2026-10-20',
-      days: 10,
-      severity: 'critical',
-    },
-    {
-      name: 'Cetirizine 10mg',
-      batch: 'CET456',
-      date: '2026-11-14',
-      days: 35,
-      severity: 'warning',
-    },
-    {
-      name: 'Omeprazole 20mg',
-      batch: 'OME789',
-      date: '2026-12-10',
-      days: 61,
-      severity: 'warning',
-    },
-    {
-      name: 'Azithromycin 500mg',
-      batch: 'AZI321',
-      date: '2026-12-25',
-      days: 76,
-      severity: 'warning',
-    },
-  ];
+  // Real Top Selling Medicines List from Database
+  const topMedicines = (liveData?.topMedicines?.length > 0)
+    ? liveData.topMedicines.map((m) => ({
+        name: m.name,
+        category: m.category,
+        sold: `${m.unitsSold.toLocaleString()} units`,
+        amount: `${m.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB`,
+      }))
+    : [];
 
-  // Recent Transactions
-  const recentTransactions = [
-    {
-      id: liveData?.recentSales?.[0]?.sale_number || 'SALE-2026-0001',
-      customer: liveData?.recentSales?.[0]?.customer_name || 'Walk-in Customer',
-      time: 'Today, 11:45 AM',
-      amount: '$145.00',
-      status: 'Paid',
-      statusColor: 'bg-emerald-100 text-emerald-700',
-    },
-    {
-      id: 'INV-2026-0041',
-      customer: 'Sarah Jenkins',
-      time: 'Today, 11:20 AM',
-      amount: '$320.50',
-      status: 'Paid',
-      statusColor: 'bg-emerald-100 text-emerald-700',
-    },
-    {
-      id: 'INV-2026-0040',
-      customer: 'Michael Brown',
-      time: 'Today, 10:55 AM',
-      amount: '$85.00',
-      status: 'Paid',
-      statusColor: 'bg-emerald-100 text-emerald-700',
-    },
-    {
-      id: 'INV-2026-0039',
-      customer: 'David Wilson',
-      time: 'Today, 10:15 AM',
-      amount: '$410.00',
-      status: 'Pending',
-      statusColor: 'bg-amber-100 text-amber-700',
-    },
-    {
-      id: 'INV-2026-0038',
-      customer: 'Emily Davis',
-      time: 'Today, 09:30 AM',
-      amount: '$230.00',
-      status: 'Paid',
-      statusColor: 'bg-emerald-100 text-emerald-700',
-    },
-  ];
+  // Real Expiry Alerts List from Database
+  const expiryAlerts = (liveData?.nearExpiryBatches?.length > 0)
+    ? liveData.nearExpiryBatches.map((b) => ({
+        name: b.product_name,
+        batch: b.batch_number,
+        date: String(b.expiry_date).slice(0, 10),
+        days: b.days_remaining,
+        severity: b.days_remaining <= 30 ? 'critical' : 'warning',
+      }))
+    : [];
+
+  // Real Recent Transactions from Database
+  const recentTransactions = (liveData?.recentSales?.length > 0)
+    ? liveData.recentSales.map((s) => ({
+        id: s.sale_number,
+        customer: s.customer_name || 'Walk-in Customer',
+        time: s.sale_date ? new Date(s.sale_date).toLocaleDateString() : 'Today',
+        amount: `${Number(s.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB`,
+        status: s.payment_status === 'paid' ? 'Paid' : s.payment_status === 'partially_paid' ? 'Partial' : 'Pending',
+        statusColor: s.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700',
+      }))
+    : [];
 
   const formatUSD = (val) =>
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(val);
+    `${Number(val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ETB`;
 
   return (
     <div className="space-y-6 select-none">

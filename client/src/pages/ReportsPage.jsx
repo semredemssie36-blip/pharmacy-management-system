@@ -11,6 +11,25 @@ import PageHeader from '../components/common/PageHeader.jsx';
 import SummaryCard from '../components/common/SummaryCard.jsx';
 import StatusBadge from '../components/common/StatusBadge.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
+import {
+  SalesIcon,
+  InventoryIcon,
+  AccountingIcon,
+  PurchaseIcon,
+  ClinicalIcon,
+  WarningIcon,
+  BoxIcon,
+  LockIcon,
+  ShieldIcon,
+  StopIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  TagIcon,
+  BuildingIcon,
+  FileTextIcon,
+  DollarIcon,
+  ReportsIcon,
+} from '../components/common/Icons.jsx';
 
 export default function ReportsPage() {
   const can = useCan();
@@ -164,68 +183,74 @@ export default function ReportsPage() {
           <button
             type="button"
             onClick={() => handleTabChange('sales')}
-            className={`whitespace-nowrap px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
               activeTab === 'sales'
-                ? 'border-slate-900 text-slate-900 bg-slate-50'
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            📊 Sales & Revenue
+            <SalesIcon className="w-4 h-4 pointer-events-none" />
+            <span>Sales & Revenue</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('inventory')}
-            className={`whitespace-nowrap px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
               activeTab === 'inventory'
-                ? 'border-slate-900 text-slate-900 bg-slate-50'
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            📦 Inventory & Valuation
+            <InventoryIcon className="w-4 h-4 pointer-events-none" />
+            <span>Inventory & Valuation</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('finance')}
-            className={`whitespace-nowrap px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
               activeTab === 'finance'
-                ? 'border-slate-900 text-slate-900 bg-slate-50'
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            💳 Collections & Receivables
+            <AccountingIcon className="w-4 h-4 pointer-events-none" />
+            <span>Collections & Receivables</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('procurement')}
-            className={`whitespace-nowrap px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
               activeTab === 'procurement'
-                ? 'border-slate-900 text-slate-900 bg-slate-50'
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            🚚 Procurement Fulfillment
+            <PurchaseIcon className="w-4 h-4 pointer-events-none" />
+            <span>Procurement Fulfillment</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('dispensing')}
-            className={`whitespace-nowrap px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
               activeTab === 'dispensing'
-                ? 'border-slate-900 text-slate-900 bg-slate-50'
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            💊 Clinical Dispensing
+            <ClinicalIcon className="w-4 h-4 pointer-events-none" />
+            <span>Clinical Dispensing</span>
           </button>
           <button
             type="button"
             onClick={() => handleTabChange('expiry')}
-            className={`whitespace-nowrap px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-t-lg border-b-2 transition ${
               activeTab === 'expiry'
-                ? 'border-slate-900 text-slate-900 bg-slate-50'
+                ? 'border-blue-600 text-blue-600 bg-blue-50/50'
                 : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
             }`}
           >
-            🚨 Expiry, Quarantine & Recalls
+            <WarningIcon className="w-4 h-4 pointer-events-none" />
+            <span>Expiry, Quarantine & Recalls</span>
           </button>
         </nav>
       </div>
@@ -361,7 +386,7 @@ export default function ReportsPage() {
             type="button"
             onClick={loadReport}
             disabled={isLoading}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-sm transition"
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition disabled:opacity-50"
           >
             {isLoading ? 'Updating...' : 'Apply Filters'}
           </button>
@@ -384,28 +409,28 @@ export default function ReportsPage() {
               title="Net Sales (Completed)"
               value={formatCurrency(reportData?.summary?.netTotal)}
               subtitle={`${formatNumber(reportData?.summary?.completedCount)} completed orders`}
-              icon="💵"
+              icon={<DollarIcon className="w-5 h-5 text-emerald-600" />}
               tone="emerald"
             />
             <SummaryCard
               title="Gross Sales"
               value={formatCurrency(reportData?.summary?.grossTotal)}
               subtitle="Before discounts and concessions"
-              icon="📈"
+              icon={<ReportsIcon className="w-5 h-5 text-slate-600" />}
               tone="slate"
             />
             <SummaryCard
               title="Total Discounts Granted"
               value={formatCurrency(reportData?.summary?.totalDiscount)}
               subtitle="Promotional & authorized discounts"
-              icon="🏷️"
+              icon={<TagIcon className="w-5 h-5 text-amber-600" />}
               tone="amber"
             />
             <SummaryCard
               title="Paid In Full"
               value={formatCurrency(reportData?.summary?.paidTotal)}
               subtitle="Cleared customer payments"
-              icon="✅"
+              icon={<CheckCircleIcon className="w-5 h-5 text-blue-600" />}
               tone="blue"
             />
           </div>
@@ -522,35 +547,35 @@ export default function ReportsPage() {
               title="Available Units"
               value={formatNumber(reportData?.summary?.availableQuantity)}
               subtitle="Unencumbered, ready for sale"
-              icon="📦"
+              icon={<BoxIcon className="w-5 h-5 text-emerald-600" />}
               tone="emerald"
             />
             <SummaryCard
               title="Reserved Stock"
               value={formatNumber(reportData?.summary?.reservedQuantity)}
               subtitle="Allocated to active orders"
-              icon="🔒"
+              icon={<LockIcon className="w-5 h-5 text-blue-600" />}
               tone="blue"
             />
             <SummaryCard
               title="Quarantined Stock"
               value={formatNumber(reportData?.summary?.quarantinedQuantity)}
               subtitle="Held under regulatory review"
-              icon="🛡️"
+              icon={<ShieldIcon className="w-5 h-5 text-amber-600" />}
               tone="amber"
             />
             <SummaryCard
               title="Expired Units"
               value={formatNumber(reportData?.summary?.expiredQuantity)}
               subtitle="Segregated from usable stock"
-              icon="⛔"
+              icon={<StopIcon className="w-5 h-5 text-rose-600" />}
               tone="rose"
             />
             <SummaryCard
               title="Total Physical Stock"
               value={formatNumber(reportData?.summary?.physicalQuantity)}
               subtitle="Sum of all positions in warehouse"
-              icon="🏢"
+              icon={<BuildingIcon className="w-5 h-5 text-slate-600" />}
               tone="slate"
             />
           </div>
@@ -659,28 +684,28 @@ export default function ReportsPage() {
               title="Gross Collections"
               value={formatCurrency(reportData?.summary?.totalCollected)}
               subtitle={`${formatNumber(reportData?.summary?.paymentCount)} completed payments`}
-              icon="💰"
+              icon={<DollarIcon className="w-5 h-5 text-emerald-600" />}
               tone="emerald"
             />
             <SummaryCard
               title="Refunds Paid"
               value={formatCurrency(reportData?.summary?.totalRefunded)}
               subtitle={`${formatNumber(reportData?.summary?.refundCount)} return settlements`}
-              icon="↩️"
+              icon={<StopIcon className="w-5 h-5 text-rose-600" />}
               tone="rose"
             />
             <SummaryCard
               title="Net Cash Realization"
               value={formatCurrency(reportData?.summary?.netCollections)}
               subtitle="Collections less completed refunds"
-              icon="📊"
+              icon={<ReportsIcon className="w-5 h-5 text-blue-600" />}
               tone="blue"
             />
             <SummaryCard
               title="Outstanding Receivables"
               value={formatCurrency(reportData?.summary?.outstandingReceivablesBalance)}
               subtitle={`${formatNumber(reportData?.summary?.activeReceivablesCount)} open credit accounts`}
-              icon="📄"
+              icon={<FileTextIcon className="w-5 h-5 text-amber-600" />}
               tone="amber"
             />
           </div>
@@ -767,28 +792,28 @@ export default function ReportsPage() {
               title="Total PO Spend"
               value={formatCurrency(reportData?.summary?.totalSpend)}
               subtitle={`${formatNumber(reportData?.summary?.totalOrders)} purchase orders placed`}
-              icon="📑"
+              icon={<FileTextIcon className="w-5 h-5 text-slate-600" />}
               tone="slate"
             />
             <SummaryCard
               title="Fully Received"
               value={formatNumber(reportData?.summary?.fullyReceivedCount)}
               subtitle="Orders 100% delivered to warehouse"
-              icon="📦"
+              icon={<BoxIcon className="w-5 h-5 text-emerald-600" />}
               tone="emerald"
             />
             <SummaryCard
               title="Partially Received"
               value={formatNumber(reportData?.summary?.partiallyReceivedCount)}
               subtitle="Awaiting remaining deliveries"
-              icon="⏳"
+              icon={<ClockIcon className="w-5 h-5 text-amber-600" />}
               tone="amber"
             />
             <SummaryCard
               title="Discrepant Receipts"
               value={formatNumber(reportData?.summary?.discrepancyReceiptsCount)}
               subtitle="Goods receipts with count variances"
-              icon="⚠️"
+              icon={<WarningIcon className="w-5 h-5 text-rose-600" />}
               tone="rose"
             />
           </div>

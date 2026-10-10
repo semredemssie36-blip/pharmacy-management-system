@@ -264,6 +264,49 @@ class ReportRepository {
     `;
     const [nearExpiryBatches] = await pool.query(nearExpiryBatchesSql, nearExpiryParams);
 
+    // 1.11 Top Selling Medicines
+    const [topMedicines] = await pool.query(`
+      SELECT 
+        p.name, 
+        COALESCE(c.name, 'General Medication') AS category,
+        COALESCE(SUM(si.quantity), 0) AS units_sold,
+        COALESCE(SUM(si.line_total), 0) AS total_revenue
+      FROM sale_items si
+      JOIN sales s ON si.sale_id = s.id
+      JOIN products p ON si.product_id = p.id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE s.organization_id = ? AND s.status = 'completed'
+      GROUP BY p.id, p.name, c.name
+      ORDER BY total_revenue DESC
+      LIMIT 5
+    `, [organizationId]).catch(() => [[]]);
+
+    // 1.12 Monthly Sales Distribution
+    const [monthlySalesRows] = await pool.query(`
+      SELECT 
+        DATE_FORMAT(sale_date, '%b') AS month_name,
+        MONTH(sale_date) as month_num,
+        COALESCE(SUM(total_amount), 0) AS total_amount
+      FROM sales
+      WHERE organization_id = ? AND status = 'completed'
+      GROUP BY month_name, month_num
+      ORDER BY month_num ASC
+    `, [organizationId]).catch(() => [[]]);
+
+    // 1.13 Active Customers Count
+    const [[custRow]] = await pool.query(`
+      SELECT COUNT(*) AS total_customers
+      FROM customers
+      WHERE organization_id = ? AND status = 'active'
+    `, [organizationId]).catch(() => [[{ total_customers: 0 }]]);
+
+    // 1.14 Procurement Purchases Total
+    const [[poRow]] = await pool.query(`
+      SELECT COALESCE(SUM(total_amount), 0) AS total_purchased
+      FROM purchase_orders
+      WHERE organization_id = ? AND status IN ('completed', 'approved', 'received')
+    `, [organizationId]).catch(() => [[{ total_purchased: 0 }]]);
+
     const completedSalesCount = Number(salesRow?.completed_sales_count || 0);
     const totalSalesAmount = Number(salesRow?.total_sales_amount || 0);
     const averageSaleValue = completedSalesCount > 0
@@ -278,6 +321,12 @@ class ReportRepository {
         totalDiscountAmount: Number(salesRow?.total_discount_amount || 0),
         totalPaidAmount: Number(salesRow?.total_paid_amount || 0),
         averageSaleValue,
+      },
+      procurement: {
+        totalPurchased: Number(poRow?.total_purchased || 0),
+      },
+      customers: {
+        totalCustomers: Number(custRow?.total_customers || 0),
       },
       finance: {
         paymentCount: Number(payRow?.payment_count || 0),
@@ -309,6 +358,17 @@ class ReportRepository {
       },
       recentSales,
       nearExpiryBatches,
+      topMedicines: (topMedicines || []).map((tm) => ({
+        name: tm.name,
+        category: tm.category,
+        unitsSold: Number(tm.units_sold || 0),
+        totalRevenue: Number(tm.total_revenue || 0),
+      })),
+      monthlySales: (monthlySalesRows || []).map((ms) => ({
+        month: ms.month_name,
+        monthNum: ms.month_num,
+        total: Number(ms.total_amount || 0),
+      })),
     };
   }
 

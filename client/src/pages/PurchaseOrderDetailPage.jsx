@@ -104,16 +104,16 @@ function PurchaseOrderDetailPage() {
         <div className="flex flex-wrap gap-3 items-center">
           <Can permission="purchase_order.submit">
             {po.status === 'draft' && (
-              <button disabled={busy} onClick={() => action(() => purchaseOrdersApi.submit(po.id), 'Submitted for approval.')} className="bg-slate-900 text-white rounded px-4 py-2 text-sm disabled:opacity-50">Submit</button>
+              <button disabled={busy} onClick={() => action(() => purchaseOrdersApi.submit(po.id), 'Submitted for approval.')} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition disabled:opacity-50">Submit</button>
             )}
           </Can>
 
           <Can permission="purchase_order.approve">
             {po.status === 'pending_approval' && (
               <>
-                <button disabled={busy} onClick={() => action(() => purchaseOrdersApi.approve(po.id), 'Purchase order approved.')} className="bg-green-700 text-white rounded px-4 py-2 text-sm disabled:opacity-50">Approve</button>
-                <input placeholder="Rejection reason" value={reason} onChange={(e) => setReason(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
-                <button disabled={busy} onClick={() => reason && action(() => purchaseOrdersApi.reject(po.id, reason), 'Purchase order rejected.')} className="bg-red-700 text-white rounded px-4 py-2 text-sm disabled:opacity-50">Reject</button>
+                <button disabled={busy} onClick={() => action(() => purchaseOrdersApi.approve(po.id), 'Purchase order approved.')} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition disabled:opacity-50">Approve</button>
+                <input placeholder="Rejection reason" value={reason} onChange={(e) => setReason(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                <button disabled={busy} onClick={() => reason && action(() => purchaseOrdersApi.reject(po.id, reason), 'Purchase order rejected.')} className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition disabled:opacity-50">Reject</button>
               </>
             )}
           </Can>
@@ -121,8 +121,8 @@ function PurchaseOrderDetailPage() {
           <Can permission="purchase_order.cancel">
             {['draft', 'submitted', 'pending_approval', 'approved', 'partially_received'].includes(po.status) && (
               <>
-                <input placeholder="Cancellation reason" value={reason} onChange={(e) => setReason(e.target.value)} className="rounded border border-slate-300 px-3 py-2 text-sm" />
-                <button disabled={busy} onClick={() => reason && action(() => purchaseOrdersApi.cancel(po.id, reason), 'Purchase order cancelled.')} className="bg-amber-700 text-white rounded px-4 py-2 text-sm disabled:opacity-50">Cancel</button>
+                <input placeholder="Cancellation reason" value={reason} onChange={(e) => setReason(e.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+                <button disabled={busy} onClick={() => reason && action(() => purchaseOrdersApi.cancel(po.id, reason), 'Purchase order cancelled.')} className="bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition disabled:opacity-50">Cancel</button>
               </>
             )}
           </Can>
@@ -131,7 +131,7 @@ function PurchaseOrderDetailPage() {
             {['approved', 'partially_received'].includes(po.status) && (
               <Link
                 to={`/procurement/goods-receipts/new?purchaseOrderId=${po.id}`}
-                className="bg-emerald-700 hover:bg-emerald-800 text-white rounded px-4 py-2 text-sm font-medium transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition"
               >
                 Receive Goods →
               </Link>

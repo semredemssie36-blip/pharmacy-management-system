@@ -128,7 +128,7 @@ function RolesPage() {
     <div className="max-w-4xl">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900">Roles</h1>
-        <button onClick={openCreate} className="bg-slate-900 text-white rounded px-4 py-2 text-sm hover:bg-slate-800">
+        <button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition">
           + New role
         </button>
       </div>
@@ -182,10 +182,10 @@ function RolesPage() {
           </div>
 
           <div className="flex gap-2">
-            <button type="submit" disabled={submitting} className="bg-slate-900 text-white rounded px-4 py-2 text-sm disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-4 py-2 text-sm shadow-xs transition disabled:opacity-50">
               {submitting ? 'Saving…' : editing ? 'Save changes' : 'Create'}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="border border-slate-300 rounded px-4 py-2 text-sm">
+            <button type="button" onClick={() => setShowForm(false)} className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium rounded-xl px-4 py-2 text-sm transition">
               Cancel
             </button>
           </div>

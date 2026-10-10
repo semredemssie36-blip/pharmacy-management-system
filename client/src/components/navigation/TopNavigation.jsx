@@ -1,84 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthContext.jsx';
 import GlobalSearchBar from '../GlobalSearchBar.jsx';
 import NotificationBell from '../NotificationBell.jsx';
 import { MenuIcon, ChevronDownIcon } from '../common/Icons.jsx';
 
-const DEMO_ACTORS = [
-  {
-    role: 'System Administrator',
-    email: 'admin@pharmacy.local',
-    badge: 'Super Admin',
-    color: 'bg-purple-100 text-purple-700 border-purple-200',
-    avatar: 'AD',
-  },
-  {
-    role: 'Branch Manager',
-    email: 'manager@pharmacy.local',
-    badge: 'Operations',
-    color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
-    avatar: 'BM',
-  },
-  {
-    role: 'Pharmacist',
-    email: 'pharmacist@pharmacy.local',
-    badge: 'Dispensing & Clinical',
-    color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    avatar: 'PH',
-  },
-  {
-    role: 'Pharmacy Technician',
-    email: 'technician@pharmacy.local',
-    badge: 'Dispense Assist',
-    color: 'bg-teal-100 text-teal-700 border-teal-200',
-    avatar: 'PT',
-  },
-  {
-    role: 'Cashier',
-    email: 'cashier@pharmacy.local',
-    badge: 'Sales & POS',
-    color: 'bg-blue-100 text-blue-700 border-blue-200',
-    avatar: 'CS',
-  },
-  {
-    role: 'Storekeeper',
-    email: 'storekeeper@pharmacy.local',
-    badge: 'Inventory & GRN',
-    color: 'bg-amber-100 text-amber-700 border-amber-200',
-    avatar: 'SK',
-  },
-  {
-    role: 'Procurement Officer',
-    email: 'procurement@pharmacy.local',
-    badge: 'Purchasing & Vendors',
-    color: 'bg-orange-100 text-orange-700 border-orange-200',
-    avatar: 'PO',
-  },
-  {
-    role: 'Finance User',
-    email: 'finance@pharmacy.local',
-    badge: 'AR / AP & Ledgers',
-    color: 'bg-rose-100 text-rose-700 border-rose-200',
-    avatar: 'FU',
-  },
-  {
-    role: 'Management / Reporting',
-    email: 'reporting@pharmacy.local',
-    badge: 'Analytics & BI',
-    color: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-    avatar: 'MR',
-  },
-];
-
 export default function TopNavigation({ onToggleSidebar }) {
-  const { user, login, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const [profileOpen, setProfileOpen] = useState(false);
-  const [switching, setSwitching] = useState(false);
-  const [switchError, setSwitchError] = useState(null);
-
   const profileRef = useRef(null);
 
   useEffect(() => {
@@ -90,24 +21,6 @@ export default function TopNavigation({ onToggleSidebar }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  async function handleQuickSwitch(actorEmail) {
-    if (user?.email === actorEmail) {
-      setProfileOpen(false);
-      return;
-    }
-    try {
-      setSwitching(true);
-      setSwitchError(null);
-      await login(actorEmail, 'Passw0rd!123');
-      setProfileOpen(false);
-      navigate('/', { replace: true });
-    } catch (err) {
-      setSwitchError('Failed to switch actor: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setSwitching(false);
-    }
-  }
 
   async function handleLogout() {
     await logout();
@@ -124,10 +37,10 @@ export default function TopNavigation({ onToggleSidebar }) {
         .slice(0, 2)
     : 'U';
 
-  const userRole = user?.roles?.[0]?.name || user?.roles?.[0]?.code || 'Staff';
+  const userRole = user?.roles?.[0]?.name || user?.roles?.[0]?.code || 'Staff Member';
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 flex items-center justify-between px-4 sm:px-6 select-none">
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/90 flex items-center justify-between px-4 sm:px-6 select-none shrink-0">
       {/* Left: Mobile hamburger & Search bar */}
       <div className="flex items-center gap-3 sm:gap-4 flex-1 max-w-xl">
         <button
@@ -143,29 +56,29 @@ export default function TopNavigation({ onToggleSidebar }) {
         </div>
       </div>
 
-      {/* Right controls: Branch indicator, Notifications, Profile & Actor Switcher */}
+      {/* Right controls: Branch indicator, Notifications, Profile */}
       <div className="flex items-center gap-3 sm:gap-4 ml-4">
         {/* Branch / Org Pill */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-100/90 border border-slate-200 rounded-full text-xs text-slate-700">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse pointer-events-none"></span>
           <span className="font-semibold text-slate-800">
-            {user?.branch_name || 'Piassa Branch'}
+            {user?.branch_name || 'Piassa Main Branch'}
           </span>
           <span className="text-slate-400">|</span>
           <span className="text-slate-600">
-            {user?.organization_name || 'EthioCodes Pharma'}
+            {user?.organization_name || 'EthioCodes Central Pharmacy'}
           </span>
         </div>
 
         {/* Notifications */}
         <NotificationBell />
 
-        {/* User profile dropdown & Actor switcher */}
+        {/* User Profile dropdown */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100/80 transition-colors focus:outline-none"
-            title="Profile & Actor Switcher"
+            title="User Profile & Settings"
           >
             <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-xs pointer-events-none select-none">
               {initials}
@@ -183,11 +96,11 @@ export default function TopNavigation({ onToggleSidebar }) {
 
           {/* Profile Dropdown */}
           {profileOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200/90 overflow-hidden z-50 animate-fadeIn">
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200/90 overflow-hidden z-50 animate-fadeIn">
               {/* Current user header */}
               <div className="p-4 bg-slate-50/90 border-b border-slate-200/80">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs pointer-events-none">
+                  <div className="w-11 h-11 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs pointer-events-none shrink-0">
                     {initials}
                   </div>
                   <div className="overflow-hidden">
@@ -195,77 +108,59 @@ export default function TopNavigation({ onToggleSidebar }) {
                       {user?.name || 'Authorized User'}
                     </p>
                     <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">
+                    <span className="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-100 text-blue-700">
                       {userRole}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Quick Actor Switcher Section */}
-              <div className="p-3 border-b border-slate-100">
-                <div className="flex items-center justify-between px-1 mb-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Quick Actor Switcher
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium">9 Canonical Roles</span>
-                </div>
+              {/* Navigation links */}
+              <div className="p-2 space-y-1">
+                <Link
+                  to="/profile"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 rounded-xl transition-colors"
+                >
+                  <svg className="w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>My Profile & Account</span>
+                </Link>
 
-                {switchError && (
-                  <div className="mb-2 p-2 rounded bg-rose-50 text-rose-700 text-xs border border-rose-200">
-                    {switchError}
-                  </div>
-                )}
+                <Link
+                  to="/profile#security"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 rounded-xl transition-colors"
+                >
+                  <svg className="w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span>Security & Password</span>
+                </Link>
 
-                <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
-                  {DEMO_ACTORS.map((actor) => {
-                    const isCurrent = user?.email === actor.email;
-                    return (
-                      <button
-                        key={actor.email}
-                        disabled={switching}
-                        onClick={() => handleQuickSwitch(actor.email)}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-xs transition-colors text-left ${
-                          isCurrent
-                            ? 'bg-blue-50 border border-blue-200 text-blue-900 font-semibold'
-                            : 'hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0 pointer-events-none">
-                            {actor.avatar}
-                          </span>
-                          <div className="truncate">
-                            <span className="block font-medium truncate">{actor.role}</span>
-                            <span className="block text-[10px] text-slate-400 truncate">
-                              {actor.email}
-                            </span>
-                          </div>
-                        </div>
-                        {isCurrent ? (
-                          <span className="text-[10px] font-bold text-blue-600 bg-white px-2 py-0.5 rounded-full border border-blue-200 shrink-0">
-                            Active
-                          </span>
-                        ) : (
-                          <span
-                            className={`text-[9px] px-1.5 py-0.5 rounded border shrink-0 ${actor.color}`}
-                          >
-                            Switch
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                <Link
+                  to="/profile#permissions"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 rounded-xl transition-colors"
+                >
+                  <svg className="w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span>Active Permissions ({user?.permissions?.length || 0})</span>
+                </Link>
               </div>
 
               {/* Sign out */}
-              <div className="p-2 bg-slate-50">
+              <div className="p-2 border-t border-slate-100 bg-slate-50">
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
                 >
-                  Sign Out from Pharmacy ERP
+                  <svg className="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>

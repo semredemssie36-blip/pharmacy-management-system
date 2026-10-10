@@ -196,7 +196,7 @@ function ProductDetailPage() {
         ))}
         <div className="mt-2 flex gap-2">
           <button onClick={() => setIngredientRows([...ingredientRows, { active_ingredient_id: '', strength: '' }])} className="text-sm text-sky-700 hover:underline">+ Add ingredient</button>
-          <button onClick={saveIngredients} disabled={saving} className="bg-slate-900 text-white rounded px-3 py-1 text-sm disabled:opacity-50">Save ingredients</button>
+          <button onClick={saveIngredients} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold shadow-xs transition disabled:opacity-50">Save ingredients</button>
         </div>
       </Section>
 
@@ -220,7 +220,7 @@ function ProductDetailPage() {
         ))}
         <div className="mt-2 flex gap-2">
           <button onClick={() => setUnitRows([...unitRows, { unit_id: '', is_base_unit: false, is_purchase_unit: false, is_inventory_unit: false, is_selling_unit: false }])} className="text-sm text-sky-700 hover:underline">+ Add unit</button>
-          <button onClick={saveUnits} disabled={saving} className="bg-slate-900 text-white rounded px-3 py-1 text-sm disabled:opacity-50">Save units</button>
+          <button onClick={saveUnits} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold shadow-xs transition disabled:opacity-50">Save units</button>
         </div>
       </Section>
 
@@ -241,7 +241,7 @@ function ProductDetailPage() {
         ))}
         <div className="mt-2 flex gap-2">
           <button onClick={() => setConversionRows([...conversionRows, { from_unit_id: '', to_unit_id: '', factor: '' }])} className="text-sm text-sky-700 hover:underline">+ Add conversion</button>
-          <button onClick={saveConversions} disabled={saving} className="bg-slate-900 text-white rounded px-3 py-1 text-sm disabled:opacity-50">Save conversions</button>
+          <button onClick={saveConversions} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold shadow-xs transition disabled:opacity-50">Save conversions</button>
         </div>
       </Section>
 
@@ -261,7 +261,7 @@ function ProductDetailPage() {
         ))}
         <div className="mt-2 flex gap-2">
           <button onClick={() => setRelationshipRows([...relationshipRows, { related_product_id: '', relationship_type: '' }])} className="text-sm text-sky-700 hover:underline">+ Add relationship</button>
-          <button onClick={saveRelationships} disabled={saving} className="bg-slate-900 text-white rounded px-3 py-1 text-sm disabled:opacity-50">Save relationships</button>
+          <button onClick={saveRelationships} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 text-xs font-semibold shadow-xs transition disabled:opacity-50">Save relationships</button>
         </div>
       </Section>
     </div>

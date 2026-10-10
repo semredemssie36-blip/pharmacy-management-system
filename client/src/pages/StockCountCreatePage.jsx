@@ -321,14 +321,14 @@ export default function StockCountCreatePage() {
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
           <Link
             to="/inventory/stock-counts"
-            className="px-4 py-2 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="px-4 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+            className="px-5 py-2 rounded-xl shadow-xs text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition"
           >
             {submitting ? 'Initializing...' : 'Create Draft Count Session'}
           </button>

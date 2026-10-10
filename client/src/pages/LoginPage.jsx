@@ -3,18 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext.jsx';
 import { PillCrossLogo } from '../components/common/Icons.jsx';
 
-const DEMO_ACCOUNTS = [
-  { role: 'System Administrator', email: 'admin@pharmacy.local', badge: 'Full Access', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { role: 'Branch Manager', email: 'manager@pharmacy.local', badge: 'Branch Ops', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-  { role: 'Pharmacist', email: 'pharmacist@pharmacy.local', badge: 'Rx & Clinical', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  { role: 'Pharmacy Technician', email: 'technician@pharmacy.local', badge: 'Dispensing', color: 'bg-teal-100 text-teal-700 border-teal-200' },
-  { role: 'Sales / Cashier', email: 'cashier@pharmacy.local', badge: 'POS & Billing', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { role: 'Storekeeper', email: 'storekeeper@pharmacy.local', badge: 'Inventory & GRN', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-  { role: 'Procurement Officer', email: 'procurement@pharmacy.local', badge: 'Purchases & Vendors', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-  { role: 'Finance User', email: 'finance@pharmacy.local', badge: 'Ledgers & AR/AP', color: 'bg-rose-100 text-rose-700 border-rose-200' },
-  { role: 'Management / Reporting', email: 'reporting@pharmacy.local', badge: 'BI & Analytics', color: 'bg-cyan-100 text-cyan-700 border-cyan-200' },
-];
-
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -41,7 +29,7 @@ export default function LoginPage() {
       const destination = location.state?.from?.pathname || '/';
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Login failed');
+      setError(err.response?.data?.message || err.message || 'Login failed. Please verify credentials.');
     } finally {
       setSubmitting(false);
     }
@@ -52,29 +40,29 @@ export default function LoginPage() {
     await performLogin(email, password);
   }
 
-  async function handleQuickDemoLogin(demoEmail) {
-    setEmail(demoEmail);
-    setPassword('Passw0rd!123');
-    await performLogin(demoEmail, 'Passw0rd!123');
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 select-none">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="flex justify-center mb-3">
-          <PillCrossLogo className="w-12 h-12 pointer-events-none" />
+        <div className="flex justify-center mb-4">
+          <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-200/80">
+            <PillCrossLogo className="w-10 h-10 pointer-events-none" />
+          </div>
         </div>
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">
           Pharmacy ERP
         </h1>
-        <p className="mt-1 text-xs text-slate-500 font-medium">
-          Enterprise Management System • EthioCodes Software Development
+        <p className="mt-1.5 text-xs text-slate-500 font-medium">
+          Authoritative Healthcare & Pharmacy Operations Platform
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
-        <div className="bg-white py-8 px-6 sm:px-10 shadow-xl rounded-3xl border border-slate-200/80 space-y-6">
-          {/* Main Credentials Form */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-6 sm:px-10 shadow-xl rounded-3xl border border-slate-200/80">
+          <div className="mb-6 border-b border-slate-100 pb-4">
+            <h2 className="text-base font-bold text-slate-900">Sign in to your account</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Enter your organizational credentials to continue</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <label htmlFor="email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -86,7 +74,7 @@ export default function LoginPage() {
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@pharmacy.local"
+                placeholder="user@pharmacy.local"
                 className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
               />
             </div>
@@ -96,7 +84,6 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Password
                 </label>
-                <span className="text-[11px] text-slate-400 font-mono">Demo: Passw0rd!123</span>
               </div>
               <input
                 id="password"
@@ -115,44 +102,18 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-700 active:scale-[0.99] transition shadow-md disabled:opacity-50"
+              className="w-full mt-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white hover:bg-blue-700 active:scale-[0.99] transition shadow-md disabled:opacity-50"
             >
               {submitting ? 'Authenticating…' : 'Sign In to Workspace'}
             </button>
           </form>
 
-          {/* 1-Click Quick Demo Switcher Section */}
-          <div className="pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                1-Click Demo Actor Sign In
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium">9 Canonical Roles</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => handleQuickDemoLogin(acc.email)}
-                  className="flex flex-col text-left p-2.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-xs group"
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-bold text-slate-800 group-hover:text-blue-700 truncate">
-                      {acc.role}
-                    </span>
-                    <span className={`text-[9px] px-1.5 py-0.2 rounded border font-semibold ${acc.color}`}>
-                      {acc.badge}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-400 truncate mt-1">
-                    {acc.email}
-                  </span>
-                </button>
-              ))}
-            </div>
+          <div className="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Identity Service Online
+            </span>
+            <span>TLS 1.3 Encrypted</span>
           </div>
         </div>
 

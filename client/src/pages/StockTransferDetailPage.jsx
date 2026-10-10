@@ -467,7 +467,7 @@ export default function StockTransferDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={handleSubmit}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 shadow-sm transition disabled:opacity-50"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 shadow-xs transition disabled:opacity-50"
                 >
                   Submit for Approval
                 </button>
@@ -482,7 +482,7 @@ export default function StockTransferDetailPage() {
                     type="button"
                     disabled={busy}
                     onClick={() => setApproveModalOpen(true)}
-                    className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 shadow-sm transition disabled:opacity-50"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 shadow-xs transition disabled:opacity-50"
                   >
                     Approve Transfer
                   </button>
@@ -492,7 +492,7 @@ export default function StockTransferDetailPage() {
                     type="button"
                     disabled={busy}
                     onClick={() => setRejectModalOpen(true)}
-                    className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-medium text-white hover:bg-rose-700 shadow-sm transition disabled:opacity-50"
+                    className="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 shadow-xs transition disabled:opacity-50"
                   >
                     Reject
                   </button>
@@ -507,7 +507,7 @@ export default function StockTransferDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={openDispatchModal}
-                  className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 shadow-sm transition disabled:opacity-50 flex items-center gap-1.5"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 shadow-xs transition disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -529,7 +529,7 @@ export default function StockTransferDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={openReceiveModal}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 shadow-sm transition disabled:opacity-50 flex items-center gap-1.5"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 shadow-xs transition disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -1003,7 +1003,7 @@ export default function StockTransferDetailPage() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="rounded bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 shadow-xs transition"
                 >
                   Confirm Approval
                 </button>
@@ -1349,7 +1349,7 @@ export default function StockTransferDetailPage() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="rounded bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 shadow-xs transition"
                 >
                   Confirm & Post Received Stock
                 </button>

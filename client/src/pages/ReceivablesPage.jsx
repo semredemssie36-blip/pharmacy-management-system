@@ -337,7 +337,7 @@ export default function ReceivablesPage() {
                           <Can permission="payment.create">
                             <button
                               onClick={() => openPayModal(r)}
-                              className="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1 rounded transition"
+                              className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg shadow-xs transition"
                             >
                               Collect Payment
                             </button>
@@ -422,14 +422,14 @@ export default function ReceivablesPage() {
                 <button
                   type="button"
                   onClick={() => setPayModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 hover:bg-slate-50 rounded-xl transition shadow-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={payLoading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition disabled:opacity-50"
                 >
                   {payLoading ? 'Saving...' : 'Confirm Payment'}
                 </button>

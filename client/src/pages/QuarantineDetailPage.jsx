@@ -199,7 +199,7 @@ export default function QuarantineDetailPage() {
               <button
                 onClick={() => setShowReleaseModal(true)}
                 disabled={actionLoading}
-                className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded shadow-sm transition"
+                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-xs transition"
               >
                 Release to Stock
               </button>
@@ -208,7 +208,7 @@ export default function QuarantineDetailPage() {
               <button
                 onClick={() => setShowDisposeModal(true)}
                 disabled={actionLoading}
-                className="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-medium rounded shadow-sm transition"
+                className="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg shadow-xs transition"
               >
                 Authorize Disposal
               </button>
@@ -381,14 +381,14 @@ export default function QuarantineDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowReleaseModal(false)}
-                  className="px-3 py-1.5 border rounded text-xs text-slate-600 hover:bg-slate-50"
+                  className="px-3.5 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition disabled:opacity-50"
                 >
                   {actionLoading ? 'Releasing...' : 'Confirm Release to Stock'}
                 </button>

@@ -315,9 +315,9 @@ export default function StockCountDetailPage() {
                 <button
                   onClick={handleStartCount}
                   disabled={busy}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm font-medium shadow-sm disabled:opacity-50"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-xs disabled:opacity-50 transition"
                 >
-                  ▶ Start Counting & Freeze Snapshot
+                  Start Counting & Freeze Snapshot
                 </button>
               </Can>
             )}
@@ -328,9 +328,9 @@ export default function StockCountDetailPage() {
                 <button
                   onClick={handleSubmitCount}
                   disabled={busy}
-                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium shadow-sm disabled:opacity-50"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-xs disabled:opacity-50 transition"
                 >
-                  ✓ Submit for Review
+                  Submit for Review
                 </button>
               </Can>
             )}
@@ -341,9 +341,9 @@ export default function StockCountDetailPage() {
                 <button
                   onClick={handleApprove}
                   disabled={busy}
-                  className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded text-sm font-medium shadow-sm disabled:opacity-50"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-xs disabled:opacity-50 transition"
                 >
-                  ✓ Approve Variances
+                  Approve Variances
                 </button>
               </Can>
             )}
@@ -354,9 +354,9 @@ export default function StockCountDetailPage() {
                 <button
                   onClick={() => setRejectModalOpen(true)}
                   disabled={busy}
-                  className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-sm font-medium shadow-sm disabled:opacity-50"
+                  className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold shadow-xs disabled:opacity-50 transition"
                 >
-                  ✕ Reject Session
+                  Reject Session
                 </button>
               </Can>
             )}
@@ -367,9 +367,9 @@ export default function StockCountDetailPage() {
                 <button
                   onClick={handleApplyAdjustments}
                   disabled={busy}
-                  className="px-5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm font-bold shadow-md disabled:opacity-50 animate-pulse"
+                  className="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-md disabled:opacity-50 transition"
                 >
-                  ⚡ Apply Authorized Stock Adjustments
+                  Apply Authorized Stock Adjustments
                 </button>
               </Can>
             )}
@@ -475,7 +475,7 @@ export default function StockCountDetailPage() {
           <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">Variances Flagged</div>
           <div className="text-lg font-bold text-slate-900 mt-1">
             {discrepancyLines > 0 ? (
-              <span className="text-rose-600">⚠ {discrepancyLines} Items</span>
+              <span className="text-rose-600">{discrepancyLines} Items</span>
             ) : (
               <span className="text-emerald-600">0 Discrepancies</span>
             )}
@@ -831,14 +831,14 @@ export default function StockCountDetailPage() {
                 <button
                   type="button"
                   onClick={() => setCountModalOpen(false)}
-                  className="px-3 py-1.5 border border-slate-300 rounded text-sm text-slate-700 hover:bg-slate-50"
+                  className="px-3.5 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium shadow-sm"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-xs transition disabled:opacity-50"
                 >
                   Save Count
                 </button>

@@ -162,7 +162,7 @@ export default function SupplierReturnCreatePage() {
           <button
             type="submit"
             disabled={receiptLoading || !receiptInput.trim()}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition disabled:opacity-50"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
           >
             {receiptLoading ? 'Loading...' : 'Verify Receipt'}
           </button>
@@ -334,7 +334,7 @@ export default function SupplierReturnCreatePage() {
                 type="button"
                 disabled={submitting}
                 onClick={() => handleSubmit(false)}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
               >
                 Save as Draft
               </button>
@@ -342,7 +342,7 @@ export default function SupplierReturnCreatePage() {
                 type="button"
                 disabled={submitting}
                 onClick={() => handleSubmit(true)}
-                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition"
+                className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
               >
                 {submitting ? 'Creating...' : 'Submit Order'}
               </button>

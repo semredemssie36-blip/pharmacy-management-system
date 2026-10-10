@@ -243,7 +243,7 @@ export default function RecallDetailPage() {
               <button
                 onClick={handleApprove}
                 disabled={actionLoading}
-                className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded shadow-sm transition"
+                className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-xs transition"
               >
                 Approve Recall Case
               </button>
@@ -255,7 +255,7 @@ export default function RecallDetailPage() {
               <button
                 onClick={handleActivate}
                 disabled={actionLoading}
-                className="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded shadow-sm transition"
+                className="px-3 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg shadow-xs transition"
               >
                 Activate Recall & Contain Stock
               </button>
@@ -268,7 +268,7 @@ export default function RecallDetailPage() {
                 <button
                   onClick={() => setShowActionModal(true)}
                   disabled={actionLoading}
-                  className="px-3 py-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded shadow-sm transition"
+                  className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-xs transition"
                 >
                   Record Containment Action
                 </button>
@@ -277,7 +277,7 @@ export default function RecallDetailPage() {
                 <button
                   onClick={() => setShowCloseModal(true)}
                   disabled={actionLoading}
-                  className="px-3 py-1.5 text-xs bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded shadow-sm transition"
+                  className="px-3 py-1.5 text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded-lg shadow-xs transition"
                 >
                   Close Recall Case
                 </button>
@@ -536,14 +536,14 @@ export default function RecallDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowCloseModal(false)}
-                  className="px-3 py-1.5 border rounded text-xs text-slate-600 hover:bg-slate-50"
+                  className="px-3.5 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded text-xs font-semibold"
+                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-xs transition disabled:opacity-50"
                 >
                   {actionLoading ? 'Closing...' : 'Confirm Case Closure'}
                 </button>

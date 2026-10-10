@@ -821,7 +821,7 @@ export default function PosPage() {
                 type="button"
                 onClick={handleCompleteSale}
                 disabled={isLoading || cartItems.length === 0}
-                className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-base"
+                className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-base"
               >
                 <span>Complete Sale & Dispense</span>
               </button>
@@ -830,7 +830,7 @@ export default function PosPage() {
                 type="button"
                 onClick={openCheckoutModal}
                 disabled={isLoading || cartItems.length === 0}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold rounded-xl shadow transition flex items-center justify-center gap-2 text-sm"
+                className="w-full py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 disabled:opacity-50 font-semibold rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-sm"
               >
                 <span>Payment & Customer Credit</span>
               </button>
@@ -849,7 +849,7 @@ export default function PosPage() {
                   type="button"
                   onClick={handlePaymentPending}
                   disabled={isLoading || cartItems.length === 0}
-                  className="py-2 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-medium text-xs rounded-lg transition"
+                  className="py-2 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-xs rounded-lg transition"
                 >
                   Pending Payment
                 </button>
@@ -1074,7 +1074,7 @@ export default function PosPage() {
                 type="button"
                 onClick={handleExecuteCheckout}
                 disabled={isLoading || (paymentMode === 'credit' && !selectedCustomerId)}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-sm font-bold shadow transition"
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-sm font-semibold shadow-xs transition"
               >
                 {isLoading ? 'Processing...' : 'Confirm & Complete'}
               </button>
@@ -1162,7 +1162,7 @@ export default function PosPage() {
                   setShowReceiptModal(false);
                   resetPos();
                 }}
-                className="flex-1 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition"
+                className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-xs transition"
               >
                 Done / Next Sale
               </button>

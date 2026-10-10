@@ -144,7 +144,7 @@ export default function SupplierReturnDetailPage() {
                 <button
                   disabled={submitting}
                   onClick={handleSubmitOrder}
-                  className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                  className="rounded-xl bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
                 >
                   {submitting ? 'Submitting...' : 'Submit Order'}
                 </button>
@@ -156,7 +156,7 @@ export default function SupplierReturnDetailPage() {
                 <button
                   disabled={approving}
                   onClick={handleApproveOrder}
-                  className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                  className="rounded-xl bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition disabled:opacity-50 shadow-xs"
                 >
                   {approving ? 'Approving...' : 'Approve Order'}
                 </button>
@@ -168,7 +168,7 @@ export default function SupplierReturnDetailPage() {
                 <button
                   disabled={completing}
                   onClick={handleCompleteOrder}
-                  className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
+                  className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition disabled:opacity-50"
                 >
                   {completing ? 'Deducting Stock...' : 'Dispatch & Complete Return'}
                 </button>
@@ -179,7 +179,7 @@ export default function SupplierReturnDetailPage() {
               <Can permission="supplier_return.cancel">
                 <button
                   onClick={() => setCancelModalOpen(true)}
-                  className="rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-50 transition"
+                  className="rounded-xl border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition shadow-xs"
                 >
                   Cancel Order
                 </button>

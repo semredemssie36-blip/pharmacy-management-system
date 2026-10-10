@@ -9,5 +9,7 @@ const router = Router();
 router.post('/auth/login', authValidator.validateLogin, authController.login);
 router.post('/auth/logout', authController.logout);
 router.get('/auth/me', authenticate, authController.me);
+router.put('/auth/profile', authenticate, authController.updateProfile);
+router.post('/auth/change-password', authenticate, authController.changePassword);
 
 export default router;

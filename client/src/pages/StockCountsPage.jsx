@@ -93,7 +93,7 @@ export default function StockCountsPage() {
           <Can permission="stock_count.create">
             <Link
               to="/inventory/stock-counts/new"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              className="inline-flex items-center px-4 py-2 rounded-xl shadow-xs text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition"
             >
               + New Stock Count Session
             </Link>
@@ -213,7 +213,7 @@ export default function StockCountsPage() {
           <button
             type="button"
             onClick={handleSearchSubmit}
-            className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            className="px-3.5 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-xs transition"
           >
             Search
           </button>
@@ -307,7 +307,7 @@ export default function StockCountsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {discLines > 0 ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">
-                            ⚠ {discLines} Variance{discLines > 1 ? 's' : ''}
+                            {discLines} Variance{discLines > 1 ? 's' : ''}
                           </span>
                         ) : (
                           <span className="text-xs text-slate-400">None detected</span>
@@ -322,7 +322,7 @@ export default function StockCountsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link
                           to={`/inventory/stock-counts/${c.id}`}
-                          className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded"
+                          className="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded-lg font-medium transition"
                         >
                           View Details →
                         </Link>

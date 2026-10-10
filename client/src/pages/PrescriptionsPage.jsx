@@ -978,7 +978,7 @@ function PrescriptionsPage() {
                         setRxToValidate(selectedRx);
                         setValidationNotes('');
                       }}
-                      className="px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-medium hover:bg-teal-700"
+                      className="px-3.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 shadow-xs transition"
                     >
                       Validate Prescription
                     </button>
@@ -1050,7 +1050,7 @@ function PrescriptionsPage() {
                 <button
                   type="button"
                   onClick={() => setRxToValidate(null)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50"
+                  className="px-4 py-2 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
                 >
                   Cancel
                 </button>
@@ -1058,7 +1058,7 @@ function PrescriptionsPage() {
                   type="button"
                   disabled={validating}
                   onClick={handleValidatePrescription}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 shadow-xs transition"
                 >
                   {validating ? 'Validating...' : 'Approve & Validate'}
                 </button>

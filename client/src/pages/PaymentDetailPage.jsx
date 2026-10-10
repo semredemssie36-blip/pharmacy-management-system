@@ -152,13 +152,13 @@ export default function PaymentDetailPage() {
             <Can permission="payment.verify">
               <button
                 onClick={handleVerify}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-xs transition"
               >
                 Verify Payment
               </button>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold shadow-xs transition"
               >
                 Cancel Payment
               </button>
