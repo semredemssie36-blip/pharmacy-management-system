@@ -1,12 +1,28 @@
 import { API_BASE_URL } from '../utils/env.js';
 
+function sanitizePath(path) {
+  if (!path || typeof path !== 'string' || !path.includes('?')) return path;
+  const [baseUrl, query] = path.split('?');
+  if (!query) return baseUrl;
+  const sp = new URLSearchParams(query);
+  const clean = new URLSearchParams();
+  for (const [key, val] of sp.entries()) {
+    if (val !== undefined && val !== null && val !== '' && val !== 'undefined' && val !== 'null') {
+      clean.append(key, val);
+    }
+  }
+  const cleanQuery = clean.toString();
+  return cleanQuery ? `${baseUrl}?${cleanQuery}` : baseUrl;
+}
+
 /**
  * Reusable API client foundation.
  * All backend communication should go through this client — never
  * hardcode fetch() calls inside components.
  */
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const sanitizedPath = sanitizePath(path);
+  const response = await fetch(`${API_BASE_URL}${sanitizedPath}`, {
     credentials: 'include', // send the httpOnly auth cookie with API requests
     headers: {
       'Content-Type': 'application/json',

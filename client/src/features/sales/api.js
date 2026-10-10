@@ -1,9 +1,20 @@
 import apiClient from '../../services/apiClient.js';
 
+function buildQuery(params) {
+  if (!params) return '';
+  const clean = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '' && value !== 'undefined' && value !== 'null') {
+      clean[key] = value;
+    }
+  }
+  const qs = new URLSearchParams(clean).toString();
+  return qs ? `?${qs}` : '';
+}
+
 export const salesApi = {
   list(params) {
-    const q = params ? `?${new URLSearchParams(params)}` : '';
-    return apiClient.get(`/sales${q}`);
+    return apiClient.get(`/sales${buildQuery(params)}`);
   },
   get(id) {
     return apiClient.get(`/sales/${id}`);
@@ -33,8 +44,7 @@ export const salesApi = {
     return apiClient.post(`/sales/${id}/void`, { reason });
   },
   searchPosProducts(params) {
-    const q = params ? `?${new URLSearchParams(params)}` : '';
-    return apiClient.get(`/pos/products/search${q}`);
+    return apiClient.get(`/pos/products/search${buildQuery(params)}`);
   },
 };
 

@@ -32,14 +32,15 @@ export default function SalesPage() {
     setIsLoading(true);
     setErrorMessage('');
     try {
-      const res = await salesApi.list({
-        page,
-        status: statusFilter || undefined,
-        search: searchQuery || undefined,
-        limit: 15,
-      });
-      setSales(res.data?.items || res.data?.sales || []);
-      setTotal(res.data?.total ?? res.data?.pagination?.total ?? 0);
+      const params = { page, limit: 15 };
+      if (statusFilter) params.status = statusFilter;
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+
+      const res = await salesApi.list(params);
+      const items = res.data?.items || res.data?.data?.items || res.data?.sales || [];
+      const count = res.data?.total ?? res.data?.data?.total ?? res.data?.pagination?.total ?? 0;
+      setSales(items);
+      setTotal(count);
     } catch (err) {
       setErrorMessage(err.message || 'Failed to load sales');
     } finally {
@@ -323,11 +324,11 @@ export default function SalesPage() {
                 <div key={idx} className="border-b border-slate-100 pb-1.5">
                   <div className="flex justify-between font-medium text-slate-800">
                     <span>{line.productName}</span>
-                    <span className="font-mono">ETB {line.lineTotal.toFixed(2)}</span>
+                    <span className="font-mono">ETB {Number(line.lineTotal || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-slate-500 text-[11px]">
-                    <span>{line.quantity} {line.unitName} @ ETB {line.unitPrice.toFixed(2)}</span>
-                    {line.discountAmount > 0 && <span className="text-emerald-600">Disc: -{line.discountAmount.toFixed(2)}</span>}
+                    <span>{line.quantity} {line.unitName} @ ETB {Number(line.unitPrice || 0).toFixed(2)}</span>
+                    {Number(line.discountAmount || 0) > 0 && <span className="text-emerald-600">Disc: -{Number(line.discountAmount || 0).toFixed(2)}</span>}
                   </div>
                   {line.batches?.length > 0 && (
                     <div className="text-[10px] text-slate-400 mt-0.5">
@@ -341,17 +342,17 @@ export default function SalesPage() {
             <div className="border-t border-dashed border-slate-300 pt-3 space-y-1 text-xs">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal:</span>
-                <span className="font-mono">ETB {selectedReceipt.subtotal.toFixed(2)}</span>
+                <span className="font-mono">ETB {Number(selectedReceipt.subtotal || 0).toFixed(2)}</span>
               </div>
-              {selectedReceipt.discountAmount > 0 && (
+              {Number(selectedReceipt.discountAmount || 0) > 0 && (
                 <div className="flex justify-between text-emerald-600 font-medium">
                   <span>Discount:</span>
-                  <span className="font-mono">- ETB {selectedReceipt.discountAmount.toFixed(2)}</span>
+                  <span className="font-mono">- ETB {Number(selectedReceipt.discountAmount || 0).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-base font-bold text-slate-900 pt-1 border-t border-slate-200">
                 <span>TOTAL:</span>
-                <span className="font-mono text-emerald-600">ETB {selectedReceipt.totalAmount.toFixed(2)}</span>
+                <span className="font-mono text-emerald-600">ETB {Number(selectedReceipt.totalAmount || 0).toFixed(2)}</span>
               </div>
             </div>
 

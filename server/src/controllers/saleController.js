@@ -1,19 +1,26 @@
 import saleService from '../services/saleService.js';
 import { parseIdParam } from '../utils/parseId.js';
 
+function cleanQueryParam(val) {
+  if (val === undefined || val === null || val === '' || val === 'undefined' || val === 'null') {
+    return undefined;
+  }
+  return val;
+}
+
 async function list(req, res, next) {
   try {
     const result = await saleService.listSales(req.user.id, {
-      search: req.query.search,
-      status: req.query.status,
-      branchId: req.query.branchId,
-      warehouseId: req.query.warehouseId,
-      customerId: req.query.customerId,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate,
-      page: req.query.page,
-      limit: req.query.limit,
-      sort: req.query.sort,
+      search: cleanQueryParam(req.query.search),
+      status: cleanQueryParam(req.query.status),
+      branchId: cleanQueryParam(req.query.branchId),
+      warehouseId: cleanQueryParam(req.query.warehouseId),
+      customerId: cleanQueryParam(req.query.customerId),
+      startDate: cleanQueryParam(req.query.startDate),
+      endDate: cleanQueryParam(req.query.endDate),
+      page: cleanQueryParam(req.query.page),
+      limit: cleanQueryParam(req.query.limit),
+      sort: cleanQueryParam(req.query.sort),
     });
     res.json({ success: true, data: result });
   } catch (err) {

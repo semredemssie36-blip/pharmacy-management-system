@@ -225,12 +225,14 @@ export async function seedFullDemo() {
     ],
     FINANCE_USER: [
       'payment.%', 'receivable.%', 'customer.view', 'supplier.view', 'sale.view',
-      'purchase_order.view', 'report.financial.view', 'report.sales.view',
+      'purchase_order.view', 'customer_return.view', 'customer_return.complete',
+      'report.financial.view', 'report.sales.view',
       'report.dashboard.view', 'search.view', 'notification.view'
     ],
     MANAGEMENT_REPORTING: [
       'report.%', 'sale.view', 'inventory.view', 'purchase_order.view',
-      'dispensing.view', 'payment.view', 'search.view', 'notification.view'
+      'dispensing.view', 'payment.view', 'customer.view', 'customer_return.view',
+      'supplier.view', 'search.view', 'notification.view'
     ],
   };
 

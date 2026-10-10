@@ -9,7 +9,12 @@ import SummaryCard from '../components/common/SummaryCard.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 
 export default function CustomerReturnsPage() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
+  const hasPerm = (p) =>
+    (typeof can === 'function' && can(p)) ||
+    user?.permissions?.includes('*') ||
+    (Array.isArray(user?.permissions) && user.permissions.includes(p));
+  const canViewReturns = hasPerm('customer_return.view');
 
   const [returns, setReturns] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -24,6 +29,7 @@ export default function CustomerReturnsPage() {
   const [page, setPage] = useState(1);
 
   async function loadData() {
+    if (!canViewReturns) return;
     setLoading(true);
     setError(null);
     try {
@@ -45,8 +51,12 @@ export default function CustomerReturnsPage() {
   }
 
   useEffect(() => {
+    if (!canViewReturns) {
+      setLoading(false);
+      return;
+    }
     loadData();
-  }, [statusFilter, startDate, endDate, page]);
+  }, [statusFilter, startDate, endDate, page, canViewReturns]);
 
   function handleSearchSubmit(e) {
     e.preventDefault();
@@ -59,6 +69,25 @@ export default function CustomerReturnsPage() {
   const totalPendingInspection = returns.filter((r) => r.status === 'submitted' || r.status === 'pending_inspection').length;
   const totalApproved = returns.filter((r) => r.status === 'approved').length;
   const totalCompleted = returns.filter((r) => r.status === 'completed').length;
+
+  if (!canViewReturns) {
+    return (
+      <div className="max-w-xl mx-auto my-12 p-8 bg-white rounded-2xl border border-slate-200/90 text-center shadow-xs">
+        <div className="w-12 h-12 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xl mb-4 select-none">
+          !
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">Access Restricted</h2>
+        <p className="text-sm text-slate-500 mt-2">
+          Your active account does not have authorization to view customer return logs.
+        </p>
+        <div className="mt-6">
+          <Link to="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-xs transition">
+            Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

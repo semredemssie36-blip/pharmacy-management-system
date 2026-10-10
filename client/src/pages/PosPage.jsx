@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { salesApi } from '../features/sales/api.js';
 import { paymentsApi, receivablesApi } from '../features/finance/api.js';
 import { branchesApi } from '../features/organizations/api.js';
@@ -10,7 +11,12 @@ import ConfirmationDialog from '../components/common/ConfirmationDialog.jsx';
 import EmptyState from '../components/common/EmptyState.jsx';
 
 export default function PosPage() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
+  const hasPerm = (p) =>
+    (typeof can === 'function' && can(p)) ||
+    user?.permissions?.includes('*') ||
+    (Array.isArray(user?.permissions) && user.permissions.includes(p));
+  const canOperatePos = hasPerm('sale.create') || hasPerm('sale.confirm');
 
   // Branch & Warehouse selection
   const [branches, setBranches] = useState([]);
@@ -55,6 +61,7 @@ export default function PosPage() {
 
   // Fetch branches and customers on mount
   useEffect(() => {
+    if (!canOperatePos) return;
     async function loadInitialData() {
       try {
         const [bRes, cRes] = await Promise.all([
@@ -73,7 +80,7 @@ export default function PosPage() {
       }
     }
     loadInitialData();
-  }, []);
+  }, [canOperatePos]);
 
   // Real-time product search
   useEffect(() => {
@@ -483,6 +490,26 @@ export default function PosPage() {
       setIsLoading(false);
       setShowCancelDialog(false);
     }
+  }
+
+  if (!canOperatePos) {
+    return (
+      <div className="max-w-xl mx-auto my-12 p-8 bg-white rounded-2xl border border-slate-200/90 text-center shadow-xs">
+        <div className="w-12 h-12 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xl mb-4 select-none">
+          !
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">POS Terminal Restricted</h2>
+        <p className="text-sm text-slate-500 mt-2">
+          Your active account does not have authorization to operate the Point of Sale terminal.
+          POS operations require Cashier or Branch Manager permissions.
+        </p>
+        <div className="mt-6">
+          <Link to="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-xs transition">
+            Back to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -997,25 +1024,25 @@ export default function PosPage() {
                         <div className="flex justify-between">
                           <span className="text-slate-600">Credit Limit:</span>
                           <span className="font-semibold text-slate-800">
-                            {customerCreditSummary.creditLimit.toFixed(2)} ETB
+                            {Number(customerCreditSummary.creditLimit || 0).toFixed(2)} ETB
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Current Outstanding:</span>
                           <span className="font-semibold text-rose-600">
-                            {customerCreditSummary.currentBalance.toFixed(2)} ETB
+                            {Number(customerCreditSummary.currentBalance || 0).toFixed(2)} ETB
                           </span>
                         </div>
                         <div className="flex justify-between pt-1 border-t border-purple-200">
                           <span className="font-bold text-slate-700">Available Credit:</span>
                           <span
                             className={`font-black ${
-                              customerCreditSummary.availableCredit >= finalTotal
+                              Number(customerCreditSummary.availableCredit || 0) >= finalTotal
                                 ? 'text-emerald-700'
                                 : 'text-rose-700'
                             }`}
                           >
-                            {customerCreditSummary.availableCredit.toFixed(2)} ETB
+                            {Number(customerCreditSummary.availableCredit || 0).toFixed(2)} ETB
                           </span>
                         </div>
 
@@ -1109,11 +1136,11 @@ export default function PosPage() {
                 <div key={idx} className="border-b border-slate-100 pb-1.5">
                   <div className="flex justify-between font-medium text-slate-800">
                     <span>{line.productName}</span>
-                    <span className="font-mono">ETB {line.lineTotal.toFixed(2)}</span>
+                    <span className="font-mono">ETB {Number(line.lineTotal || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-slate-500 text-[11px]">
-                    <span>{line.quantity} {line.unitName} @ ETB {line.unitPrice.toFixed(2)}</span>
-                    {line.discountAmount > 0 && <span className="text-emerald-600">Disc: -{line.discountAmount.toFixed(2)}</span>}
+                    <span>{line.quantity} {line.unitName} @ ETB {Number(line.unitPrice || 0).toFixed(2)}</span>
+                    {Number(line.discountAmount || 0) > 0 && <span className="text-emerald-600">Disc: -{Number(line.discountAmount || 0).toFixed(2)}</span>}
                   </div>
                   {line.batches?.length > 0 && (
                     <div className="text-[10px] text-slate-400 mt-0.5">
@@ -1128,17 +1155,17 @@ export default function PosPage() {
             <div className="border-t border-dashed border-slate-300 pt-3 space-y-1 text-xs">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal:</span>
-                <span className="font-mono">ETB {receiptData.subtotal.toFixed(2)}</span>
+                <span className="font-mono">ETB {Number(receiptData.subtotal || 0).toFixed(2)}</span>
               </div>
-              {receiptData.discountAmount > 0 && (
+              {Number(receiptData.discountAmount || 0) > 0 && (
                 <div className="flex justify-between text-emerald-600 font-medium">
                   <span>Discount:</span>
-                  <span className="font-mono">- ETB {receiptData.discountAmount.toFixed(2)}</span>
+                  <span className="font-mono">- ETB {Number(receiptData.discountAmount || 0).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-base font-bold text-slate-900 pt-1 border-t border-slate-200">
                 <span>TOTAL PAID:</span>
-                <span className="font-mono text-emerald-600">ETB {receiptData.totalAmount.toFixed(2)}</span>
+                <span className="font-mono text-emerald-600">ETB {Number(receiptData.totalAmount || 0).toFixed(2)}</span>
               </div>
               <div className="text-center pt-3 text-[11px] text-slate-400">
                 Thank you for your visit. Keep receipt for returns/warranty.

@@ -473,19 +473,19 @@ export default function ReceivablesPage() {
                   <div className="p-3 border rounded-lg bg-white">
                     <span className="text-xs text-slate-500 block">Credit Limit</span>
                     <span className="font-bold text-slate-900 text-sm">
-                      {customerSummary.creditLimit.toFixed(2)} ETB
+                      {Number(customerSummary.creditLimit || 0).toFixed(2)} ETB
                     </span>
                   </div>
                   <div className="p-3 border rounded-lg bg-white">
                     <span className="text-xs text-slate-500 block">Current Balance</span>
                     <span className="font-bold text-rose-600 text-sm">
-                      {customerSummary.currentBalance.toFixed(2)} ETB
+                      {Number(customerSummary.currentBalance || 0).toFixed(2)} ETB
                     </span>
                   </div>
                   <div className="p-3 border rounded-lg bg-white">
                     <span className="text-xs text-slate-500 block">Available Credit</span>
                     <span className="font-bold text-emerald-600 text-sm">
-                      {customerSummary.availableCredit.toFixed(2)} ETB
+                      {Number(customerSummary.availableCredit || 0).toFixed(2)} ETB
                     </span>
                   </div>
                 </div>

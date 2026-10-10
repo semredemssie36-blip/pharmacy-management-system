@@ -51,17 +51,43 @@ export default function Sidebar({ isOpen, onClose }) {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // Detailed capability detection
+  const canPos = isAdmin || isCashier || hasPerm('sale.create');
+  const canSalesHistory = isAdmin || isManager || isCashier || isReporting || isFinance || hasPerm('sale.view');
+  const canCustomerReturns = isAdmin || isManager || isCashier || isFinance || hasPerm('customer_return.view');
+
+  const canPurchaseOrders = isAdmin || isManager || isProcurement || isReporting || isFinance || hasPerm('purchase_order.view');
+  const canGoodsReceipts = isAdmin || isManager || isStorekeeper || isProcurement || hasPerm('goods_receipt.view');
+  const canSupplierReturns = isAdmin || isManager || isStorekeeper || isProcurement || hasPerm('supplier_return.view');
+
+  const canStockOverview = isAdmin || isManager || isStorekeeper || isPharmacist || isTech || isReporting || hasPerm('inventory.view');
+  const canBatches = isAdmin || isManager || isStorekeeper || isPharmacist || hasPerm('batch.view');
+  const canStockCounts = isAdmin || isManager || isStorekeeper || hasPerm('stock_count.view');
+  const canStockTransfers = isAdmin || isManager || isStorekeeper || hasPerm('stock_transfer.view');
+  const canExpiry = isAdmin || isManager || isPharmacist || isTech || isStorekeeper || hasPerm('expiry.view');
+  const canQuarantine = isAdmin || isManager || isPharmacist || isStorekeeper || hasPerm('quarantine.view');
+  const canRecalls = isAdmin || isManager || isPharmacist || isStorekeeper || hasPerm('recall.view');
+  const canMovements = isAdmin || isManager || isStorekeeper || hasPerm('stock_movement.view');
+
+  const canPrescriptions = isAdmin || isManager || isPharmacist || isTech || hasPerm('prescription.view');
+  const canDispensings = isAdmin || isManager || isPharmacist || isTech || hasPerm('dispensing.view');
+  const canPatients = isAdmin || isManager || isPharmacist || isTech || hasPerm('patient.view');
+  const canPrescribers = isAdmin || isManager || isPharmacist || isTech || hasPerm('prescriber.view');
+
+  const canPayments = isAdmin || isManager || isFinance || isCashier || isReporting || hasPerm('payment.view');
+  const canReceivables = isAdmin || isManager || isFinance || hasPerm('receivable.view');
+
   // Check section visibility based on roles or granular permissions
-  const canSeeSales = isAdmin || isManager || isCashier || isReporting || hasPerm('sale.view');
-  const canSeePurchases = isAdmin || isManager || isProcurement || isStorekeeper || isReporting || hasPerm('purchase.view');
-  const canSeeInventory = isAdmin || isManager || isStorekeeper || isPharmacist || isTech || isProcurement || isReporting || hasPerm('inventory.view');
-  const canSeeClinical = isAdmin || isManager || isPharmacist || isTech || hasPerm('dispensing.view');
-  const canSeeFinance = isAdmin || isManager || isFinance || isReporting || hasPerm('payment.view');
+  const canSeeSales = canPos || canSalesHistory || canCustomerReturns;
+  const canSeePurchases = canPurchaseOrders || canGoodsReceipts || canSupplierReturns;
+  const canSeeInventory = canStockOverview || canBatches || canStockCounts || canStockTransfers || canExpiry || canQuarantine || canRecalls || canMovements;
+  const canSeeClinical = canPrescriptions || canDispensings || canPatients || canPrescribers;
+  const canSeeFinance = canPayments || canReceivables;
   const canSeeMasterData = isAdmin || isManager || isProcurement || isPharmacist || hasPerm('product.view');
   const canSeeAdmin = isAdmin || isManager || hasPerm('branch.view') || hasPerm('user.view') || hasPerm('role.view') || hasPerm('warehouse.view');
-  const canSeeReports = isAdmin || isManager || isFinance || isReporting || hasPerm('report.sales.view');
-  const canSeeCustomers = isAdmin || isManager || isCashier || isFinance;
-  const canSeeSuppliers = isAdmin || isManager || isProcurement || isFinance;
+  const canSeeReports = isAdmin || isManager || isFinance || isReporting || hasPerm('report.sales.view') || hasPerm('report.dashboard.view');
+  const canSeeCustomers = isAdmin || isManager || isCashier || isFinance || hasPerm('customer.view');
+  const canSeeSuppliers = isAdmin || isManager || isProcurement || isFinance || hasPerm('supplier.view');
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors duration-150 select-none ${
@@ -124,10 +150,10 @@ export default function Sidebar({ isOpen, onClose }) {
             </button>
             {openSections.clinical && (
               <div className="ml-7 pl-3 border-l-2 border-slate-100 my-1 space-y-0.5">
-                <NavLink to="/clinical/prescriptions" className={subLinkClass}>Prescriptions</NavLink>
-                <NavLink to="/clinical/dispensings" className={subLinkClass}>Dispensing Queue</NavLink>
-                <NavLink to="/clinical/patients" className={subLinkClass}>Patients Registry</NavLink>
-                <NavLink to="/clinical/prescribers" className={subLinkClass}>Prescribers / Doctors</NavLink>
+                {canPrescriptions && <NavLink to="/clinical/prescriptions" className={subLinkClass}>Prescriptions</NavLink>}
+                {canDispensings && <NavLink to="/clinical/dispensings" className={subLinkClass}>Dispensing Queue</NavLink>}
+                {canPatients && <NavLink to="/clinical/patients" className={subLinkClass}>Patients Registry</NavLink>}
+                {canPrescribers && <NavLink to="/clinical/prescribers" className={subLinkClass}>Prescribers / Doctors</NavLink>}
               </div>
             )}
           </div>
@@ -148,9 +174,9 @@ export default function Sidebar({ isOpen, onClose }) {
             </button>
             {openSections.sales && (
               <div className="ml-7 pl-3 border-l-2 border-slate-100 my-1 space-y-0.5">
-                <NavLink to="/pos" className={subLinkClass}>Point of Sale (POS)</NavLink>
-                <NavLink to="/sales" className={subLinkClass}>Sales History</NavLink>
-                <NavLink to="/returns/customer" className={subLinkClass}>Customer Returns</NavLink>
+                {canPos && <NavLink to="/pos" className={subLinkClass}>Point of Sale (POS)</NavLink>}
+                {canSalesHistory && <NavLink to="/sales" className={subLinkClass}>Sales History</NavLink>}
+                {canCustomerReturns && <NavLink to="/returns/customer" className={subLinkClass}>Customer Returns</NavLink>}
               </div>
             )}
           </div>
@@ -171,9 +197,9 @@ export default function Sidebar({ isOpen, onClose }) {
             </button>
             {openSections.purchase && (
               <div className="ml-7 pl-3 border-l-2 border-slate-100 my-1 space-y-0.5">
-                <NavLink to="/procurement/purchase-orders" className={subLinkClass}>Purchase Orders</NavLink>
-                <NavLink to="/procurement/goods-receipts" className={subLinkClass}>Goods Receiving</NavLink>
-                <NavLink to="/returns/supplier" className={subLinkClass}>Supplier Returns</NavLink>
+                {canPurchaseOrders && <NavLink to="/procurement/purchase-orders" className={subLinkClass}>Purchase Orders</NavLink>}
+                {canGoodsReceipts && <NavLink to="/procurement/goods-receipts" className={subLinkClass}>Goods Receiving</NavLink>}
+                {canSupplierReturns && <NavLink to="/returns/supplier" className={subLinkClass}>Supplier Returns</NavLink>}
               </div>
             )}
           </div>
@@ -194,14 +220,14 @@ export default function Sidebar({ isOpen, onClose }) {
             </button>
             {openSections.inventory && (
               <div className="ml-7 pl-3 border-l-2 border-slate-100 my-1 space-y-0.5">
-                <NavLink to="/inventory/stock" className={subLinkClass}>Stock Overview</NavLink>
-                <NavLink to="/inventory/batches" className={subLinkClass}>Batch Registry</NavLink>
-                <NavLink to="/inventory/stock-counts" className={subLinkClass}>Counts & Audits</NavLink>
-                <NavLink to="/inventory/transfers" className={subLinkClass}>Stock Transfers</NavLink>
-                <NavLink to="/inventory/expiry" className={subLinkClass}>Expiry Management</NavLink>
-                <NavLink to="/inventory/quarantines" className={subLinkClass}>Quarantine Holds</NavLink>
-                <NavLink to="/inventory/recalls" className={subLinkClass}>Product Recalls</NavLink>
-                <NavLink to="/inventory/stock-movements" className={subLinkClass}>Movement Ledger</NavLink>
+                {canStockOverview && <NavLink to="/inventory/stock" className={subLinkClass}>Stock Overview</NavLink>}
+                {canBatches && <NavLink to="/inventory/batches" className={subLinkClass}>Batch Registry</NavLink>}
+                {canStockCounts && <NavLink to="/inventory/stock-counts" className={subLinkClass}>Counts & Audits</NavLink>}
+                {canStockTransfers && <NavLink to="/inventory/transfers" className={subLinkClass}>Stock Transfers</NavLink>}
+                {canExpiry && <NavLink to="/inventory/expiry" className={subLinkClass}>Expiry Management</NavLink>}
+                {canQuarantine && <NavLink to="/inventory/quarantines" className={subLinkClass}>Quarantine Holds</NavLink>}
+                {canRecalls && <NavLink to="/inventory/recalls" className={subLinkClass}>Product Recalls</NavLink>}
+                {canMovements && <NavLink to="/inventory/stock-movements" className={subLinkClass}>Movement Ledger</NavLink>}
               </div>
             )}
           </div>
@@ -238,8 +264,8 @@ export default function Sidebar({ isOpen, onClose }) {
             </button>
             {openSections.finance && (
               <div className="ml-7 pl-3 border-l-2 border-slate-100 my-1 space-y-0.5">
-                <NavLink to="/finance/payments" className={subLinkClass}>Payments & Receipts</NavLink>
-                <NavLink to="/finance/receivables" className={subLinkClass}>Accounts Receivable</NavLink>
+                {canPayments && <NavLink to="/finance/payments" className={subLinkClass}>Payments & Receipts</NavLink>}
+                {canReceivables && <NavLink to="/finance/receivables" className={subLinkClass}>Accounts Receivable</NavLink>}
               </div>
             )}
           </div>

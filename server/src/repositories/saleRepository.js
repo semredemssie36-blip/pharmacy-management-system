@@ -45,31 +45,31 @@ async function list({
   }
   where.push(`(${ors.join(' OR ')})`);
 
-  if (status) {
+  if (status && status !== 'undefined' && status !== 'null') {
     where.push('s.status = ?');
     params.push(status);
   }
-  if (branchId) {
+  if (branchId && !isNaN(Number(branchId))) {
     where.push('s.branch_id = ?');
     params.push(Number(branchId));
   }
-  if (warehouseId) {
+  if (warehouseId && !isNaN(Number(warehouseId))) {
     where.push('s.warehouse_id = ?');
     params.push(Number(warehouseId));
   }
-  if (customerId) {
+  if (customerId && !isNaN(Number(customerId))) {
     where.push('s.customer_id = ?');
     params.push(Number(customerId));
   }
-  if (startDate) {
+  if (startDate && startDate !== 'undefined' && startDate !== 'null') {
     where.push('s.sale_date >= ?');
     params.push(startDate);
   }
-  if (endDate) {
+  if (endDate && endDate !== 'undefined' && endDate !== 'null') {
     where.push('s.sale_date <= ?');
     params.push(endDate);
   }
-  if (search) {
+  if (search && search !== 'undefined' && search !== 'null') {
     where.push('(s.sale_number LIKE ? OR c.name LIKE ? OR s.notes LIKE ?)');
     const pct = `%${search}%`;
     params.push(pct, pct, pct);
