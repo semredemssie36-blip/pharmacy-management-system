@@ -3,6 +3,7 @@ import ValidationError from '../errors/ValidationError.js';
 import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import quarantineRepository from '../repositories/quarantineRepository.js';
+import auditService from './auditService.js';
 import { getPool } from '../database/pool.js';
 
 export class QuarantineService {
@@ -144,6 +145,19 @@ export class QuarantineService {
         connection,
       );
 
+      await auditService.log({
+        organizationId: orgId,
+        branchId,
+        warehouseId,
+        actorUserId: userId,
+        action: 'quarantine.created',
+        resourceType: 'quarantine_case',
+        resourceId: caseId,
+        resourceReference: quarantineNumber,
+        reason,
+        details: { productId, batchId, quantity },
+      }, connection);
+
       await connection.commit();
       return this.getQuarantineById(caseId, userId);
     } catch (err) {
@@ -221,6 +235,19 @@ export class QuarantineService {
         connection,
       );
 
+      await auditService.log({
+        organizationId: qCase.organization_id,
+        branchId: qCase.branch_id,
+        warehouseId: qCase.warehouse_id,
+        actorUserId: userId,
+        action: 'quarantine.released',
+        resourceType: 'quarantine_case',
+        resourceId: qCase.id,
+        resourceReference: qCase.quarantine_number,
+        reason: releaseNotes.trim(),
+        details: { quantity: Number(qCase.quantity) },
+      }, connection);
+
       await connection.commit();
       return this.getQuarantineById(id, userId);
     } catch (err) {
@@ -281,6 +308,19 @@ export class QuarantineService {
         },
         connection,
       );
+
+      await auditService.log({
+        organizationId: qCase.organization_id,
+        branchId: qCase.branch_id,
+        warehouseId: qCase.warehouse_id,
+        actorUserId: userId,
+        action: 'quarantine.disposed',
+        resourceType: 'quarantine_case',
+        resourceId: qCase.id,
+        resourceReference: qCase.quarantine_number,
+        reason: disposalNotes.trim(),
+        details: { disposalMethod: disposalMethod?.trim(), quantity: Number(qCase.quantity) },
+      }, connection);
 
       await connection.commit();
       return this.getQuarantineById(id, userId);

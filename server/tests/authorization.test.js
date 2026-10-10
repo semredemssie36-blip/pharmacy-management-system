@@ -113,6 +113,7 @@ before(async () => {
   closePool = (await import('../src/database/pool.js')).closePool;
   app = (await import('../src/app.js')).default;
 
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM storage_locations');
   await pool.query('DELETE FROM warehouses');
   await pool.query('DELETE FROM branches');
@@ -122,6 +123,7 @@ before(async () => {
   await pool.query('DELETE FROM role_permissions');
   await pool.query('DELETE FROM roles');
   await pool.query("DELETE FROM users WHERE email LIKE '%@scope-test.local'");
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
   await seedStructure();
 });
@@ -129,6 +131,7 @@ before(async () => {
 after(async () => {
   try {
     if (pool) {
+      await pool.query('SET FOREIGN_KEY_CHECKS = 0');
       await pool.query('DELETE FROM storage_locations');
       await pool.query('DELETE FROM warehouses');
       await pool.query('DELETE FROM branches');
@@ -138,6 +141,7 @@ after(async () => {
       await pool.query('DELETE FROM role_permissions');
       await pool.query('DELETE FROM roles');
       await pool.query("DELETE FROM users WHERE email LIKE '%@scope-test.local'");
+      await pool.query('SET FOREIGN_KEY_CHECKS = 1');
     }
   } finally {
     if (closePool) await closePool();

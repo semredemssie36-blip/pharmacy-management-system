@@ -6,6 +6,7 @@ import saleRepository from '../repositories/saleRepository.js';
 import productRepository from '../repositories/productRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
 import approvalRepository from '../repositories/approvalRepository.js';
+import auditService from './auditService.js';
 import { getPool } from '../database/pool.js';
 
 const STATUS_TRANSITIONS = {
@@ -528,6 +529,19 @@ async function completeSale(id, userId) {
       }, connection);
     }
 
+    await auditService.log({
+      organizationId: sale.organization_id,
+      branchId: sale.branch_id,
+      warehouseId: sale.warehouse_id,
+      actorUserId: userId,
+      action: 'sale.completed',
+      resourceType: 'sale',
+      resourceId: sale.id,
+      resourceReference: sale.sale_number,
+      reason: 'Sale completed and inventory deducted',
+      details: { totalAmount: sale.total_amount, netAmount: sale.net_amount },
+    }, connection);
+
     await connection.commit();
     return getSaleById(id, userId);
   } catch (err) {
@@ -550,6 +564,19 @@ async function cancelSale(id, reason, userId) {
   }
 
   await saleRepository.updateStatus(id, 'cancelled', { cancelledReason: reason || null });
+
+  await auditService.log({
+    organizationId: existing.organization_id,
+    branchId: existing.branch_id,
+    warehouseId: existing.warehouse_id,
+    actorUserId: userId,
+    action: 'sale.cancelled',
+    resourceType: 'sale',
+    resourceId: existing.id,
+    resourceReference: existing.sale_number,
+    reason: reason || null,
+  }).catch(() => {});
+
   return getSaleById(id, userId);
 }
 
@@ -595,6 +622,18 @@ async function voidSale(id, reason, userId) {
     });
 
     await saleRepository.updateStatus(id, 'voided', { voidReason: reason.trim() }, connection);
+
+    await auditService.log({
+      organizationId: sale.organization_id,
+      branchId: sale.branch_id,
+      warehouseId: sale.warehouse_id,
+      actorUserId: userId,
+      action: 'sale.voided',
+      resourceType: 'sale',
+      resourceId: sale.id,
+      resourceReference: sale.sale_number,
+      reason: reason.trim(),
+    }, connection);
 
     await connection.commit();
     return getSaleById(id, userId);

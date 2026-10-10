@@ -128,6 +128,11 @@ function MainLayout() {
               Permissions
             </Link>
           </Can>
+          <Can permission="audit.view">
+            <Link to="/administration/audit-logs" className="block rounded px-3 py-2 hover:bg-slate-800">
+              Audit Logs
+            </Link>
+          </Can>
           <Can permission="approval.view">
             <Link to="/approvals" className="block rounded px-3 py-2 hover:bg-slate-800">
               Approvals & Overrides

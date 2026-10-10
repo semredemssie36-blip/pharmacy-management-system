@@ -4,6 +4,7 @@ import { getPool } from '../database/pool.js';
 import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import stockCountRepository from '../repositories/stockCountRepository.js';
+import auditService from './auditService.js';
 
 async function getScopeSets(userId) {
   const scope = await authorizationService.getUserScope(userId);
@@ -491,6 +492,19 @@ export const stockCountService = {
         status: 'completed',
         applied_by: user.id,
         applied_at: new Date(),
+      }, connection);
+
+      await auditService.log({
+        organizationId: count.organization_id,
+        branchId: count.branch_id,
+        warehouseId: count.warehouse_id,
+        actorUserId: user.id,
+        action: 'stock_count.adjusted',
+        resourceType: 'stock_count',
+        resourceId: count.id,
+        resourceReference: count.count_number,
+        reason: 'Approved stock count variance adjustments applied to inventory',
+        details: { linesAdjusted: varianceLines.length },
       }, connection);
 
       await connection.commit();

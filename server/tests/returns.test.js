@@ -89,6 +89,7 @@ before(async () => {
   const runTag = Math.random().toString(36).slice(2, 8);
 
   // Clean any previous test data safely
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM customer_return_lines');
   await pool.query('DELETE FROM customer_returns');
   await pool.query('DELETE FROM supplier_return_lines');
@@ -107,6 +108,7 @@ before(async () => {
   await pool.query('DELETE FROM stock_movements');
   await pool.query('DELETE FROM inventory');
   await pool.query('DELETE FROM batches');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
   // Organizations
   const [o1] = await pool.query(`INSERT INTO organizations (name, code, status) VALUES ('Return Org 1', 'RO1_${runTag}', 'active')`);

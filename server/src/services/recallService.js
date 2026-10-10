@@ -3,6 +3,7 @@ import ValidationError from '../errors/ValidationError.js';
 import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import recallRepository from '../repositories/recallRepository.js';
+import auditService from './auditService.js';
 import { getPool } from '../database/pool.js';
 
 export class RecallService {
@@ -134,6 +135,17 @@ export class RecallService {
         await recallRepository.addRecallBatches(recallId, resolvedBatchIds, connection);
       }
 
+      await auditService.log({
+        organizationId: orgId,
+        actorUserId: userId,
+        action: 'recall.created',
+        resourceType: 'recall_case',
+        resourceId: recallId,
+        resourceReference: recallNumber,
+        reason: title,
+        details: { severity, scopeLevel, productId, batchCount: resolvedBatchIds.length },
+      }, connection);
+
       await connection.commit();
       return this.getRecallById(recallId, userId);
     } catch (err) {
@@ -160,6 +172,16 @@ export class RecallService {
       approved_at: new Date(),
       approval_notes: approvalNotes?.trim() || null,
     });
+
+    await auditService.log({
+      organizationId: recall.organization_id,
+      actorUserId: userId,
+      action: 'recall.approved',
+      resourceType: 'recall_case',
+      resourceId: id,
+      resourceReference: recall.recall_number,
+      reason: approvalNotes?.trim() || 'Recall approved by supervisor',
+    }).catch(() => {});
 
     return this.getRecallById(id, userId);
   }
@@ -249,6 +271,17 @@ export class RecallService {
         },
         connection,
       );
+
+      await auditService.log({
+        organizationId: recall.organization_id,
+        actorUserId: userId,
+        action: 'recall.activated',
+        resourceType: 'recall_case',
+        resourceId: recall.id,
+        resourceReference: recall.recall_number,
+        reason: `Activated recall containment: ${totalContained} units held`,
+        details: { totalContained, batchCount: batchIds.length },
+      }, connection);
 
       await connection.commit();
       return this.getRecallById(id, userId);
@@ -386,6 +419,16 @@ export class RecallService {
       resolved_at: new Date(),
       resolution_notes: resolutionNotes.trim(),
     });
+
+    await auditService.log({
+      organizationId: recall.organization_id,
+      actorUserId: userId,
+      action: 'recall.closed',
+      resourceType: 'recall_case',
+      resourceId: id,
+      resourceReference: recall.recall_number,
+      reason: resolutionNotes.trim(),
+    }).catch(() => {});
 
     return this.getRecallById(id, userId);
   }

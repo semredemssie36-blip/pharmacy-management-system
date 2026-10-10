@@ -4,6 +4,7 @@ import { getPool } from '../database/pool.js';
 import authorizationService from './authorizationService.js';
 import inventoryService from './inventoryService.js';
 import stockTransferRepository from '../repositories/stockTransferRepository.js';
+import auditService from './auditService.js';
 
 async function generateTransferNumber(connection) {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -517,6 +518,19 @@ export const stockTransferService = {
         dispatch_notes: payload.dispatchNotes || null,
       }, connection);
 
+      await auditService.log({
+        organizationId: transfer.organization_id,
+        branchId: transfer.source_branch_id,
+        warehouseId: transfer.source_warehouse_id,
+        actorUserId: user.id,
+        action: 'stock_transfer.dispatched',
+        resourceType: 'stock_transfer',
+        resourceId: id,
+        resourceReference: transfer.transfer_number,
+        reason: payload.dispatchNotes || 'Transfer dispatched',
+        details: { destinationWarehouseId: transfer.destination_warehouse_id },
+      }, connection);
+
       await connection.commit();
       return stockTransferRepository.findWithDetails(id);
     } catch (err) {
@@ -673,6 +687,19 @@ export const stockTransferService = {
         received_at: new Date(),
         receiving_notes: payload.receivingNotes || transfer.receiving_notes,
         has_discrepancy: hasDiscrepancy ? 1 : 0,
+      }, connection);
+
+      await auditService.log({
+        organizationId: transfer.organization_id,
+        branchId: transfer.destination_branch_id,
+        warehouseId: transfer.destination_warehouse_id,
+        actorUserId: user.id,
+        action: 'stock_transfer.received',
+        resourceType: 'stock_transfer',
+        resourceId: id,
+        resourceReference: transfer.transfer_number,
+        reason: payload.receivingNotes || 'Transfer received at destination',
+        details: { status: newTransferStatus, hasDiscrepancy: Boolean(hasDiscrepancy) },
       }, connection);
 
       await connection.commit();

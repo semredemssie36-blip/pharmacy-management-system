@@ -1,0 +1,31 @@
+-- Task 19 — Centralized Audit Trail and Activity History Schema
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  organization_id INT UNSIGNED NOT NULL,
+  branch_id INT UNSIGNED NULL,
+  warehouse_id INT UNSIGNED NULL,
+  actor_user_id INT UNSIGNED NULL,
+  action VARCHAR(100) NOT NULL,
+  resource_type VARCHAR(100) NOT NULL,
+  resource_id BIGINT UNSIGNED NULL,
+  resource_reference VARCHAR(100) NULL,
+  outcome ENUM('success', 'failure') NOT NULL DEFAULT 'success',
+  details JSON NULL,
+  before_values JSON NULL,
+  after_values JSON NULL,
+  reason TEXT NULL,
+  ip_address VARCHAR(45) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_audit_org_created (organization_id, created_at),
+  KEY idx_audit_branch_created (branch_id, created_at),
+  KEY idx_audit_actor_created (actor_user_id, created_at),
+  KEY idx_audit_resource (resource_type, resource_id),
+  KEY idx_audit_action_created (action, created_at),
+  KEY idx_audit_ref (resource_reference),
+  CONSTRAINT fk_audit_org FOREIGN KEY (organization_id) REFERENCES organizations (id) ON UPDATE CASCADE,
+  CONSTRAINT fk_audit_branch FOREIGN KEY (branch_id) REFERENCES branches (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_audit_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses (id) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_audit_actor FOREIGN KEY (actor_user_id) REFERENCES users (id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

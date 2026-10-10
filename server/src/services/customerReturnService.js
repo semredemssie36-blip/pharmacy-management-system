@@ -3,6 +3,7 @@ import ValidationError from '../errors/ValidationError.js';
 import authorizationService from './authorizationService.js';
 import customerReturnRepository from '../repositories/customerReturnRepository.js';
 import inventoryService from './inventoryService.js';
+import auditService from './auditService.js';
 import { getPool } from '../database/pool.js';
 import logger from '../utils/logger.js';
 
@@ -784,6 +785,18 @@ export const customerReturnService = {
         },
         connection,
       );
+
+      await auditService.log({
+        organizationId: ret.organization_id,
+        branchId: ret.branch_id,
+        actorUserId: userId,
+        action: 'customer_return.completed',
+        resourceType: 'customer_return',
+        resourceId: id,
+        resourceReference: ret.return_number,
+        reason: 'Customer return completed with stock disposition and refund/receivable adjustment',
+        details: { refundId, targetRefundAmount },
+      }, connection);
 
       await connection.commit();
 

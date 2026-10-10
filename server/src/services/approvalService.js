@@ -5,6 +5,7 @@
 import crypto from 'node:crypto';
 import approvalRepository from '../repositories/approvalRepository.js';
 import authorizationService from './authorizationService.js';
+import auditService from './auditService.js';
 import { getPool } from '../database/pool.js';
 import AppError from '../errors/AppError.js';
 import ValidationError from '../errors/ValidationError.js';
@@ -218,6 +219,18 @@ class ApprovalService {
         payload: { requestedValue, originalValue },
       }, connection);
 
+      await auditService.log({
+        organizationId,
+        branchId,
+        actorUserId: user.id,
+        action: 'approval.created',
+        resourceType: 'approval_request',
+        resourceId: requestId,
+        resourceReference: requestNumber,
+        reason,
+        details: { category, requestedValue, originalValue, targetEntityType, targetEntityId },
+      }, connection);
+
       await connection.commit();
 
       logger.info('Approval request created', {
@@ -395,6 +408,18 @@ class ApprovalService {
         payload: { approverId: user.id, decisionAt },
       }, connection);
 
+      await auditService.log({
+        organizationId: request.organization_id,
+        branchId: request.branch_id,
+        actorUserId: user.id,
+        action: 'approval.approved',
+        resourceType: 'approval_request',
+        resourceId: id,
+        resourceReference: request.request_number,
+        reason: decisionReason || 'Approved',
+        details: { category: request.category },
+      }, connection);
+
       await connection.commit();
 
       logger.info('Approval request approved', {
@@ -478,6 +503,18 @@ class ApprovalService {
         payload: { approverId: user.id, decisionAt },
       }, connection);
 
+      await auditService.log({
+        organizationId: request.organization_id,
+        branchId: request.branch_id,
+        actorUserId: user.id,
+        action: 'approval.rejected',
+        resourceType: 'approval_request',
+        resourceId: id,
+        resourceReference: request.request_number,
+        reason: decisionReason.trim(),
+        details: { category: request.category },
+      }, connection);
+
       await connection.commit();
 
       logger.info('Approval request rejected', {
@@ -540,6 +577,18 @@ class ApprovalService {
         action: 'cancelled',
         actorId: user.id,
         notes: cancelReason || 'Cancelled by requester',
+      }, connection);
+
+      await auditService.log({
+        organizationId: request.organization_id,
+        branchId: request.branch_id,
+        actorUserId: user.id,
+        action: 'approval.cancelled',
+        resourceType: 'approval_request',
+        resourceId: id,
+        resourceReference: request.request_number,
+        reason: cancelReason || 'Cancelled by requester',
+        details: { category: request.category },
       }, connection);
 
       await connection.commit();
@@ -638,6 +687,18 @@ class ApprovalService {
       action: 'executed',
       actorId: approvedRequest.requester_id,
       notes: `Approved override executed for ${targetEntityType} #${targetEntityId}`,
+    }, connection);
+
+    await auditService.log({
+      organizationId: approvedRequest.organization_id,
+      branchId: approvedRequest.branch_id,
+      actorUserId: approvedRequest.requester_id,
+      action: 'approval.executed',
+      resourceType: 'approval_request',
+      resourceId: approvedRequest.id,
+      resourceReference: approvedRequest.request_number,
+      reason: `Approved override executed for ${targetEntityType} #${targetEntityId}`,
+      details: { category: approvedRequest.category, targetEntityType, targetEntityId },
     }, connection);
 
     return { approved: true, request: approvedRequest };

@@ -523,3 +523,7 @@ test('WORKFLOW INTEGRATION: Customer credit sale exceeding limit succeeds when a
   const finalAprRes = await agentAdmin.get(`/api/v1/approvals/${aprId}`);
   assert.equal(finalAprRes.body.data.status, 'executed');
 });
+
+after(async () => {
+  if (closePool) await closePool();
+});

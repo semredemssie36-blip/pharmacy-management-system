@@ -1,5 +1,6 @@
 import env from '../config/env.js';
-import authService from '../services/authService.js';
+import authService, { resolveUserOrgId } from '../services/authService.js';
+import auditService from '../services/auditService.js';
 
 function cookieOptions() {
   return {
@@ -23,7 +24,7 @@ function parseExpiryToMs(value) {
 
 async function login(req, res, next) {
   try {
-    const { user, token } = await authService.login(req.body);
+    const { user, token } = await authService.login(req.body, req.ip);
     res.cookie(env.auth.cookieName, token, cookieOptions());
     res.status(200).json({ success: true, data: { user } });
   } catch (err) {
@@ -32,6 +33,20 @@ async function login(req, res, next) {
 }
 
 function logout(req, res) {
+  if (req.user) {
+    resolveUserOrgId(req.user.id).then((orgId) => {
+      auditService.log({
+        organizationId: orgId,
+        actorUserId: req.user.id,
+        action: 'auth.logout',
+        resourceType: 'auth',
+        resourceId: req.user.id,
+        outcome: 'success',
+        ipAddress: req.ip,
+      }).catch(() => {});
+    }).catch(() => {});
+  }
+
   // Invalidate the client's authentication state by clearing the cookie.
   res.clearCookie(env.auth.cookieName, {
     httpOnly: true,

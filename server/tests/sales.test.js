@@ -82,6 +82,7 @@ before(async () => {
   await pool.query('DELETE FROM sale_lines');
   await pool.query('DELETE FROM sales');
   await pool.query('DELETE FROM goods_receipt_lines');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('DELETE FROM goods_receipts');
   await pool.query('DELETE FROM purchase_order_lines');
   await pool.query('DELETE FROM purchase_orders');
@@ -103,6 +104,7 @@ before(async () => {
   await pool.query('DELETE FROM warehouses');
   await pool.query('DELETE FROM branches');
   await pool.query('DELETE FROM organizations');
+  await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 
   // Organizations
   const [o1] = await pool.query("INSERT INTO organizations (name, code, status) VALUES ('Sales Org 1', 'SORG1', 'active')");

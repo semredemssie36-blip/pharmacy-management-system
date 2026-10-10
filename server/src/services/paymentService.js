@@ -6,6 +6,7 @@ import saleRepository from '../repositories/saleRepository.js';
 import dispensingRepository from '../repositories/dispensingRepository.js';
 import receivableRepository from '../repositories/receivableRepository.js';
 import paymentRepository from '../repositories/paymentRepository.js';
+import auditService from './auditService.js';
 import { getPool } from '../database/pool.js';
 import logger from '../utils/logger.js';
 
@@ -400,6 +401,18 @@ export const paymentService = {
         }
       }
 
+      await auditService.log({
+        organizationId: targetOrgId,
+        branchId: targetBranchId,
+        actorUserId: userId,
+        action: 'payment.created',
+        resourceType: 'payment',
+        resourceId: paymentId,
+        resourceReference: paymentNumber,
+        reason: `Payment received: ${roundTo2(amount)} ${input.currency || 'ETB'} via ${paymentMethod}`,
+        details: { amount: roundTo2(amount), paymentMethod, referenceType, referenceId },
+      }, connection);
+
       await connection.commit();
 
       logger.info('Payment recorded successfully', {
@@ -729,6 +742,18 @@ export const paymentService = {
           );
         }
       }
+
+      await auditService.log({
+        organizationId: payment.organization_id,
+        branchId: payment.branch_id,
+        actorUserId: userId,
+        action: 'refund.created',
+        resourceType: 'refund',
+        resourceId: refundId,
+        resourceReference: refundNumber,
+        reason,
+        details: { amount: refundAmount, refundMethod, paymentNumber: payment.payment_number },
+      }, connection);
 
       await connection.commit();
 

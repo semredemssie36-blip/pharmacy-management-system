@@ -2,6 +2,7 @@ import AppError from '../errors/AppError.js';
 import ValidationError from '../errors/ValidationError.js';
 import authorizationService from './authorizationService.js';
 import productRepository from '../repositories/productRepository.js';
+import auditService from './auditService.js';
 import { getPool } from '../database/pool.js';
 
 const ENUM_CHECKS = {
@@ -147,7 +148,7 @@ async function create(input, userId) {
     if (existingBarcode) throw new AppError('Barcode already exists in this organization', { statusCode: 409, code: 'DUPLICATE_PRODUCT_BARCODE' });
   }
 
-  return productRepository.create({
+  const created = await productRepository.create({
     organization_id: Number(input.organizationId),
     code: input.code.trim(),
     barcode: input.barcode?.trim() || null,
@@ -170,6 +171,19 @@ async function create(input, userId) {
     reorder_level: input.reorderLevel ?? null,
     status: input.status || 'active',
   });
+
+  await auditService.log({
+    organizationId: created.organization_id,
+    actorUserId: userId,
+    action: 'product.created',
+    resourceType: 'product',
+    resourceId: created.id,
+    resourceReference: created.code,
+    reason: `Product created: ${created.name}`,
+    details: { name: created.name, code: created.code, sellingPrice: created.selling_price },
+  }).catch(() => {});
+
+  return created;
 }
 
 async function update(id, input, userId) {
@@ -188,17 +202,56 @@ async function update(id, input, userId) {
     if (existing && existing.id !== id) throw new AppError('Barcode already exists in this organization', { statusCode: 409, code: 'DUPLICATE_PRODUCT_BARCODE' });
   }
 
-  return productRepository.update(id, input);
+  const updated = await productRepository.update(id, input);
+  const diff = auditService.calculateDiff(product, updated);
+  if (diff) {
+    await auditService.log({
+      organizationId: product.organization_id,
+      actorUserId: userId,
+      action: 'product.updated',
+      resourceType: 'product',
+      resourceId: id,
+      resourceReference: updated.code || product.code,
+      beforeValues: diff.before,
+      afterValues: diff.after,
+    }).catch(() => {});
+  }
+
+  return updated;
 }
 
 async function deactivate(id, userId) {
-  await getById(id, userId);
-  return productRepository.update(id, { status: 'inactive' });
+  const product = await getById(id, userId);
+  const res = await productRepository.update(id, { status: 'inactive' });
+  await auditService.log({
+    organizationId: product.organization_id,
+    actorUserId: userId,
+    action: 'product.deactivated',
+    resourceType: 'product',
+    resourceId: id,
+    resourceReference: product.code,
+    reason: 'Product deactivated',
+    beforeValues: { status: product.status },
+    afterValues: { status: 'inactive' },
+  }).catch(() => {});
+  return res;
 }
 
 async function activate(id, userId) {
-  await getById(id, userId);
-  return productRepository.update(id, { status: 'active' });
+  const product = await getById(id, userId);
+  const res = await productRepository.update(id, { status: 'active' });
+  await auditService.log({
+    organizationId: product.organization_id,
+    actorUserId: userId,
+    action: 'product.activated',
+    resourceType: 'product',
+    resourceId: id,
+    resourceReference: product.code,
+    reason: 'Product activated',
+    beforeValues: { status: product.status },
+    afterValues: { status: 'active' },
+  }).catch(() => {});
+  return res;
 }
 
 async function setActiveIngredients(productId, items, userId) {
